@@ -30,23 +30,28 @@ public class MoveAvailabilityChecker {
   public static boolean hasAvailableMove(GameState gs, String playerId, List<Card> cards) {
     List<Pawn> allPawns = gs.getPawns();
 
-    List<Pawn> nestPawns = allPawns.stream()
-        .filter(p -> playerId.equals(p.getPlayerId()))
+    // Every pawn this player may move: their own, plus a teammate's once all of their own are
+    // home (team play). Filtering on ownership alone would leave them with nothing in that phase,
+    // and so wrongly excuse them from the "must play if possible" rule.
+    List<Pawn> playablePawns = allPawns.stream()
+        .filter(p -> gs.mayControlPawn(playerId, p))
+        .collect(Collectors.toList());
+
+    List<Pawn> nestPawns = playablePawns.stream()
         .filter(p -> isPawnOnNest(p))
         .collect(Collectors.toList());
 
-    List<Pawn> boardPawns = allPawns.stream()
-        .filter(p -> playerId.equals(p.getPlayerId()))
+    List<Pawn> boardPawns = playablePawns.stream()
         .filter(p -> pawnIsOnNormalBoard(p))
         .collect(Collectors.toList());
 
-    List<Pawn> opponentBoardPawns = allPawns.stream()
-        .filter(p -> !playerId.equals(p.getPlayerId()))
+    // The other half of a Jack switch: any board pawn — the pair is rejected by colour below.
+    List<Pawn> allBoardPawns = allPawns.stream()
         .filter(p -> pawnIsOnNormalBoard(p))
         .collect(Collectors.toList());
 
     for (Card card : cards) {
-      if (checkCard(gs, playerId, card, nestPawns, boardPawns, opponentBoardPawns)) {
+      if (checkCard(gs, playerId, card, nestPawns, boardPawns, allBoardPawns)) {
         return true;
       }
     }
@@ -55,7 +60,7 @@ public class MoveAvailabilityChecker {
 
   private static boolean checkCard(
       GameState gs, String playerId, Card card,
-      List<Pawn> nestPawns, List<Pawn> boardPawns, List<Pawn> opponentBoardPawns) {
+      List<Pawn> nestPawns, List<Pawn> boardPawns, List<Pawn> allBoardPawns) {
 
     switch (card.getValue()) {
       case 13: // King — nest to start only
@@ -73,10 +78,11 @@ public class MoveAvailabilityChecker {
         }
         return false;
 
-      case 11: // Jack — switch own board pawn with any opponent board pawn
+      case 11: // Jack — switch a board pawn you control with a board pawn of another colour
         for (Pawn own : boardPawns) {
-          for (Pawn opp : opponentBoardPawns) {
-            if (trySwitch(gs, playerId, card, own, opp)) return true;
+          for (Pawn other : allBoardPawns) {
+            if (own.getPlayerId().equals(other.getPlayerId())) continue;
+            if (trySwitch(gs, playerId, card, own, other)) return true;
           }
         }
         return false;
