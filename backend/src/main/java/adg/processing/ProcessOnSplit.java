@@ -57,7 +57,10 @@ public class ProcessOnSplit {
 
     if (!selectionIsValid()) return;
 
-    playerId = pawn1.getPlayerId();
+    // The card is played from the MOVER's hand, which in team play is not the pawns' owner —
+    // you play your teammate's pawns once all of your own are home. ProcessOnMove still checks,
+    // per pawn, that the mover is allowed to control it.
+    playerId = moveMessage.getPlayerId();
     nrStepsPawn1 = moveMessage.getStepsPawn1();
     nrStepsPawn2 = moveMessage.getStepsPawn2();
 

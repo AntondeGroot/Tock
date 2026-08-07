@@ -30,7 +30,9 @@ public class ProcessOnBoard {
     if (!cardIsAceOrKing(card, response)) return;
 
     PositionKey currentTileId = gs.getPawn(pawn1).getCurrentTileId();
-    PositionKey targetTileId = new PositionKey(playerId, 0);
+    // A pawn always enters the board on ITS OWN start tile — in team play the mover is not the
+    // owner, because you play your teammate's pawns once all of your own are home.
+    PositionKey targetTileId = new PositionKey(pawn1.getPlayerId(), 0);
 
     if (!pawnIsOnNest(currentTileId, response)) return;
     if (!targetTileIsFree(gs, pawn1, targetTileId, response)) return;

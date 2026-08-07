@@ -50,6 +50,7 @@ public class ProcessOnMove {
   private Pawn pawn1;
   private Card card;
   private String playerId;
+  private String pawnOwnerId;
   private PositionKey currentTileId;
   private String playerIdOfTile;
   private int nrSteps;
@@ -140,6 +141,9 @@ public class ProcessOnMove {
 
   private void initializeRouting() {
     currentTileId = pawn1.getCurrentTileId();
+    // A pawn always travels towards ITS OWN finish, so the route is read in the owner's frame of
+    // reference — which is not the mover's in team play, where you play a teammate's pawns.
+    pawnOwnerId = pawn1.getPlayerId();
     playerIdOfTile = currentTileId.getPlayerId();
     nrSteps = moveMessage.getStepsPawn1();
     next = currentTileId.getTileNr() + nrSteps;
@@ -147,7 +151,7 @@ public class ProcessOnMove {
 
   private boolean isForwardCrossSection() {
     return next > LAST_TILE
-        && !gs.isPawnOnLastSection(playerId, playerIdOfTile)
+        && !gs.isPawnOnLastSection(pawnOwnerId, playerIdOfTile)
         && !isPawnOnFinish(pawn1);
   }
 
@@ -156,7 +160,7 @@ public class ProcessOnMove {
   }
 
   private boolean isEnteringFinish() {
-    return next > LAST_TILE && gs.isPawnOnLastSection(playerId, playerIdOfTile);
+    return next > LAST_TILE && gs.isPawnOnLastSection(pawnOwnerId, playerIdOfTile);
   }
 
   // ── Route: forward cross-section ─────────────────────────────────────────

@@ -60,16 +60,14 @@ public final class SevenSplitRecommender {
       return null;
     }
 
-    String playerId = request.getPlayerId();
     // Cheap exit: unless a pawn is near the finish or a blockaded start tile, there's no wall to
     // advance toward, so skip the per-step search entirely (the common case).
-    if (!mightHaveWall(gs, playerId, request.getPawn1Id())
-        && !mightHaveWall(gs, playerId, request.getPawn2Id())) {
+    if (!mightHaveWall(gs, request.getPawn1Id()) && !mightHaveWall(gs, request.getPawn2Id())) {
       return null;
     }
 
-    Analysis a1 = analyze(gs, request, request.getPawn1Id(), cardId, playerId);
-    Analysis a2 = analyze(gs, request, request.getPawn2Id(), cardId, playerId);
+    Analysis a1 = analyze(gs, request, request.getPawn1Id(), cardId);
+    Analysis a2 = analyze(gs, request, request.getPawn2Id(), cardId);
 
     Integer steps1 = chooseStepsForPawn1(a1, a2);
     if (steps1 == null) {
@@ -113,8 +111,14 @@ public final class SevenSplitRecommender {
   }
 
   /** The step count whose landing is furthest forward, and how that landing is classified. */
-  private static Analysis analyze(
-      GameState gs, MoveRequest base, PawnId pawnId, int cardId, String playerId) {
+  private static Analysis analyze(GameState gs, MoveRequest base, PawnId pawnId, int cardId) {
+    Pawn pawn = gs.getPawn(pawnId);
+    if (pawn == null) {
+      return new Analysis(Kind.NONE, 0, -1);
+    }
+    // "Furthest forward" is measured along the route to the pawn's OWN finish — in team play the
+    // mover is not the owner, because you play your teammate's pawns once your own are home.
+    String ownerId = pawn.getPlayerId();
     int bestSteps = 0;
     int bestIndex = Integer.MIN_VALUE;
     int bestTileNr = -1;
@@ -127,7 +131,7 @@ public final class SevenSplitRecommender {
       if (landing == null) {
         continue;
       }
-      int index = forwardIndex(gs, playerId, landing);
+      int index = forwardIndex(gs, ownerId, landing);
       if (index > bestIndex) {
         bestIndex = index;
         bestSteps = steps;
@@ -163,7 +167,7 @@ public final class SevenSplitRecommender {
   }
 
   /** Quick test of whether a pawn is close enough to a wall (finish or a blockaded start) to matter. */
-  private static boolean mightHaveWall(GameState gs, String playerId, PawnId pawnId) {
+  private static boolean mightHaveWall(GameState gs, PawnId pawnId) {
     Pawn pawn = gs.getPawn(pawnId);
     if (pawn == null) {
       return false;
@@ -173,7 +177,8 @@ public final class SevenSplitRecommender {
     if (tileNr >= FINISH_FIRST_TILE) {
       return true; // already on the finish — could go deeper or overshoot
     }
-    if (gs.isPawnOnLastSection(playerId, tile.getPlayerId()) && tileNr >= WALL_REACH_TILE) {
+    // Whose last section this is depends on who owns the pawn, not on who is moving it.
+    if (gs.isPawnOnLastSection(pawn.getPlayerId(), tile.getPlayerId()) && tileNr >= WALL_REACH_TILE) {
       return true; // close enough to enter its own finish
     }
     // close enough to reach the next section's start tile, and that tile is a blockade
@@ -183,16 +188,17 @@ public final class SevenSplitRecommender {
 
   /**
    * A monotonic measure of how far forward a tile is along the pawn's path to its own finish:
-   * board sections in travel order, with the finish at the far end. Higher = further forward.
+   * board sections in travel order from its owner's own section, with the finish at the far end.
+   * Higher = further forward.
    */
-  private static int forwardIndex(GameState gs, String playerId, PositionKey tile) {
+  private static int forwardIndex(GameState gs, String ownerId, PositionKey tile) {
     int tileNr = tile.getTileNr();
-    if (tile.getPlayerId().equals(playerId) && tileNr >= FINISH_FIRST_TILE) {
+    if (tile.getPlayerId().equals(ownerId) && tileNr >= FINISH_FIRST_TILE) {
       // finish tiles continue straight after the last board section
       return gs.getNrPlayers() * TILES_PER_SECTION + (tileNr - FINISH_FIRST_TILE);
     }
     int order = 0;
-    String section = playerId;
+    String section = ownerId;
     while (!section.equals(tile.getPlayerId()) && order <= 16) {
       section = gs.nextPlayerId(section);
       order++;
