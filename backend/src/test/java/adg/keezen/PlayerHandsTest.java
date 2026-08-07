@@ -80,6 +80,15 @@ class PlayerHandsTest {
   }
 
   @Test
+  void setHand_replacesTheHandWithoutPilingTheOldCards() {
+    hands.giveCard("0", card(1));
+    hands.giveCard("0", card(2));
+    hands.setHand("0", List.of(card(7), card(13)));
+    assertEquals(List.of(card(7), card(13)), hands.cardsOf("0"), "exactly the given cards, in order");
+    assertTrue(hands.playedCards().isEmpty(), "the replaced cards are dropped, NOT put on the pile");
+  }
+
+  @Test
   void moveCard_transfersBetweenHands() {
     Card c = card(9);
     hands.giveCard("0", c);

@@ -4,6 +4,7 @@ import com.adg.openapi.model.Card;
 import com.adg.openapi.model.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,6 +75,19 @@ class PlayerHands {
   void forfeit(String playerId) {
     playedCards.addAll(handOf(playerId));
     hands.get(playerId).dropCards();
+  }
+
+  /**
+   * Test hook: replace the player's whole hand with {@code cards}. Unlike {@link #forfeit} the
+   * discarded cards do NOT go to the pile — the point is to put a known hand on the table without
+   * leaving any trace of the randomly dealt one.
+   */
+  void setHand(String playerId, List<Card> cards) {
+    PlayerHand hand = hands.get(playerId);
+    hand.dropCards();
+    for (Card card : cards) {
+      hand.addCard(card);
+    }
   }
 
   /** Test hook: swap the player's first card for {@code card} (no-op removal on an empty hand). */

@@ -4,6 +4,7 @@ import com.adg.openapi.model.Card;
 import com.adg.openapi.model.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public interface CardsDeckInterface {
 
@@ -26,6 +27,13 @@ public interface CardsDeckInterface {
   boolean hasPlayedSinceDeal(String playerId);
 
   void giveCardToPlayerForTesting(String playerId, Card card);
+
+  /**
+   * Test hook: replace the player's whole hand with {@code cards}, dropping the dealt one without
+   * putting it on the pile. Lets a test (or the README screenshot generator) pin an exact hand,
+   * which {@code giveCardToPlayerForTesting} cannot — that only swaps the first card.
+   */
+  void setHandForTesting(String playerId, List<Card> cards);
 
   void setPlayerCard(String playerId, Card card);
 

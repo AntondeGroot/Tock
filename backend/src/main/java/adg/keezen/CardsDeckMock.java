@@ -5,6 +5,7 @@ import com.adg.openapi.model.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -68,6 +69,10 @@ public class CardsDeckMock implements CardsDeckInterface {
 
   public void setPlayerCard(String playerId, Card card) {
     hands.giveCard(playerId, card);
+  }
+
+  public void setHandForTesting(String playerId, List<Card> cards) {
+    hands.setHand(playerId, cards);
   }
 
   public void dealCards() {

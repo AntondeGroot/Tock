@@ -9,6 +9,7 @@
     "test": "ng test",
     "test:coverage": "ng test --no-watch --coverage",
     "e2e": "playwright test",
+    "generate:readme-images": "GENERATE_README_IMAGES=true playwright test readme-images.spec.ts",
     "prettier": "prettier --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
