@@ -94,6 +94,10 @@ public class CardsDeck implements CardsDeckInterface {
     hands.giveCard(playerId, card);
   }
 
+  public void setHandForTesting(String playerId, List<Card> cards) {
+    hands.setHand(playerId, cards);
+  }
+
   public void dealCards() {
     int nrCards = roundNr == 0 ? CARDS_DEALT_FIRST_ROUND : CARDS_DEALT_LATER_ROUNDS;
     playedSinceDeal.clear(); // fresh hands → everyone may trade again this round

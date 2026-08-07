@@ -59,6 +59,21 @@ export async function setOnlyCard(
 }
 
 /**
+ * POST /test/set-hand/{session}/{player}/{values} — replace the player's whole hand with exactly
+ * these card values, dropping the dealt one without piling it. The deck is shuffled server-side,
+ * so this is what makes a rendered hand reproducible. Values must be distinct (the uuid is the
+ * value); suits are assigned by the backend.
+ */
+export async function setHand(
+  api: APIRequestContext,
+  sessionId: string,
+  playerId: string,
+  cardValues: number[],
+): Promise<void> {
+  await api.post(`/test/set-hand/${sessionId}/${playerId}/${cardValues.join(',')}`);
+}
+
+/**
  * POST /test/set-card/{session}/{player}/{value}. NOTE: this *replaces* the player's
  * first card with one of `cardValue` — it does not append, so the hand size is
  * unchanged (see `CardsDeck.giveCardToPlayerForTesting`). To reduce a hand to a single
