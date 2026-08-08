@@ -6,10 +6,8 @@ import {
   Card as CardModel,
   MoveRequest,
   MoveResponse,
-  Pawn as ApiPawn,
-  PositionKey,
 } from '../../api';
-import { buildBoard, Pt, BoardGeometry } from './board-geometry';
+import { buildBoard } from './board-geometry';
 import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
@@ -25,6 +23,7 @@ import { projectCardBacks, projectPawns, projectTiles } from './board-view';
 import { TeamTradeController } from './team-trade-controller';
 import { GameStateStream } from './game-state-stream';
 import { PawnAnimator } from './pawn-animator';
+import { moveAnimation } from './move-animation';
 import { PawnAndCardSelection } from './pawn-and-card-selection';
 import { teammateCaptureTiles } from './teammate-capture';
 import { pawnKey } from './pawn-key';
@@ -325,34 +324,20 @@ export class Board implements OnInit, OnDestroy {
 
   // --- Pawn move animation (drives the reusable PawnAnimator engine) -------
 
-  /** Walk each of a move's pawns along its path; killed pawns go home after the killer. */
+  /**
+   * Queue a move's pawns as ONE group, so they move together. The animator plays queued groups
+   * strictly in order — this move waits for any still-running one instead of cutting it short —
+   * so the sounds are offset by that wait too.
+   */
   private animateMove(mr: MoveResponse): void {
     const g = this.geometry();
     if (!g) return;
-    if (mr.moveType === 'onBoard') this.sound.play('pawnOnBoard');
-    const d1 = this.walkPawn(g, mr.pawn1, mr.movePawn1, 0);
-    const d2 = this.walkPawn(g, mr.pawn2, mr.movePawn2, 0);
-    this.walkPawn(g, mr.pawnKilledByPawn1, mr.movePawnKilledByPawn1, d1);
-    this.walkPawn(g, mr.pawnKilledByPawn2, mr.movePawnKilledByPawn2, d2);
+    const { walks, killDelay1, killDelay2 } = moveAnimation(g, mr);
+    const wait = this.pawnAnimator.enqueue(walks);
+    if (mr.moveType === 'onBoard') this.sound.play('pawnOnBoard', wait);
     // A captured pawn "dies" as it's flung home — play the kill sound as that begins.
-    if (mr.pawnKilledByPawn1) this.sound.play('pawnKilled', d1);
-    if (mr.pawnKilledByPawn2) this.sound.play('pawnKilled', d2);
-  }
-
-  /** Convert a pawn's tile path to pixel waypoints (board geometry) and hand it to the animator. */
-  private walkPawn(
-    g: BoardGeometry,
-    pawn: ApiPawn | undefined,
-    move: PositionKey[] | undefined,
-    delayMs: number,
-  ): number {
-    if (!pawn || !move) return 0;
-    const points: Pt[] = [];
-    for (const t of move) {
-      const p = g.position(t.playerId, t.tileNr);
-      if (p) points.push(p);
-    }
-    return this.pawnAnimator.walk(pawnKey(pawn.pawnId), points, delayMs);
+    if (mr.pawnKilledByPawn1) this.sound.play('pawnKilled', wait + killDelay1);
+    if (mr.pawnKilledByPawn2) this.sound.play('pawnKilled', wait + killDelay2);
   }
 
   private findPawn(id: string) {
