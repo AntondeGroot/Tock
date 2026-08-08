@@ -45,12 +45,20 @@ export class WinnerBanner {
       }
 
       if (winners.length > this.seen) {
-        const place = winners.length;
-        const player = players.find((p) => p.id === winners[place - 1]);
+        // A team places as a PAIR — one push adds every member and they share a standing — so
+        // announce all the newcomers, and take the medal from the standing the server gave them
+        // rather than from the length of the list (which counts players, not places).
+        const finishers = winners
+          .slice(this.seen)
+          .map((id) => players.find((p) => p.id === id))
+          .filter((p) => p !== undefined);
+        const place = finishers[0]?.place ?? winners.length; // `place` is optional in the API
         this.announce({
-          name: player?.name ?? '',
-          medal: MEDALS[place] ?? '🏅',
-          color: seatColor(player?.playerInt),
+          name: finishers.map((p) => p.name ?? '').join(' + '),
+          // Only the top three are medalled; the rest are still announced, just bare — the same
+          // rule the roster's medal column follows, so a standing reads the same in both places.
+          medal: MEDALS[place] ?? '',
+          color: seatColor(finishers[0]?.playerInt),
         });
       }
       this.seen = winners.length;
