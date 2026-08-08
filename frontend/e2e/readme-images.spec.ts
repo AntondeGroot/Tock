@@ -70,6 +70,11 @@ interface Scenario {
   gameOptions?: Record<string, unknown>;
   /** Card values dealt to the viewer, when the default hand would not fit the story. */
   viewerHand?: number[];
+  /**
+   * Where the pawns start, when the default (every player part-way round) would clutter the shot.
+   * Anything left unplaced stays in its nest.
+   */
+  placePawns?: (api: APIRequestContext, sessionId: string, playerIds: string[]) => Promise<void>;
   /** Extra backend seeding once the game exists — e.g. opening a pending card trade. */
   seed?: (api: APIRequestContext, sessionId: string) => Promise<void>;
   /**
@@ -117,6 +122,22 @@ const SCENARIOS: Scenario[] = [
       'pairs; once all your own pawns are home you play your teammate’s.',
     players: 6,
     gameOptions: { teamPlay: true },
+  },
+  {
+    key: 'split-seven',
+    title: 'Splitting a seven across two pawns',
+    description:
+      'A seven is the one card you may divide between two of your pawns, in any share that adds ' +
+      'up to seven — three steps for one and four for the other here. Pick the card and both ' +
+      'pawns, then set the split. Every other pawn is still in its nest, so the only two on the ' +
+      'board are the two being moved.',
+    players: 4,
+    placePawns: async (api, sessionId) => {
+      // Only the two pawns the split moves are out; nothing else competes for attention.
+      await setPawn(api, sessionId, VIEWER, 0, VIEWER, 3);
+      await setPawn(api, sessionId, VIEWER, 1, VIEWER, 9);
+    },
+    open: (page) => selectSplitOfSeven(page),
   },
   {
     key: 'trade-ask',
@@ -184,6 +205,25 @@ async function openTrade(
   await teamTrade(api, sessionId, requesterId, 'REQUEST', hand[0]);
 }
 
+/**
+ * Select the seven and both pawns, then nudge the split off its 0/7 default so the picture shows
+ * an actual division. The step boxes only exist once a card and two pawns are picked, and no
+ * server state can express a selection — it lives in the client.
+ */
+async function selectSplitOfSeven(page: Page): Promise<void> {
+  await page.click('[data-testid="card-7"]');
+  await page.click(`[data-testid="pawn-${VIEWER}:0"]`);
+  await page.click(`[data-testid="pawn-${VIEWER}:1"]`);
+  await page.waitForSelector('app-split-steps');
+  const plus = 'app-split-steps .pawn-steps__row:first-child .pawn-step-btn:last-child';
+  for (let step = 0; step < 3; step++) {
+    await page.click(plus);
+  }
+  // Each change re-previews the landing tiles over the network; let the last one land so the
+  // highlighted tiles are the same on every run.
+  await page.waitForTimeout(1_000);
+}
+
 /** Click a button that opens a dialog and wait for it, since no server state can seed one. */
 async function openTradeDialog(page: Page, buttonSelector: string): Promise<void> {
   await page.click(buttonSelector);
@@ -234,9 +274,13 @@ async function captureScenario(browser: Browser, scenario: Scenario): Promise<vo
 /** Build the scenario's game: players seated, pawns placed, hands pinned, extra state seeded. */
 async function seedGame(api: APIRequestContext, scenario: Scenario): Promise<string> {
   const { sessionId, playerIds } = await createGame(api, scenario.players, scenario.gameOptions);
-  for (const playerId of playerIds) {
-    for (const { pawnNr, tileNr } of PAWN_PLACEMENTS) {
-      await setPawn(api, sessionId, playerId, pawnNr, playerId, tileNr);
+  if (scenario.placePawns) {
+    await scenario.placePawns(api, sessionId, playerIds);
+  } else {
+    for (const playerId of playerIds) {
+      for (const { pawnNr, tileNr } of PAWN_PLACEMENTS) {
+        await setPawn(api, sessionId, playerId, pawnNr, playerId, tileNr);
+      }
     }
   }
   // Only the viewer's hand is rendered face-up; the opponents just show five card backs each.

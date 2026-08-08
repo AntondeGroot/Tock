@@ -17,10 +17,46 @@ REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_URL="${E2E_API_URL:-http://localhost:4200}"
 BACKEND_PID=""
 
+# The port to free on the way out, parsed off the URL (host:PORT[/path]); 4200 when it has none.
+BACKEND_PORT="${BACKEND_URL##*:}"
+BACKEND_PORT="${BACKEND_PORT%%/*}"
+case "$BACKEND_PORT" in
+  ''|*[!0-9]*) BACKEND_PORT=4200 ;;
+esac
+
+# Kill a process and everything under it, deepest first.
+kill_tree() {
+  local pid="$1" child
+  for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+    kill_tree "$child"
+  done
+  kill "$pid" 2>/dev/null || true
+}
+
+# Wait for the port to come free, escalating if something clings to it.
+release_port() {
+  local listeners attempt
+  for attempt in $(seq 1 20); do
+    listeners="$(lsof -t -iTCP:"$BACKEND_PORT" -sTCP:LISTEN 2>/dev/null || true)"
+    [ -z "$listeners" ] && return 0
+    # shellcheck disable=SC2086 # deliberate word splitting: lsof lists one pid per line
+    if [ "$attempt" -lt 15 ]; then kill $listeners 2>/dev/null || true;
+    else kill -9 $listeners 2>/dev/null || true; fi
+    sleep 0.5
+  done
+  echo "⚠️  Port $BACKEND_PORT is still in use — backend tests will fail to bind it."
+}
+
+# Only ever tears down a backend WE started; one you were already running is left alone.
+#
+# `kill $BACKEND_PID` alone is not enough: that pid is the subshell, and Maven and the JVM inside
+# it are children that outlive it. The orphan keeps holding the port, and every later backend test
+# then dies with "Failed to start bean 'webServerStartStop'" because it cannot bind 4200.
 cleanup() {
   if [ -n "$BACKEND_PID" ]; then
-    echo "🛑 Stopping the backend we started (pid $BACKEND_PID)…"
-    kill "$BACKEND_PID" 2>/dev/null || true
+    echo "🛑 Stopping the backend we started (pid $BACKEND_PID) and its children…"
+    kill_tree "$BACKEND_PID"
+    release_port
   fi
 }
 trap cleanup EXIT
