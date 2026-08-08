@@ -1,0 +1,36 @@
+<div class="pawn-steps">
+  <div class="pawn-steps__row">
+    <label class="pawn-steps__label" for="split-steps-1" [style.color]="color1()">{{
+      label1()
+    }}</label>
+    <button type="button" class="pawn-step-btn" (click)="step1(-1)">−</button>
+    <input
+      class="pawn-steps__input"
+      type="number"
+      min="0"
+      max="7"
+      id="split-steps-1"
+      [style.border-color]="color1()"
+      [value]="steps1()"
+      (input)="steps1Change.emit($any($event.target).value)"
+    />
+    <button type="button" class="pawn-step-btn" (click)="step1(1)">+</button>
+  </div>
+  <div class="pawn-steps__row">
+    <label class="pawn-steps__label" for="split-steps-2" [style.color]="color2()">{{
+      label2()
+    }}</label>
+    <button type="button" class="pawn-step-btn" (click)="step2(-1)">−</button>
+    <input
+      class="pawn-steps__input"
+      type="number"
+      min="0"
+      max="7"
+      id="split-steps-2"
+      [style.border-color]="color2()"
+      [value]="steps2()"
+      (input)="steps2Change.emit($any($event.target).value)"
+    />
+    <button type="button" class="pawn-step-btn" (click)="step2(1)">+</button>
+  </div>
+</div>

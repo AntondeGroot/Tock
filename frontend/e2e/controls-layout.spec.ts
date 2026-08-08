@@ -105,9 +105,9 @@ test.describe('controls + roster placement', () => {
     }
   }
 
-  // Selecting a 7 with two pawns reveals the split step boxes inside the button
-  // box. They must not overflow it (the cap that keeps buttons narrow enough to
-  // sit beside the roster used to squeeze the steppers out of the box).
+  // Selecting a 7 with two pawns reveals the split step boxes. Where they belong depends on the
+  // layout: tucked inside the button box on desktop, but a band under the hand on a phone —
+  // stacked under the buttons they made that column so tall the last row fell off the screen.
   for (const vp of VIEWPORTS) {
     for (const lang of LANGS) {
       test(`${vp.name} · ${lang} · 7-split step boxes`, async ({ browser }) => {
@@ -141,6 +141,8 @@ test.describe('controls + roster placement', () => {
           return {
             box: rj('.button-container'),
             controls: rj('.controls'),
+            split: rj('.pawn-steps'),
+            nestedInButtonBox: document.querySelectorAll('.button-container .pawn-steps').length,
             splitParts: [
               rj('.pawn-steps')!,
               ...rects('.pawn-step-btn'),
@@ -153,13 +155,31 @@ test.describe('controls + roster placement', () => {
         });
 
         const T = 1;
-        // Every split control stays within the button box — no overflow.
-        for (const el of g.splitParts) {
-          expect(el.left, 'split control overflows the button box (left)').toBeGreaterThanOrEqual(
-            g.box!.left - T,
+        if (vp.name === 'desktop') {
+          // Every split control stays within the button box — no overflow. The cap that keeps the
+          // buttons narrow enough to sit beside the roster used to squeeze the steppers out of it.
+          expect(g.nestedInButtonBox, 'desktop keeps the split in the button box').toBe(1);
+          for (const el of g.splitParts) {
+            expect(el.left, 'split control overflows the button box (left)').toBeGreaterThanOrEqual(
+              g.box!.left - T,
+            );
+            expect(el.right, 'split control overflows the button box (right)').toBeLessThanOrEqual(
+              g.box!.right + T,
+            );
+          }
+        } else {
+          // The phone lifts it out into a full-width band above the controls. The rule that
+          // matters there is that all of it is on screen — it used to run off the bottom.
+          expect(g.nestedInButtonBox, 'the phone must not nest the split in the button box').toBe(
+            0,
           );
-          expect(el.right, 'split control overflows the button box (right)').toBeLessThanOrEqual(
-            g.box!.right + T,
+          for (const el of g.splitParts) {
+            expect(el.left, 'split control off screen (left)').toBeGreaterThanOrEqual(-T);
+            expect(el.right, 'split control off screen (right)').toBeLessThanOrEqual(g.vw + T);
+            expect(el.bottom, 'split control off screen (bottom)').toBeLessThanOrEqual(g.vh + T);
+          }
+          expect(g.split!.bottom, 'the split band sits above the controls row').toBeLessThanOrEqual(
+            g.controls!.top + T,
           );
         }
         // Controls and every chip stay on screen.

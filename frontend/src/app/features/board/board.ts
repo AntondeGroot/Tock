@@ -23,6 +23,7 @@ import { projectCardBacks, projectPawns, projectTiles } from './board-view';
 import { TeamTradeController } from './team-trade-controller';
 import { GameStateStream } from './game-state-stream';
 import { PawnAnimator } from './pawn-animator';
+import { SplitSteps } from './split-steps/split-steps';
 import { moveAnimation } from './move-animation';
 import { PawnAndCardSelection } from './pawn-and-card-selection';
 import { teammateCaptureTiles } from './teammate-capture';
@@ -36,7 +37,7 @@ import { localRejectionKey, rejectionMessageKey } from './rejection-message';
 
 @Component({
   selector: 'app-board',
-  imports: [Pawn, CardLayer, PlayerList, TradePanel],
+  imports: [Pawn, CardLayer, PlayerList, TradePanel, SplitSteps],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -58,10 +59,12 @@ export class Board implements OnInit, OnDestroy {
       },
     );
     this.stream.start();
+    this.phoneLayout.addEventListener('change', this.onLayoutChange);
   }
 
   ngOnDestroy(): void {
     this.stream?.stop();
+    this.phoneLayout.removeEventListener('change', this.onLayoutChange);
   }
 
   private handleGameState(next: GameStatePush): void {
@@ -177,6 +180,13 @@ export class Board implements OnInit, OnDestroy {
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
+
+  // The phone layout, matching the 699px breakpoint the SCSS uses. The 7-split control needs a
+  // different PARENT on each layout — the button column on a desktop, a band under the hand on a
+  // phone — and no stylesheet can move a node between parents, so the template branches on this.
+  private readonly phoneLayout = window.matchMedia('(max-width: 699px)');
+  protected readonly isPhone = signal(this.phoneLayout.matches);
+  private readonly onLayoutChange = (e: MediaQueryListEvent) => this.isPhone.set(e.matches);
   private prevMoveKey: string | undefined;
 
   // --- Selection: delegated to the ported PawnAndCardSelection state machine ---

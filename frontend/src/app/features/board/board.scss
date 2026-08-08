@@ -300,78 +300,6 @@
   }
 }
 
-// 7-split step boxes — ported from .pawnIntegerBoxes/.TextBoxForPawnSteps + the
-// mobile-ux ± steppers. Label + input border take each pawn's highlight colour
-// (set inline from pawn1Highlight()/pawn2Highlight()).
-.pawn-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px;
-  border-radius: 8px;
-  background-color: rgba(255, 200, 100, 0.15);
-  border: 1px solid rgba(201, 162, 39, 0.5);
-
-  &__row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  &__label {
-    font:
-      600 13pt 'Lato',
-      'Helvetica Neue',
-      sans-serif;
-    white-space: nowrap; // never wrap onto two lines
-    min-width: 3.8em; // keep the two rows aligned across languages
-  }
-
-  &__input {
-    width: 30px;
-    text-align: center;
-    border: 2px solid #c9a227; // overridden inline by the pawn highlight colour
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.92);
-    color: #2a1800;
-    font:
-      12pt 'Lato',
-      'Helvetica Neue',
-      sans-serif;
-
-    // Hide the native number spinners — we use the ± buttons instead.
-    -moz-appearance: textfield;
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-  }
-}
-
-// − / + steppers (ported from .pawn-step-btn).
-.pawn-step-btn {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  font-size: 14pt;
-  font-weight: 600;
-  line-height: 1;
-  border: 2px solid #c9a227;
-  background: linear-gradient(145deg, #3a2000, #251400);
-  color: #f4d03f;
-  cursor: pointer;
-  box-shadow:
-    2px 2px 8px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  &:active {
-    background: linear-gradient(145deg, #251400, #1a0e00);
-    transform: translateY(1px);
-  }
-}
-
 // Card suggestion (hovered/selected special card). A normal-flow row centered
 // below the hand — the stage reserves the hand strip above, so this sits cleanly
 // under the cards without any board-% positioning. min-height reserves two lines
@@ -398,9 +326,9 @@
 @media (max-width: 699px) {
   .play {
     --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 348px) / 1.42));
-    // The footer is fixed over the bottom ~48px of the viewport. When a tall state (7-split)
-    // overflows and the page scrolls, reserve that height plus the safe-area inset so the last
-    // controls row clears the footer instead of hiding behind it.
+    // The footer is fixed over the bottom ~48px of the viewport. If content ever overflows and
+    // the page scrolls, reserve that height plus the safe-area inset so the last controls row
+    // clears the footer instead of hiding behind it.
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
@@ -417,28 +345,5 @@
     letter-spacing: 0.3px;
     white-space: normal;
     line-height: 1.15;
-  }
-
-  // Compact the 7-split step boxes so they fit within the capped button width
-  // instead of overflowing it.
-  .pawn-steps {
-    padding: 5px;
-    gap: 5px;
-  }
-  .pawn-steps__row {
-    gap: 4px;
-  }
-  .pawn-steps__label {
-    font-size: 10.5pt;
-    min-width: 0;
-  }
-  .pawn-steps__input {
-    width: 26px;
-    font-size: 11pt;
-  }
-  .pawn-step-btn {
-    width: 26px;
-    height: 26px;
-    font-size: 12pt;
   }
 }

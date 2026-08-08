@@ -1,0 +1,104 @@
+// 7-split step boxes — ported from .pawnIntegerBoxes/.TextBoxForPawnSteps + the
+// mobile-ux ± steppers. Label + input border take each pawn's highlight colour
+// (set inline from pawn1Highlight()/pawn2Highlight()).
+.pawn-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background-color: rgba(255, 200, 100, 0.15);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__label {
+    font:
+      600 13pt 'Lato',
+      'Helvetica Neue',
+      sans-serif;
+    white-space: nowrap; // never wrap onto two lines
+    min-width: 3.8em; // keep the two rows aligned across languages
+  }
+
+  &__input {
+    width: 30px;
+    text-align: center;
+    border: 2px solid #c9a227; // overridden inline by the pawn highlight colour
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #2a1800;
+    font:
+      12pt 'Lato',
+      'Helvetica Neue',
+      sans-serif;
+
+    // Hide the native number spinners — we use the ± buttons instead.
+    -moz-appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+}
+
+// − / + steppers (ported from .pawn-step-btn).
+.pawn-step-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 14pt;
+  font-weight: 600;
+  line-height: 1;
+  border: 2px solid #c9a227;
+  background: linear-gradient(145deg, #3a2000, #251400);
+  color: #f4d03f;
+  cursor: pointer;
+  box-shadow:
+    2px 2px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  &:active {
+    background: linear-gradient(145deg, #251400, #1a0e00);
+    transform: translateY(1px);
+  }
+}
+
+// Phone: one horizontal band under the hand (where the card hint normally sits) instead of a
+// tall block stacked under the buttons, which pushed the last row off the bottom of the screen.
+// Both pawns share the row; the box shrinks to fit rather than overflowing sideways.
+:host(.split-steps--inline) {
+  display: block;
+  padding: 0 8px;
+  margin: 0.4rem auto 0;
+
+  .pawn-steps {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap; // a very narrow screen (or a long label) drops to two rows rather than clipping
+    gap: 10px;
+    padding: 5px 8px;
+  }
+  .pawn-steps__row {
+    gap: 4px;
+  }
+  .pawn-steps__label {
+    font-size: 10.5pt;
+    min-width: 0; // the rows sit side by side, so they no longer need a shared label width
+  }
+  .pawn-steps__input {
+    width: 26px;
+    font-size: 11pt;
+  }
+  .pawn-step-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 12pt;
+  }
+}

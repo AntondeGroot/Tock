@@ -35,6 +35,14 @@ With team play on, an even number of players pairs up with the seat opposite —
 | --- | --- |
 | <img src="readme-images/game-6-players-teams-desktop.png" alt="6 players, in teams, on a computer" width="620"> | <img src="readme-images/game-6-players-teams-mobile.png" alt="6 players, in teams, on a phone" width="200"> |
 
+### Splitting a seven across two pawns
+
+A seven is the one card you may divide between two of your pawns, in any share that adds up to seven — three steps for one and four for the other here. Pick the card and both pawns, then set the split. Every other pawn is still in its nest, so the only two on the board are the two being moved.
+
+| On a computer | On a phone |
+| --- | --- |
+| <img src="readme-images/split-seven-desktop.png" alt="Splitting a seven across two pawns, on a computer" width="620"> | <img src="readme-images/split-seven-mobile.png" alt="Splitting a seven across two pawns, on a phone" width="200"> |
+
 ### Asking your teammate for a King or Ace
 
 Only a King or an Ace gets a pawn out of the nest, so with the team-trade option on you may ask your teammate for one. The “Ask for a King or Ace” button opens your hand: pick the card you are willing to give away, then ask.

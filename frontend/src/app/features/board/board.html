@@ -55,8 +55,27 @@
 
     <!-- Suggestion for the hovered/selected special card (empty for regular cards).
          A flow row centered below the hand; the cards stay absolutely positioned so
-         a played card can still fly to the pile. -->
-    <div class="card-hint">{{ hint() }}</div>
+         a played card can still fly to the pile.
+
+         On a phone the 7-split takes this slot: a full-width band under the hand, rather than a
+         tall block under the buttons that ran off the bottom of the screen. The hint itself goes
+         quiet as soon as a second pawn is picked — by then you are plainly past needing it — but
+         the row keeps its height so nothing below shifts. -->
+    @if (splitVisible() && isPhone()) {
+      <app-split-steps
+        class="split-steps--inline"
+        [steps1]="stepsPawn1()"
+        [steps2]="stepsPawn2()"
+        [color1]="pawn1Highlight()"
+        [color2]="pawn2Highlight()"
+        [label1]="i18n.t('pawn1')"
+        [label2]="i18n.t('pawn2')"
+        (steps1Change)="onStepsPawn1($event)"
+        (steps2Change)="onStepsPawn2($event)"
+      />
+    } @else {
+      <div class="card-hint">{{ splitVisible() ? '' : hint() }}</div>
+    }
 
     <!-- Actions + roster. Desktop: a column pinned to the right gutter. Mobile: a
          row directly below the hint. -->
@@ -74,50 +93,19 @@
           </button>
         }
 
-        <!-- 7-split: divide the 7 across the two selected pawns (sum stays 7). -->
-        @if (splitVisible()) {
-          <div class="pawn-steps">
-            <div class="pawn-steps__row">
-              <label
-                class="pawn-steps__label"
-                for="pawn-steps-1"
-                [style.color]="pawn1Highlight()"
-                >{{ i18n.t('pawn1') }}</label
-              >
-              <button type="button" class="pawn-step-btn" (click)="stepPawn1(-1)">−</button>
-              <input
-                class="pawn-steps__input"
-                type="number"
-                min="0"
-                max="7"
-                id="pawn-steps-1"
-                [style.border-color]="pawn1Highlight()"
-                [value]="stepsPawn1()"
-                (input)="onStepsPawn1($any($event.target).value)"
-              />
-              <button type="button" class="pawn-step-btn" (click)="stepPawn1(1)">+</button>
-            </div>
-            <div class="pawn-steps__row">
-              <label
-                class="pawn-steps__label"
-                for="pawn-steps-2"
-                [style.color]="pawn2Highlight()"
-                >{{ i18n.t('pawn2') }}</label
-              >
-              <button type="button" class="pawn-step-btn" (click)="stepPawn2(-1)">−</button>
-              <input
-                class="pawn-steps__input"
-                type="number"
-                min="0"
-                max="7"
-                id="pawn-steps-2"
-                [style.border-color]="pawn2Highlight()"
-                [value]="stepsPawn2()"
-                (input)="onStepsPawn2($any($event.target).value)"
-              />
-              <button type="button" class="pawn-step-btn" (click)="stepPawn2(1)">+</button>
-            </div>
-          </div>
+        <!-- 7-split: divide the 7 across the two selected pawns (sum stays 7). The phone
+             layout renders this under the hand instead (see the hint slot above). -->
+        @if (splitVisible() && !isPhone()) {
+          <app-split-steps
+            [steps1]="stepsPawn1()"
+            [steps2]="stepsPawn2()"
+            [color1]="pawn1Highlight()"
+            [color2]="pawn2Highlight()"
+            [label1]="i18n.t('pawn1')"
+            [label2]="i18n.t('pawn2')"
+            (steps1Change)="onStepsPawn1($event)"
+            (steps2Change)="onStepsPawn2($event)"
+          />
         }
       </div>
 
