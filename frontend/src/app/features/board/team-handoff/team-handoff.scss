@@ -6,6 +6,9 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
+  // border-box, so the 88% keeps its inset instead of having the 44px padding and 4px border
+  // added on top — which on a phone left the toast spanning the screen edge to edge.
+  box-sizing: border-box;
   max-width: 380px;
   width: min(88%, 380px);
   padding: 14px 22px;

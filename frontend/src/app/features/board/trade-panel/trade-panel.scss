@@ -20,6 +20,10 @@
 }
 
 .trade-dialog {
+  // border-box, so the 92vw cap counts the padding and border too. Without it the dialog is
+  // always 48px wider than asked for (44px padding + 4px border) — invisible on a desktop, but
+  // on a phone that pushed it off the right edge, where `body { overflow-x: hidden }` clipped it.
+  box-sizing: border-box;
   width: min(92vw, 440px);
   max-height: 88vh;
   overflow-y: auto;

@@ -88,6 +88,31 @@ export async function setCard(
   await api.post(`/test/set-card/${sessionId}/${playerId}/${cardValue}`);
 }
 
+/** GET /cards/{session}/{player} — the player's real hand, uuids and suits as the server holds it. */
+export async function getHand(
+  api: APIRequestContext,
+  sessionId: string,
+  playerId: string,
+): Promise<{ uuid: number; suit: number; value: number }[]> {
+  const response = await api.get(`/cards/${sessionId}/${playerId}`);
+  return (await response.json()) as { uuid: number; suit: number; value: number }[];
+}
+
+/**
+ * POST /trade/{session} — a team card-trade action. REQUEST offers `card` and asks the teammate
+ * for a King or Ace; ACCEPT hands one back. The card must be one the player actually holds, so
+ * pass one straight from {@link getHand}.
+ */
+export async function teamTrade(
+  api: APIRequestContext,
+  sessionId: string,
+  playerId: string,
+  action: 'REQUEST' | 'ACCEPT' | 'REJECT' | 'CANCEL',
+  card?: { uuid: number; suit: number; value: number },
+): Promise<void> {
+  await api.post(`/trade/${sessionId}`, { data: { action, playerId, ...(card ? { card } : {}) } });
+}
+
 /**
  * POST /moves/{session}/{player} — play a move straight through the API, the way
  * the GWT `ApiCallsHelper.makeMove` drove opponent moves. `move` carries the card
