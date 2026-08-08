@@ -1,8 +1,8 @@
-import { test, request, Browser, Page } from '@playwright/test';
+import { test, request, APIRequestContext, Browser, Page } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { API_URL } from '../playwright.config';
-import { createGame, setHand, setPawn } from './support/seed';
+import { createGame, getHand, setHand, setPawn, teamTrade } from './support/seed';
 
 /**
  * Docs generator (not a test): seeds a game per player-count, screenshots the real Angular board
@@ -26,18 +26,71 @@ const IMG_REL = 'readme-images';
 const START_MARKER = '<!-- GAMES:START -->';
 const END_MARKER = '<!-- GAMES:END -->';
 
-const VIEWPORT = { width: 1280, height: 900 };
 /** Felt left below the lowest content before the shot is cropped (CSS px). */
 const BOTTOM_MARGIN = 24;
 
+/**
+ * Every game is shot twice, once per form factor. The app switches layout at the 699px breakpoint
+ * (see the `max-width: 699px` blocks in the SCSS), so the phone viewport exercises a genuinely
+ * different board — not just a narrower one.
+ */
+interface Device {
+  /** Suffix on the image file name, e.g. `game-4-players-mobile.png`. */
+  key: string;
+  label: string;
+  viewport: { width: number; height: number };
+  /** How wide the README renders it (px) — a phone shot needs far less room than a desktop one. */
+  readmeWidth: number;
+  isMobile?: boolean;
+}
+
+const DEVICES: Device[] = [
+  {
+    key: 'desktop',
+    label: 'On a computer',
+    viewport: { width: 1280, height: 900 },
+    readmeWidth: 620,
+  },
+  {
+    key: 'mobile',
+    label: 'On a phone',
+    // A mid-size modern handset in CSS px, below the 699px breakpoint.
+    viewport: { width: 390, height: 844 },
+    readmeWidth: 200,
+    isMobile: true,
+  },
+];
+
 interface Scenario {
-  /** Image file name (without extension) and the anchor for its README entry. */
+  /** Image file name (without the device suffix) and the anchor for its README entry. */
   key: string;
   title: string;
   description: string;
   players: number;
   gameOptions?: Record<string, unknown>;
+  /** Card values dealt to the viewer, when the default hand would not fit the story. */
+  viewerHand?: number[];
+  /** Extra backend seeding once the game exists — e.g. opening a pending card trade. */
+  seed?: (api: APIRequestContext, sessionId: string) => Promise<void>;
+  /**
+   * Drive the UI into the state to be shot, with the board already on screen: click a dialog open,
+   * or have another player act (through `api`) so the viewer sees the result arrive over SSE.
+   */
+  open?: (page: Page, api: APIRequestContext, sessionId: string) => Promise<void>;
 }
+
+/** The viewer's hand: two plain cards among Ace / Seven / King, so the gold special highlight shows. */
+const VIEWER_HAND = [1, 3, 7, 9, 13];
+/**
+ * Whoever is doing the asking holds neither a King nor an Ace — that is *why* they ask. Pinning it
+ * also fixes the card they offer, and (on the answering side) keeps their offer off the dialog.
+ */
+const ASKER_HAND = [2, 4, 6, 8, 10];
+const VIEWER = 'player0';
+
+/** The viewer's teammate in a 4-player game: teams pair seat i with seat i + n/2. */
+const TEAMMATE = 'player2';
+const TEAM_TRADE_GAME = { teamPlay: true, teamCardTrade: true };
 
 const SCENARIOS: Scenario[] = [
   {
@@ -65,7 +118,77 @@ const SCENARIOS: Scenario[] = [
     players: 6,
     gameOptions: { teamPlay: true },
   },
+  {
+    key: 'trade-ask',
+    title: 'Asking your teammate for a King or Ace',
+    description:
+      'Only a King or an Ace gets a pawn out of the nest, so with the team-trade option on you ' +
+      'may ask your teammate for one. The “Ask for a King or Ace” button opens your hand: pick ' +
+      'the card you are willing to give away, then ask.',
+    players: 4,
+    gameOptions: TEAM_TRADE_GAME,
+    viewerHand: ASKER_HAND,
+    open: (page) => openTradeDialog(page, '.ask-trade-button'),
+  },
+  {
+    key: 'trade-waiting',
+    title: 'Waiting for their answer',
+    description:
+      'Once you have asked, the ball is in your teammate’s court. You can sit it out or withdraw ' +
+      'the request — and you keep playing either way; the trade never blocks the game.',
+    players: 4,
+    gameOptions: TEAM_TRADE_GAME,
+    viewerHand: ASKER_HAND,
+    // The viewer does the asking, so the pending trade is enough to show the waiting face.
+    seed: (api, sessionId) => openTrade(api, sessionId, VIEWER),
+  },
+  {
+    key: 'trade-respond',
+    title: 'Being asked, and offering a card in return',
+    description:
+      'On the other side of the same parley: your teammate has asked you. Your hand is shown ' +
+      'with everything but the Kings and Aces dimmed out — those are the only cards that answer ' +
+      'the ask — so you either give one in return, or decline.',
+    players: 4,
+    gameOptions: TEAM_TRADE_GAME,
+    // The TEAMMATE asks this time, so the viewer is the one being asked.
+    seed: (api, sessionId) => openTrade(api, sessionId, TEAMMATE),
+  },
+  {
+    key: 'trade-rejected',
+    title: 'When they cannot help',
+    description:
+      'A teammate holding neither a King nor an Ace can only decline. The answer reaches you as ' +
+      'a banner, your offered card stays in your hand, and the trade window closes — you are free ' +
+      'to ask again after the next deal.',
+    players: 4,
+    gameOptions: TEAM_TRADE_GAME,
+    viewerHand: ASKER_HAND,
+    seed: (api, sessionId) => openTrade(api, sessionId, VIEWER), // the viewer asked…
+    open: async (page, api, sessionId) => {
+      await page.waitForSelector('.trade-dialog'); // …and is watching the waiting dialog
+      await teamTrade(api, sessionId, TEAMMATE, 'REJECT'); // the answer comes back over SSE
+      await page.waitForSelector('.team-handoff-toast');
+    },
+  },
 ];
+
+/** Open a pending trade on the table: `requesterId` offers a card and asks for a King or Ace. */
+async function openTrade(
+  api: APIRequestContext,
+  sessionId: string,
+  requesterId: string,
+): Promise<void> {
+  await setHand(api, sessionId, requesterId, ASKER_HAND);
+  const hand = await getHand(api, sessionId, requesterId);
+  await teamTrade(api, sessionId, requesterId, 'REQUEST', hand[0]);
+}
+
+/** Click a button that opens a dialog and wait for it, since no server state can seed one. */
+async function openTradeDialog(page: Page, buttonSelector: string): Promise<void> {
+  await page.click(buttonSelector);
+  await page.waitForSelector('.trade-dialog');
+}
 
 /**
  * Pawn placements applied to every player, so the shots show a game underway rather than
@@ -79,17 +202,13 @@ const PAWN_PLACEMENTS: { pawnNr: number; tileNr: number }[] = [
   { pawnNr: 2, tileNr: 16 }, // first tile of the finish lane
 ];
 
-/** The viewer's hand: two plain cards among Ace / Seven / King, so the gold special highlight shows. */
-const VIEWER_HAND = [1, 3, 7, 9, 13];
-const VIEWER = 'player0';
-
 test.describe('readme images', () => {
   test.skip(
     process.env.GENERATE_README_IMAGES !== 'true',
     'docs generator — run ./generate-readme-images.sh',
   );
-  // Booting three games and waiting out the render settles well past the default timeout.
-  test.setTimeout(180_000);
+  // Booting a game per scenario and waiting out each render settles well past the default timeout.
+  test.setTimeout(300_000);
 
   test('generate the README board previews', async ({ browser }) => {
     await mkdir(IMG_DIR, { recursive: true });
@@ -101,7 +220,19 @@ test.describe('readme images', () => {
 });
 
 async function captureScenario(browser: Browser, scenario: Scenario): Promise<void> {
-  const api = await request.newContext({ baseURL: API_URL });
+  // A fresh game per device: everything is pinned, so both shots still show the identical
+  // position — and a scenario whose state is CONSUMED by the shot (a trade that gets rejected)
+  // finds it there again for the second one.
+  for (const device of DEVICES) {
+    const api = await request.newContext({ baseURL: API_URL });
+    const sessionId = await seedGame(api, scenario);
+    await captureDevice(browser, scenario, device, sessionId, api);
+    await api.dispose();
+  }
+}
+
+/** Build the scenario's game: players seated, pawns placed, hands pinned, extra state seeded. */
+async function seedGame(api: APIRequestContext, scenario: Scenario): Promise<string> {
   const { sessionId, playerIds } = await createGame(api, scenario.players, scenario.gameOptions);
   for (const playerId of playerIds) {
     for (const { pawnNr, tileNr } of PAWN_PLACEMENTS) {
@@ -109,13 +240,28 @@ async function captureScenario(browser: Browser, scenario: Scenario): Promise<vo
     }
   }
   // Only the viewer's hand is rendered face-up; the opponents just show five card backs each.
-  await setHand(api, sessionId, VIEWER, VIEWER_HAND);
-  await api.dispose();
+  await setHand(api, sessionId, VIEWER, scenario.viewerHand ?? VIEWER_HAND);
+  await scenario.seed?.(api, sessionId);
+  return sessionId;
+}
 
-  const page = await openBoard(browser, sessionId);
+async function captureDevice(
+  browser: Browser,
+  scenario: Scenario,
+  device: Device,
+  sessionId: string,
+  api: APIRequestContext,
+): Promise<void> {
+  const page = await openBoard(browser, sessionId, device);
+  await scenario.open?.(page, api, sessionId);
   await page.screenshot({
-    path: path.join(IMG_DIR, `${scenario.key}.png`),
-    clip: { x: 0, y: 0, width: VIEWPORT.width, height: await contentHeight(page) },
+    path: path.join(IMG_DIR, `${scenario.key}-${device.key}.png`),
+    clip: {
+      x: 0,
+      y: 0,
+      width: device.viewport.width,
+      height: await contentHeight(page, device),
+    },
     // The active player's chip pulses forever, so an un-frozen shot catches it at a random phase
     // and no two runs produce the same PNG. This rewinds looping animations to their first frame.
     animations: 'disabled',
@@ -128,7 +274,12 @@ async function captureScenario(browser: Browser, scenario: Scenario): Promise<vo
  * (and pins the nav footer to the bottom of the viewport), so a plain viewport shot ends in a strip
  * of empty felt — crop to the lowest of the board, the hand and the roster instead.
  */
-async function contentHeight(page: Page): Promise<number> {
+async function contentHeight(page: Page, device: Device): Promise<number> {
+  // A modal dims the entire board behind it (a fixed, full-screen backdrop), so shoot the whole
+  // screen — cropping partway down would slice the dimmed area and read as a rendering fault.
+  if (await page.locator('.trade-overlay').count()) {
+    return device.viewport.height;
+  }
   const bottom = await page.evaluate(
     (selectors) =>
       selectors
@@ -136,14 +287,20 @@ async function contentHeight(page: Page): Promise<number> {
         .reduce((lowest, el) => Math.max(lowest, el.getBoundingClientRect().bottom), 0),
     ['.stage', '.controls', 'app-card.card:not(.flyer)'],
   );
-  return Math.min(VIEWPORT.height, Math.ceil(bottom) + BOTTOM_MARGIN);
+  // On a phone the game can reach past the fold; clamping to the viewport keeps the shot looking
+  // like an actual screen rather than a stretched page.
+  return Math.min(device.viewport.height, Math.ceil(bottom) + BOTTOM_MARGIN);
 }
 
-/** Open the board as the viewer at a fixed desktop viewport, waiting until it has settled. */
-async function openBoard(browser: Browser, sessionId: string): Promise<Page> {
-  // 1x: the shot is already 1280px wide against the 700px the README renders it at, and a 2x
+/** Open the board as the viewer at this device's viewport, waiting until it has settled. */
+async function openBoard(browser: Browser, sessionId: string, device: Device): Promise<Page> {
+  // 1x: the shot is already 1280px wide against the 620px the README renders it at, and a 2x
   // shot quadrupled the PNG weight (~1 MB each) for no visible gain.
-  const ctx = await browser.newContext({ viewport: VIEWPORT });
+  const ctx = await browser.newContext({
+    viewport: device.viewport,
+    isMobile: device.isMobile,
+    hasTouch: device.isMobile,
+  });
   await ctx.addCookies([{ name: 'playerid', value: VIEWER, url: UI }]);
   const page = await ctx.newPage();
   await page.goto(`/?sessionid=${sessionId}&playerid=${VIEWER}`);
@@ -170,7 +327,13 @@ async function rewriteReadme(): Promise<void> {
       '',
       s.description,
       '',
-      `<img src="${IMG_REL}/${s.key}.png" alt="${s.title}" width="700">`,
+      // A table puts the two form factors side by side, so the layout difference reads at a glance.
+      `| ${DEVICES.map((d) => d.label).join(' | ')} |`,
+      `| ${DEVICES.map(() => '---').join(' | ')} |`,
+      `| ${DEVICES.map(
+        (d) =>
+          `<img src="${IMG_REL}/${s.key}-${d.key}.png" alt="${s.title}, ${d.label.toLowerCase()}" width="${d.readmeWidth}">`,
+      ).join(' | ')} |`,
       '',
     ]),
     END_MARKER,
