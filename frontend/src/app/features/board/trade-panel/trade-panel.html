@@ -1,48 +1,43 @@
 @switch (mode()) {
-  @case ('offer') {
-    <div
-      class="trade-overlay"
-      tabindex="0"
-      (click)="$event.target === $event.currentTarget && dismiss()"
-      (keydown.escape)="dismiss()"
-    >
+  @case ('pick') {
+    <div class="trade-overlay">
       <div class="trade-dialog">
-        <div class="trade-title">{{ i18n.t('tradeOfferTitle') }}</div>
-        <div class="trade-sub">{{ i18n.t('tradeOfferSub') }}</div>
-        <div class="trade-hand">
-          @for (c of hand(); track c.uuid) {
+        <div class="trade-title">{{ i18n.t('tradePickTitle') }}</div>
+        <!-- Nothing to add before you pick: the title already says what to do, and naming who was
+             asked only reads as a riddle. Afterwards there IS something worth knowing. -->
+        @if (offeredCard()) {
+          <div class="trade-sub">{{ i18n.t('tradePickedSub') }}</div>
+        } @else if (secondsLeft() !== null) {
+          <!-- They have already given theirs, so the swap hangs on you alone — hence the clock.
+               The gold ring closes anticlockwise over the whole countdown while the number inside
+               counts the ticks; the ring is decoration, the number is the readable part. -->
+          <div class="trade-sub countdown">
+            <span class="countdown-ring" [style.--countdown-ms]="countdownMs + 'ms'">
+              <svg viewBox="0 0 40 40" aria-hidden="true">
+                <circle class="countdown-track" cx="20" cy="20" r="15.915" />
+                <circle class="countdown-fill" cx="20" cy="20" r="15.915" />
+              </svg>
+              <span class="countdown-number">{{ secondsLeft() }}</span>
+            </span>
+            {{ i18n.t('tradeCountdown') }}
+          </div>
+        }
+        <!-- Until a card is on the table the row runs a left-to-right swell, so it is obvious
+             these are tappable and that tapping one is the thing to do. -->
+        <div class="trade-hand" [class.hinting]="!offeredCard()">
+          @for (c of hand(); track c.uuid; let i = $index) {
             <button
               type="button"
               class="trade-card"
-              [class.selected]="isSelected(c)"
-              (click)="pick(c)"
+              [attr.data-testid]="'trade-card-' + c.value"
+              [class.selected]="isOffered(c)"
+              [style.--card-index]="i"
+              (click)="give(c)"
             >
               <app-card [suit]="c.suit" [value]="c.value" />
             </button>
           }
         </div>
-        <div class="trade-actions">
-          <button type="button" class="trade-btn ghost" (click)="dismiss()">
-            {{ i18n.t('tradeClose') }}
-          </button>
-          <button
-            type="button"
-            class="trade-btn primary"
-            [disabled]="!canConfirm()"
-            (click)="confirm()"
-          >
-            {{ i18n.t('tradeAsk') }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-  @case ('waiting') {
-    <div class="trade-overlay">
-      <div class="trade-dialog">
-        <div class="trade-title">{{ i18n.t('tradeWaitingTitle') }}</div>
-        <div class="trade-sub">{{ i18n.t('tradeWaitingSub', otherName()) }}</div>
-        <div class="trade-spinner" aria-hidden="true"></div>
         <div class="trade-actions">
           <button type="button" class="trade-btn ghost" (click)="cancel()">
             {{ i18n.t('tradeCancel') }}
@@ -55,12 +50,19 @@
     <div class="trade-overlay">
       <div class="trade-dialog">
         <div class="trade-title">{{ i18n.t('tradeRespondTitle', otherName()) }}</div>
-        <div class="trade-sub">{{ i18n.t('tradeRespondSub') }}</div>
+        <!-- Once you have given, the ball is in their court: say so rather than leaving a live
+             button implying there is still something to do. -->
+        <div class="trade-sub">
+          {{
+            answeredCard() ? i18n.t('tradeRespondWaiting', otherName()) : i18n.t('tradeRespondSub')
+          }}
+        </div>
         <div class="trade-hand">
           @for (c of hand(); track c.uuid) {
             <button
               type="button"
               class="trade-card"
+              [attr.data-testid]="'trade-card-' + c.value"
               [class.selected]="isSelected(c)"
               [class.dim]="!selectable(c)"
               (click)="pick(c)"
@@ -73,14 +75,16 @@
           <button type="button" class="trade-btn ghost" (click)="decline()">
             {{ i18n.t('tradeDecline') }}
           </button>
-          <button
-            type="button"
-            class="trade-btn primary"
-            [disabled]="!canConfirm()"
-            (click)="confirm()"
-          >
-            {{ i18n.t('tradeGive') }}
-          </button>
+          @if (!answeredCard()) {
+            <button
+              type="button"
+              class="trade-btn primary"
+              [disabled]="!canConfirm()"
+              (click)="confirm()"
+            >
+              {{ i18n.t('tradeGive') }}
+            </button>
+          }
         </div>
       </div>
     </div>

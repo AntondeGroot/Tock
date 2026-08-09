@@ -497,8 +497,13 @@ public final class GameState {
     return tradeManager.getPendingFor(playerId);
   }
 
-  public boolean requestTrade(String requesterId, Card offeredCard) {
-    return tradeManager.request(requesterId, offeredCard);
+  public boolean requestTrade(String requesterId) {
+    return tradeManager.request(requesterId);
+  }
+
+  /** The requester names (or renames) the card they give in return. */
+  public boolean offerTradeCard(String requesterId, Card offeredCard) {
+    return tradeManager.offer(requesterId, offeredCard);
   }
 
   /** Whether this player may open a team card trade right now (drives the "ask" button). */

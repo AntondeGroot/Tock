@@ -118,9 +118,6 @@
     [trade]="teamTrade.pending()"
     [viewerId]="viewerId ?? ''"
     [sessionId]="sessionId ?? ''"
-    [offering]="teamTrade.offering()"
     [otherName]="teamTrade.otherName()"
-    (closed)="teamTrade.stopOffering()"
-    (cancelledByMe)="teamTrade.cancelledByMe()"
   />
 }

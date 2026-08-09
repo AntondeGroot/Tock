@@ -53,7 +53,8 @@ class TeamTradeTest {
   @Test
   void acceptedTrade_swapsTheTwoCards() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertTrue(gs.acceptTrade("2", KING));
 
     assertTrue(deck.playerHasCard("0", KING), "requester received the King");
@@ -66,7 +67,8 @@ class TeamTradeTest {
   @Test
   void pendingTrade_clearedWhenRequesterLeaves() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     gs.processLeaveGame("0"); // requester leaves — their offered card is forfeited to the pile
 
     assertNull(gs.getPendingTradeFor("0"), "the trade must not survive the requester leaving");
@@ -79,7 +81,8 @@ class TeamTradeTest {
   @Test
   void pendingTrade_clearedWhenTeammateLeaves() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     gs.processLeaveGame("2"); // the addressed teammate leaves
 
     assertNull(gs.getPendingTradeFor("0"), "the trade must not survive the teammate leaving");
@@ -90,7 +93,8 @@ class TeamTradeTest {
   void aceIsAlsoAcceptable() {
     deck.giveCardToPlayerForTesting("0", OFFERED);
     deck.giveCardToPlayerForTesting("2", ACE);
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertTrue(gs.acceptTrade("2", ACE));
     assertTrue(deck.playerHasCard("0", ACE));
   }
@@ -99,21 +103,24 @@ class TeamTradeTest {
   void request_isBlockedWhenTheSubOptionIsOff() {
     gs.setTeamCardTrade(false);
     armStandardTrade();
-    assertFalse(gs.requestTrade("0", OFFERED));
+    assertFalse(gs.requestTrade("0"));
     assertNull(gs.getPendingTradeFor("0"));
   }
 
   @Test
-  void request_isBlockedWhenYouDoNotHoldTheOfferedCard() {
-    // never gave player 0 the OFFERED card
-    assertFalse(gs.requestTrade("0", OFFERED));
+  void offer_isBlockedWhenYouDoNotHoldTheCard() {
+    // The ask itself carries no card, so it goes out; naming a card you do not hold does not.
+    assertTrue(gs.requestTrade("0")); // never gave player 0 the OFFERED card
+    assertFalse(gs.offerTradeCard("0", OFFERED));
+    assertNull(gs.getPendingTradeFor("0").getOfferedCard());
   }
 
   @Test
   void onlyOneTradeAtATime() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
-    assertFalse(gs.requestTrade("0", OFFERED), "a second request is refused while one is pending");
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
+    assertFalse(gs.requestTrade("0"), "a second request is refused while one is pending");
   }
 
   @Test
@@ -123,13 +130,15 @@ class TeamTradeTest {
     deck.giveCardToPlayerForTesting("1", OFFERED_2);
 
     // Team A opens a trade — team B must be neither blocked nor able to see it.
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertTrue(gs.canRequestTrade("1"), "team B is not blocked by team A's pending trade");
     assertNull(gs.getPendingTradeFor("1"), "team B does not see team A's trade");
     assertNull(gs.getPendingTradeFor("3"), "team B does not see team A's trade");
 
     // Team B opens its own, concurrently.
-    assertTrue(gs.requestTrade("1", OFFERED_2));
+    assertTrue(gs.requestTrade("1"));
+    assertTrue(gs.offerTradeCard("1", OFFERED_2));
     assertEquals("0", gs.getPendingTradeFor("2").getRequesterId()); // A's teammate sees A's trade
     assertEquals("1", gs.getPendingTradeFor("3").getRequesterId()); // B's teammate sees B's trade
 
@@ -143,7 +152,8 @@ class TeamTradeTest {
   void accept_isRefusedForACardThatIsNotAKingOrAce() {
     deck.giveCardToPlayerForTesting("0", OFFERED);
     deck.giveCardToPlayerForTesting("2", NOT_KING_OR_ACE);
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertFalse(gs.acceptTrade("2", NOT_KING_OR_ACE));
     assertFalse(deck.playerHasCard("0", NOT_KING_OR_ACE), "no swap happened");
     assertTrue(gs.getPendingTradeFor("0") != null, "a refused accept leaves the trade pending");
@@ -153,14 +163,16 @@ class TeamTradeTest {
   void accept_isRefusedFromANonTeammate() {
     armStandardTrade();
     deck.giveCardToPlayerForTesting("1", KING); // opponent also holds a King
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertFalse(gs.acceptTrade("1", KING), "an opponent can't accept a trade meant for the teammate");
   }
 
   @Test
   void reject_clearsTheTradeWithoutSwapping() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertTrue(gs.rejectTrade("2"));
     assertNull(gs.getPendingTradeFor("0"));
     assertTrue(deck.playerHasCard("0", OFFERED), "offered card stays with the requester");
@@ -170,7 +182,8 @@ class TeamTradeTest {
   @Test
   void requester_canCancelTheirPendingOffer() {
     armStandardTrade();
-    assertTrue(gs.requestTrade("0", OFFERED));
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
     assertTrue(gs.cancelTrade("0"));
     assertNull(gs.getPendingTradeFor("0"));
   }

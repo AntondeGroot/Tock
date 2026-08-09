@@ -144,8 +144,9 @@ const SCENARIOS: Scenario[] = [
     title: 'Asking your teammate for a King or Ace',
     description:
       'Only a King or an Ace gets a pawn out of the nest, so with the team-trade option on you ' +
-      'may ask your teammate for one. The “Ask for a King or Ace” button opens your hand: pick ' +
-      'the card you are willing to give away, then ask.',
+      'may ask your teammate for one. The button asks there and then — your teammate already has ' +
+      'the message — and all that is left is picking what you give back. The cards swell in turn ' +
+      'until you do; tapping one sends it, and tapping another changes your mind.',
     players: 4,
     gameOptions: TEAM_TRADE_GAME,
     viewerHand: ASKER_HAND,
@@ -153,23 +154,27 @@ const SCENARIOS: Scenario[] = [
   },
   {
     key: 'trade-waiting',
-    title: 'Waiting for their answer',
+    title: 'Your teammate hears it straight away',
     description:
-      'Once you have asked, the ball is in your teammate’s court. You can sit it out or withdraw ' +
-      'the request — and you keep playing either way; the trade never blocks the game.',
+      'The other side of that moment: the ask arrives before you have chosen anything, and your ' +
+      'teammate can answer it at once. Once they have handed a King over it simply waits for you ' +
+      '— whichever of you picks last completes the swap.',
     players: 4,
     gameOptions: TEAM_TRADE_GAME,
-    viewerHand: ASKER_HAND,
-    // The viewer does the asking, so the pending trade is enough to show the waiting face.
-    seed: (api, sessionId) => openTrade(api, sessionId, VIEWER),
+    // The TEAMMATE is the viewer, having already given their King while the ask is unanswered.
+    seed: (api, sessionId) => openTrade(api, sessionId, TEAMMATE, false),
+    open: async (page) => {
+      await page.click('[data-testid="trade-card-13"]');
+      await page.click('.trade-btn.primary');
+      await page.waitForSelector('.trade-btn.primary', { state: 'detached' });
+    },
   },
   {
     key: 'trade-respond',
-    title: 'Being asked, and offering a card in return',
+    title: 'Handing one over',
     description:
-      'On the other side of the same parley: your teammate has asked you. Your hand is shown ' +
-      'with everything but the Kings and Aces dimmed out — those are the only cards that answer ' +
-      'the ask — so you either give one in return, or decline.',
+      'Your side of the swap. Everything but the Kings and Aces is dimmed out — those are the ' +
+      'only cards that answer the ask — so you either give one, or decline.',
     players: 4,
     gameOptions: TEAM_TRADE_GAME,
     // The TEAMMATE asks this time, so the viewer is the one being asked.
@@ -194,15 +199,23 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-/** Open a pending trade on the table: `requesterId` offers a card and asks for a King or Ace. */
+/**
+ * Open a pending trade: `requesterId` asks for a King or Ace. The ask carries no card — that is
+ * the point of the flow — so `withOffer` decides whether they have also picked what they give,
+ * which is what unblocks their teammate.
+ */
 async function openTrade(
   api: APIRequestContext,
   sessionId: string,
   requesterId: string,
+  withOffer = true,
 ): Promise<void> {
   await setHand(api, sessionId, requesterId, ASKER_HAND);
-  const hand = await getHand(api, sessionId, requesterId);
-  await teamTrade(api, sessionId, requesterId, 'REQUEST', hand[0]);
+  await teamTrade(api, sessionId, requesterId, 'REQUEST');
+  if (withOffer) {
+    const hand = await getHand(api, sessionId, requesterId);
+    await teamTrade(api, sessionId, requesterId, 'OFFER', hand[0]);
+  }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { computed, signal } from '@angular/core';
+import { computed } from '@angular/core';
 import { Card as CardModel, GameStatePush, Trade } from '../../api';
 import { TranslationKey } from '../../i18n/keys';
 
@@ -6,17 +6,14 @@ type Translate = (key: TranslationKey, ...args: (string | number)[]) => string;
 
 /**
  * The team card-trade feature (step 5): a player may ask their teammate for a King or Ace. This
- * owns the "offering" UI state, the derived view state (whether the ask button shows, the other
- * party's name), and — driven from the board's push effect — reacts to the outcome of the viewer's
- * own offer with the swap animation and an accepted/rejected banner.
+ * owns sending the ask, the derived view state (whether the ask button shows, the other party's
+ * name), and — driven from the board's push effect — reacts to the outcome of the viewer's own
+ * offer with the swap animation and an accepted/rejected banner.
  *
- * Framework-light (signals + computeds, no DI): the board wires in the state/hand getters and the
- * three side effects (animate the swap, show a banner, translate), so this stays unit-testable.
+ * Framework-light (computeds, no DI): the board wires in the state/hand getters and the side
+ * effects (send the ask, animate the swap, show a banner, translate), so this stays unit-testable.
  */
 export class TeamTradeController {
-  /** True while the viewer's outgoing offer dialog is open. */
-  readonly offering = signal(false);
-
   private prevMyTrade: Trade | null = null;
   private prevHand: CardModel[] = [];
   private suppressOutcome = false;
@@ -26,6 +23,8 @@ export class TeamTradeController {
     private readonly hand: () => CardModel[],
     private readonly viewerId: string | null,
     private readonly onSwap: (otherId: string, received: CardModel, given: CardModel) => void,
+    /** Sends the ask itself — pressing a button labelled "ask" must actually ask. */
+    private readonly sendRequest: () => void,
     private readonly notify: (title: string, message: string) => void,
     private readonly t: Translate,
   ) {}
@@ -48,14 +47,12 @@ export class TeamTradeController {
     return s.players.find((p) => p.id === otherId)?.name ?? '';
   });
 
-  /** Open the offer dialog (the "Ask for a King/Ace" button). */
+  /**
+   * The "Ask for a King/Ace" button: this asks, there and then. The teammate is told immediately
+   * and the picker opens off the pending trade coming back over SSE — nothing is staged locally.
+   */
   ask(): void {
-    this.offering.set(true);
-  }
-
-  /** Close the offer dialog. */
-  stopOffering(): void {
-    this.offering.set(false);
+    this.sendRequest();
   }
 
   /** You cancelled your own offer — suppress the next outcome banner/swap. */

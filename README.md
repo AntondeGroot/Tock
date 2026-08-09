@@ -45,27 +45,27 @@ A seven is the one card you may divide between two of your pawns, in any share t
 
 ### Asking your teammate for a King or Ace
 
-Only a King or an Ace gets a pawn out of the nest, so with the team-trade option on you may ask your teammate for one. The “Ask for a King or Ace” button opens your hand: pick the card you are willing to give away, then ask.
+Only a King or an Ace gets a pawn out of the nest, so with the team-trade option on you may ask your teammate for one. The button asks there and then — your teammate already has the message — and all that is left is picking what you give back. The cards swell in turn until you do; tapping one sends it, and tapping another changes your mind.
 
 | On a computer | On a phone |
 | --- | --- |
 | <img src="readme-images/trade-ask-desktop.png" alt="Asking your teammate for a King or Ace, on a computer" width="620"> | <img src="readme-images/trade-ask-mobile.png" alt="Asking your teammate for a King or Ace, on a phone" width="200"> |
 
-### Waiting for their answer
+### Your teammate hears it straight away
 
-Once you have asked, the ball is in your teammate’s court. You can sit it out or withdraw the request — and you keep playing either way; the trade never blocks the game.
-
-| On a computer | On a phone |
-| --- | --- |
-| <img src="readme-images/trade-waiting-desktop.png" alt="Waiting for their answer, on a computer" width="620"> | <img src="readme-images/trade-waiting-mobile.png" alt="Waiting for their answer, on a phone" width="200"> |
-
-### Being asked, and offering a card in return
-
-On the other side of the same parley: your teammate has asked you. Your hand is shown with everything but the Kings and Aces dimmed out — those are the only cards that answer the ask — so you either give one in return, or decline.
+The other side of that moment: the ask arrives before you have chosen anything, and your teammate can answer it at once. Once they have handed a King over it simply waits for you — whichever of you picks last completes the swap.
 
 | On a computer | On a phone |
 | --- | --- |
-| <img src="readme-images/trade-respond-desktop.png" alt="Being asked, and offering a card in return, on a computer" width="620"> | <img src="readme-images/trade-respond-mobile.png" alt="Being asked, and offering a card in return, on a phone" width="200"> |
+| <img src="readme-images/trade-waiting-desktop.png" alt="Your teammate hears it straight away, on a computer" width="620"> | <img src="readme-images/trade-waiting-mobile.png" alt="Your teammate hears it straight away, on a phone" width="200"> |
+
+### Handing one over
+
+Your side of the swap. Everything but the Kings and Aces is dimmed out — those are the only cards that answer the ask — so you either give one, or decline.
+
+| On a computer | On a phone |
+| --- | --- |
+| <img src="readme-images/trade-respond-desktop.png" alt="Handing one over, on a computer" width="620"> | <img src="readme-images/trade-respond-mobile.png" alt="Handing one over, on a phone" width="200"> |
 
 ### When they cannot help
 

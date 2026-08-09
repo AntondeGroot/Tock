@@ -6,6 +6,8 @@ import {
   Card as CardModel,
   MoveRequest,
   MoveResponse,
+  TradeAction,
+  TradeService,
 } from '../../api';
 import { buildBoard } from './board-geometry';
 import { resolveGameSession } from '../../session';
@@ -25,6 +27,7 @@ import { GameStateStream } from './game-state-stream';
 import { PawnAnimator } from './pawn-animator';
 import { SplitSteps } from './split-steps/split-steps';
 import { moveAnimation } from './move-animation';
+import { postTradeAction } from './trade-actions';
 import { PawnAndCardSelection } from './pawn-and-card-selection';
 import { teammateCaptureTiles } from './teammate-capture';
 import { pawnKey } from './pawn-key';
@@ -109,6 +112,7 @@ export class Board implements OnInit, OnDestroy {
   }
   private readonly movesService = inject(MovesService);
   private readonly cardsService = inject(CardsService);
+  private readonly tradeService = inject(TradeService);
   protected readonly i18n = inject(Translations);
   private readonly rejection = inject(MoveRejection);
   private readonly teamHandoff = inject(TeamHandoff);
@@ -300,6 +304,15 @@ export class Board implements OnInit, OnDestroy {
     () => this.hand(),
     this.viewerId,
     (otherId, received, given) => this.cardFly.tradeSwap(otherId, received, given),
+    // The ask goes out the moment the button is pressed; the picker then opens off the pending
+    // trade that comes back over SSE.
+    () =>
+      postTradeAction(
+        this.tradeService,
+        this.sessionId,
+        this.viewerId,
+        TradeAction.ActionEnum.Request,
+      ),
     (title, message) => this.teamHandoff.show(title, message),
     (key, ...args) => this.i18n.t(key, ...args),
   );
