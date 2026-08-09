@@ -32,7 +32,8 @@ public class TradeApiDelegateImpl implements TradeApiDelegate {
     GameState gs = session.getGameState();
     String playerId = action.getPlayerId();
     boolean ok = switch (action.getAction()) {
-      case REQUEST -> gs.requestTrade(playerId, action.getCard());
+      case REQUEST -> gs.requestTrade(playerId);
+      case OFFER -> gs.offerTradeCard(playerId, action.getCard());
       case ACCEPT -> gs.acceptTrade(playerId, action.getCard());
       case REJECT -> gs.rejectTrade(playerId);
       case CANCEL -> gs.cancelTrade(playerId);

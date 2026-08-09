@@ -9,8 +9,8 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
- * The team card-trade sub-game (game option "step 5"): a player offers one of their cards and asks
- * their teammate for a King or Ace. Extracted from GameState so the rules live in one small,
+ * The team card-trade sub-game (game option "step 5"): a player asks their teammate for a King or
+ * Ace, then names a card of their own to give in return. Extracted from GameState so the rules live in one small,
  * directly testable unit; GameState keeps thin public methods that delegate here. Collaborators
  * (deck, version counter, team/started status, teammate lookup, King/Ace test) are injected so this
  * class has no dependency on the rest of the game state.
@@ -79,27 +79,48 @@ class TradeManager {
   }
 
   /**
-   * A player offers a card and asks their teammate for a King or Ace. Allowed only when {@link
-   * #canRequest} holds and the requester actually holds the offered card. Returns true if the
-   * request was recorded.
+   * A player asks their teammate for a King or Ace. The ask goes out at once, carrying no card:
+   * the teammate sees it immediately, and the requester names what they give in a following
+   * {@link #offer}. Allowed only when {@link #canRequest} holds.
    */
-  boolean request(String requesterId, Card offeredCard) {
+  boolean request(String requesterId) {
     if (!canRequest(requesterId)) {
-      return false;
-    }
-    if (offeredCard == null || !cardsDeck.playerHasCard(requesterId, offeredCard)) {
       return false;
     }
     String teammate = teammateResolver.apply(requesterId);
     pendingByTeam.put(
-        teamKey(requesterId, teammate), new TradeRequest(requesterId, teammate, offeredCard));
+        teamKey(requesterId, teammate), new TradeRequest(requesterId, teammate, null));
     version.incrementAndGet();
     return true;
   }
 
   /**
-   * The teammate accepts by handing over a King or Ace: the two cards are swapped and the trade
-   * clears. Only the addressed teammate may accept, and only with a King/Ace they actually hold.
+   * The requester names the card they give in return — or renames it, since picking again simply
+   * replaces the standing offer. Only the requester of a pending trade may offer, and only a card
+   * they actually hold.
+   */
+  boolean offer(String requesterId, Card offeredCard) {
+    String key = teamKeyFor(requesterId);
+    TradeRequest pending = key == null ? null : pendingByTeam.get(key);
+    if (pending == null || !pending.getRequesterId().equals(requesterId)) {
+      return false;
+    }
+    if (offeredCard == null || !cardsDeck.playerHasCard(requesterId, offeredCard)) {
+      return false;
+    }
+    TradeRequest offered = pending.offering(offeredCard);
+    if (offered.getAnsweredCard() != null) {
+      return completeSwap(key, offered); // their half was already in — settle it now
+    }
+    pendingByTeam.put(key, offered);
+    version.incrementAndGet();
+    return true;
+  }
+
+  /**
+   * The teammate hands over a King or Ace. They need not wait for the requester to have picked —
+   * their half is simply held, and the swap goes through the moment the other half lands. Only the
+   * addressed teammate may accept, and only with a King/Ace they actually hold.
    */
   boolean accept(String teammateId, Card kingOrAce) {
     String key = teamKeyFor(teammateId);
@@ -112,17 +133,36 @@ class TradeManager {
         || !cardsDeck.playerHasCard(teammateId, kingOrAce)) {
       return false;
     }
-    String requesterId = pending.getRequesterId();
-    // The requester must still hold the card they offered — if they left or forfeited, that card
-    // was moved to the pile, and swapping it would duplicate it (and sink the teammate's card into
-    // a discarded hand). Drop the stale trade rather than corrupt the hands.
-    if (!cardsDeck.playerHasCard(requesterId, pending.getOfferedCard())) {
+    TradeRequest answered = pending.answering(kingOrAce);
+    if (answered.getOfferedCard() == null) {
+      // The ask reaches the teammate before the requester has picked, so hold this half and let
+      // the swap settle when they do — nobody is made to wait on the other.
+      pendingByTeam.put(key, answered);
+      version.incrementAndGet();
+      return true;
+    }
+    return completeSwap(key, answered);
+  }
+
+  /**
+   * Both halves are on the table: swap them and clear the trade. Either player must still hold
+   * their card — if one left or forfeited it was moved to the pile, and swapping it would
+   * duplicate it (and sink the other's card into a discarded hand). Drop the stale trade rather
+   * than corrupt the hands.
+   */
+  private boolean completeSwap(String key, TradeRequest trade) {
+    String requesterId = trade.getRequesterId();
+    String teammateId = trade.getTeammateId();
+    Card offered = trade.getOfferedCard();
+    Card answered = trade.getAnsweredCard();
+    if (!cardsDeck.playerHasCard(requesterId, offered)
+        || !cardsDeck.playerHasCard(teammateId, answered)) {
       pendingByTeam.remove(key);
       version.incrementAndGet();
       return false;
     }
-    cardsDeck.moveCardBetweenHands(requesterId, teammateId, pending.getOfferedCard());
-    cardsDeck.moveCardBetweenHands(teammateId, requesterId, kingOrAce);
+    cardsDeck.moveCardBetweenHands(requesterId, teammateId, offered);
+    cardsDeck.moveCardBetweenHands(teammateId, requesterId, answered);
     pendingByTeam.remove(key);
     version.incrementAndGet();
     return true;

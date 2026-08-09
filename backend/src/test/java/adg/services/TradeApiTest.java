@@ -49,7 +49,7 @@ class TradeApiTest {
   @Test
   void request_returns200_andThePushCarriesTheTrade() {
     GameSession session = teamTradeGame("trade-req");
-    var response = delegate.teamTrade("trade-req", action(TradeAction.ActionEnum.REQUEST, "0", OFFERED));
+    var response = delegate.teamTrade("trade-req", action(TradeAction.ActionEnum.REQUEST, "0", null));
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
     var push = new SseEmitterService().buildPush(session, "2", false);
@@ -67,7 +67,8 @@ class TradeApiTest {
   @Test
   void accept_swapsTheCards_andClearsTheTrade() {
     GameSession session = teamTradeGame("trade-acc");
-    delegate.teamTrade("trade-acc", action(TradeAction.ActionEnum.REQUEST, "0", OFFERED));
+    delegate.teamTrade("trade-acc", action(TradeAction.ActionEnum.REQUEST, "0", null));
+    delegate.teamTrade("trade-acc", action(TradeAction.ActionEnum.OFFER, "0", OFFERED));
     var response = delegate.teamTrade("trade-acc", action(TradeAction.ActionEnum.ACCEPT, "2", KING));
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(session.getCardsDeck().playerHasCard("0", KING), "requester got the King");

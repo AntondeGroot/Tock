@@ -17,6 +17,7 @@ describe('TeamTradeController', () => {
   const state = signal<GameStatePush | undefined>(undefined);
   const hand = signal<CardModel[]>([]);
   let onSwap: ReturnType<typeof vi.fn>;
+  let sendRequest: ReturnType<typeof vi.fn>;
   let notify: ReturnType<typeof vi.fn>;
   let ctl: TeamTradeController;
 
@@ -26,12 +27,14 @@ describe('TeamTradeController', () => {
       () => hand(),
       viewerId,
       onSwap as never,
+      sendRequest as never,
       notify as never,
       t as never,
     );
 
   beforeEach(() => {
     onSwap = vi.fn();
+    sendRequest = vi.fn();
     notify = vi.fn();
     hand.set([]);
     state.set(undefined);
@@ -62,12 +65,12 @@ describe('TeamTradeController', () => {
     expect(build('mate').otherName()).toBe('Me');
   });
 
-  it('toggles the offering flag', () => {
-    expect(ctl.offering()).toBe(false);
+  it('asks the teammate the moment the button is pressed', () => {
+    // Nothing is staged locally: pressing a button labelled "ask" sends the ask, and the picker
+    // then opens off the pending trade coming back over SSE.
+    expect(sendRequest).not.toHaveBeenCalled();
     ctl.ask();
-    expect(ctl.offering()).toBe(true);
-    ctl.stopOffering();
-    expect(ctl.offering()).toBe(false);
+    expect(sendRequest).toHaveBeenCalledTimes(1);
   });
 
   // Drive a resolving trade: first push has the trade pending (baseline), the second has it gone.

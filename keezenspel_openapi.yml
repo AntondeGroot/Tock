@@ -601,8 +601,10 @@ components:
     Trade:
       type: object
       description: |
-        A pending team card-trade (present only while one is open). The requester offered a
-        card and is asking their teammate for a King or Ace.
+        A pending team card-trade (present only while one is open). The requester is asking their
+        teammate for a King or Ace. Each side is filled in as that player picks, in either order:
+        the swap happens the moment both are present, so a trade only lingers while one half is
+        still missing.
       required:
         - requesterId
         - teammateId
@@ -615,10 +617,23 @@ components:
           description: The teammate being asked
         offeredCard:
           $ref: '#/components/schemas/Card'
+          description: >-
+            What the requester gives in return. Absent until they have picked; they may pick
+            again to change it, right up until the swap goes through.
+        answeredCard:
+          $ref: '#/components/schemas/Card'
+          description: >-
+            The King or Ace the teammate has committed. Absent until they have given one; they
+            too may pick again while the other half is still missing.
 
     TradeAction:
       type: object
-      description: A team card-trade action from a player.
+      description: |
+        A team card-trade action from a player. REQUEST asks the teammate at once, carrying no
+        card. OFFER (the requester) and ACCEPT (the teammate) then name each half of the swap, in
+        whichever order they come — the trade completes as soon as both have landed. Either side
+        may repeat their action to change their card while the other half is still missing.
+        REJECT and CANCEL clear the trade outright.
       required:
         - action
         - playerId
@@ -627,6 +642,7 @@ components:
           type: string
           enum:
             - REQUEST
+            - OFFER
             - ACCEPT
             - REJECT
             - CANCEL
@@ -634,7 +650,7 @@ components:
           type: string
         card:
           $ref: '#/components/schemas/Card'
-          description: The offered card (REQUEST) or the King/Ace handed over (ACCEPT)
+          description: The card given in return (OFFER) or the King/Ace handed over (ACCEPT)
 
     GameOption:
       type: object

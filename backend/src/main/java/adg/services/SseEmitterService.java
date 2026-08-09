@@ -187,7 +187,8 @@ public class SseEmitterService {
       push.setTrade(new Trade()
           .requesterId(pending.getRequesterId())
           .teammateId(pending.getTeammateId())
-          .offeredCard(pending.getOfferedCard()));
+          .offeredCard(pending.getOfferedCard())
+          .answeredCard(pending.getAnsweredCard()));
     }
   }
 }

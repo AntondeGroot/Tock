@@ -54,6 +54,79 @@
   text-wrap: pretty;
 }
 
+// The auto-pick clock: a gold ring closing anticlockwise around the tick count. Sized in `em` so
+// it rides with the dialog's type rather than needing its own breakpoint.
+.trade-sub.countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.countdown-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 2.9em;
+  height: 2.9em;
+  flex-shrink: 0;
+
+  svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    // Start the stroke at twelve o'clock (SVG begins at three) and mirror it, so it closes
+    // anticlockwise rather than the default clockwise sweep.
+    transform: rotate(-90deg) scaleX(-1);
+  }
+}
+
+// r is 15.915, so the circumference is ~100 — the dash values then read as plain percentages.
+.countdown-track,
+.countdown-fill {
+  fill: none;
+  stroke-width: 3;
+  stroke-dasharray: 100;
+}
+.countdown-track {
+  stroke: rgba(201, 162, 39, 0.22);
+}
+.countdown-fill {
+  stroke: #f4d03f;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(244, 208, 63, 0.55));
+  animation: countdownRing var(--countdown-ms, 12000ms) linear forwards;
+}
+
+// 0 → 100%: an empty ring at the start, a closed one when the time is up.
+@keyframes countdownRing {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.countdown-number {
+  position: relative;
+  font:
+    700 1.05em 'Cinzel',
+    Georgia,
+    serif;
+  color: #f4d03f;
+  font-variant-numeric: tabular-nums; // the ring must not jitter as the digits change width
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // The ring is decoration; the number carries the meaning, so it can simply sit still.
+  .countdown-fill {
+    animation: none;
+    stroke-dashoffset: 100;
+  }
+}
+
 // Hand of cards — a wrapping, centred row. Each app-card's width is set here; height follows
 // from its aspect-ratio.
 .trade-hand {
@@ -76,6 +149,33 @@
 }
 .trade-card app-card {
   width: 46px;
+}
+
+// Until a card is on the table the row swells left to right, one card after the next, so the
+// cards read as tappable and picking one reads as the thing to do. It stops the moment something
+// is offered — by then the point is made, and a standing offer should sit still.
+.trade-hand.hinting .trade-card {
+  animation: tradeHintSwell 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--card-index, 0) * 0.16s);
+}
+
+@keyframes tradeHintSwell {
+  0%,
+  55%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  22% {
+    transform: scale(1.14) translateY(-6px);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade-hand.hinting .trade-card {
+    animation: none;
+  }
 }
 .trade-card:hover {
   transform: translateY(-4px);
