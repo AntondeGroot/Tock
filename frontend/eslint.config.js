@@ -105,14 +105,14 @@ module.exports = defineConfig([
     },
   },
   {
-    // RATCHET: board.ts is still over the 400-line file cap (447 counted) after a long series of
+    // RATCHET: board.ts is still over the 400-line file cap (439 counted) after a long series of
     // extractions. Pinned at its current size (frozen ceiling — can shrink, never grow). Everything
     // else now meets the global caps: per-function size (80), cognitive complexity (15), and nested
-    // functions all pass, so those pins are gone. TODO: extract ~47 more lines to reach 400, then
+    // functions all pass, so those pins are gone. TODO: extract ~39 more lines to reach 400, then
     // delete this override entirely.
     files: ['src/app/features/board/board.ts'],
     rules: {
-      'max-lines': ['error', { max: 447, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 439, skipBlankLines: true, skipComments: true }],
     },
   },
   {
