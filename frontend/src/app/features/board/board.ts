@@ -37,6 +37,7 @@ import { GameStore } from '../../game-store';
 import { MoveRejection } from './move-rejected/move-rejection.service';
 import { TeamHandoff } from './team-handoff/team-handoff.service';
 import { localRejectionKey, rejectionMessageKey } from './rejection-message';
+import { allPawnsHome, teammateOf } from './team-control';
 
 @Component({
   selector: 'app-board',
@@ -267,11 +268,11 @@ export class Board implements OnInit, OnDestroy {
    * start playing your teammate's pawns. Fires on the transition.
    */
   private announceTeamHandoff(): void {
-    const allHome = this.viewerOwnPawnsAllHome();
-    if (allHome && !this.prevOwnPawnsHome) {
+    const mayPlay = this.mayPlayTeammatePawns();
+    if (mayPlay && !this.prevMayPlayTeammatePawns) {
       this.teamHandoff.show(this.i18n.t('teamHandoffTitle'), this.i18n.t('teamHandoffMessage'));
     }
-    this.prevOwnPawnsHome = allHome;
+    this.prevMayPlayTeammatePawns = mayPlay;
   }
 
   /**
@@ -296,7 +297,7 @@ export class Board implements OnInit, OnDestroy {
   private prevCurrentPlayerId: string | undefined;
   private prevMedalCount = -1;
 
-  private prevOwnPawnsHome = false;
+  private prevMayPlayTeammatePawns = false;
 
   // ── Team card trade (step 5) — its own controller (state, view state, outcome reaction). ──
   protected readonly teamTrade = new TeamTradeController(
@@ -323,26 +324,21 @@ export class Board implements OnInit, OnDestroy {
   private readonly controllablePlayerIds = computed(() => {
     const me = this.viewerId;
     if (!me) return [];
-    const ids = [me];
-    if (this.viewerOwnPawnsAllHome()) {
-      const s = this.state();
-      const myTeam = s?.players?.find((p) => p.id === me)?.teamId;
-      const mate =
-        myTeam != null ? s?.players?.find((p) => p.id !== me && p.teamId === myTeam) : undefined;
-      if (mate) ids.push(mate.id);
-    }
-    return ids;
+    const mate = this.teammate();
+    return this.mayPlayTeammatePawns() && mate ? [me, mate.id] : [me];
   });
 
-  // Team play: are all of the viewer's own pawns home (finish tiles, tileNr ≥ 16)? Drives the
-  // one-time hand-off announcement. False outside a team game.
-  private readonly viewerOwnPawnsAllHome = computed(() => {
-    const s = this.state();
-    if (!s?.pawns || !s.players || !this.viewerId) return false;
-    const inTeam = s.players.find((p) => p.id === this.viewerId)?.teamId != null;
-    if (!inTeam) return false;
-    const own = s.pawns.filter((p) => p.playerId === this.viewerId);
-    return own.length > 0 && own.every((p) => (p.currentTileId?.tileNr ?? -1) >= 16);
+  private readonly teammate = computed(() => teammateOf(this.state()?.players, this.viewerId));
+
+  /**
+   * Team play: may the viewer play their teammate's pawns? Only once all of the viewer's own pawns
+   * are home AND the teammate still has a pawn to move — see team-control.ts. Drives both the
+   * hand-off announcement and the selection, so neither fires when the team has just finished.
+   */
+  private readonly mayPlayTeammatePawns = computed(() => {
+    const mate = this.teammate();
+    const pawns = this.state()?.pawns;
+    return !!mate && allPawnsHome(pawns, this.viewerId) && !allPawnsHome(pawns, mate.id);
   });
 
   // --- Pawn move animation (drives the reusable PawnAnimator engine) -------
