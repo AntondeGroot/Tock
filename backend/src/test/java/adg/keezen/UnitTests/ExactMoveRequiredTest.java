@@ -8,6 +8,7 @@ import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
 import com.adg.openapi.model.Card;
+import com.adg.openapi.model.MoveRejectionReason;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
 import com.adg.openapi.model.Pawn;
@@ -206,6 +207,28 @@ class ExactMoveRequiredTest {
     assertEquals(new PositionKey("0", 14), gameState.getPawn(pawn1).getCurrentTileId());
   }
 
+  @Test
+  void enteringFinish_BounceReturnsToStartingTile_CannotMove() {
+    // pawn "1" at (0,12) + 6 steps → 13, 14, 15, then (1,16) is blocked by an own pawn, so it
+    // bounces and walks back 14, 13, 12 — landing on the very tile it started from.
+    // → without setting: the pawn "moves" to (0,12); with the setting it must be refused, and the
+    //   player told the exact step count that reaches the wall: 3, landing on (0,15).
+    // GIVEN
+    Card card = givePlayerCard(cardsDeck, 1, 6);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("0", 12));
+    Pawn blocker = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("1", 16));
+
+    // WHEN
+    createMoveRequest(moveMessage, pawn1, card);
+    gameState.processOnMove(moveMessage, moveResponse);
+
+    // THEN
+    assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
+    assertEquals(MoveRejectionReason.MUST_MOVE_EXACT_STEPS, moveResponse.getRejectionReason());
+    assertEquals(3, moveResponse.getRejectionDetail());
+    assertEquals(new PositionKey("0", 12), gameState.getPawn(pawn1).getCurrentTileId());
+  }
+
   // ── Case 3: entering finish from last section, overshoots and would bounce ─
   // Without exactMoveRequired: pawn bounces off tile 19 and lands somewhere lower.
   // With exactMoveRequired: CANNOT_MAKE_MOVE.
@@ -287,6 +310,71 @@ class ExactMoveRequiredTest {
     assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
     assertEquals(new PositionKey("1", 19), gameState.getPawn(pawn1).getCurrentTileId());
     assertEquals(new PositionKey("0", 10), gameState.getPawn(pawn2).getCurrentTileId());
+  }
+
+  @Test
+  void alreadyOnFinish_PingPongLandsOnHighestReachableTile_CannotMove() {
+    // pawn at (1,17) between own pawns at (1,16) and (1,19), +3 steps
+    // → 18, 19 is blocked so it bounces back to 17, 16 is blocked so it bounces forward to 18
+    // → lands on (1,18), which is exactly the tile it could have reached with 1 step, so a
+    //   landing-tile comparison sees no overshoot and lets this ping-pong through
+    // GIVEN
+    Card card = givePlayerCard(cardsDeck, 1, 3);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 17));
+    Pawn wallBehind = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("1", 16));
+    Pawn wallAhead = placePawnOnBoard(gameState, new PawnId("1", 2), new PositionKey("1", 19));
+
+    // WHEN
+    createMoveRequest(moveMessage, pawn1, card);
+    gameState.processOnMove(moveMessage, moveResponse);
+
+    // THEN
+    assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
+    assertNull(moveResponse.getPawn1());
+    assertEquals(new PositionKey("1", 17), gameState.getPawn(pawn1).getCurrentTileId());
+  }
+
+  @Test
+  void split7_PingPongOnFinish_CannotMove() {
+    // The reported bug, played as a split: pawns on 16, 17 and 19 plus one on the board.
+    // Splitting 3/4 makes the pawn on 17 ping-pong between its own pawns and land on (1,18),
+    // while the board pawn's 4 steps are a perfectly legal move — the whole split must still
+    // be rejected, and neither pawn may move.
+    // GIVEN
+    Card card = givePlayerSeven(cardsDeck, 1);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 17));
+    Pawn wallBehind = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("1", 16));
+    Pawn wallAhead = placePawnOnBoard(gameState, new PawnId("1", 2), new PositionKey("1", 19));
+    Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("1", 3), new PositionKey("0", 4));
+
+    // WHEN
+    createSplitMessage(moveMessage, pawn1, 3, pawn2, 4, card);
+    gameState.processOnSplit(moveMessage, moveResponse);
+
+    // THEN
+    assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
+    assertEquals(new PositionKey("1", 17), gameState.getPawn(pawn1).getCurrentTileId());
+    assertEquals(new PositionKey("0", 4), gameState.getPawn(pawn2).getCurrentTileId());
+  }
+
+  @Test
+  void alreadyOnFinish_LooselyClosedIn_CleanBackwardMove_IsAllowed() {
+    // Mirror of alreadyOnFinish_LooselyClosedIn_CleanForwardMove_IsAllowed: an own pawn at (1,16)
+    // makes the pawn on (1,19) loosely closed in, but -2 steps still lands straight on (1,17)
+    // without touching that wall. What exactMoveRequired forbids is bouncing, not being boxed in.
+    // (The deck's only backward card is the 4; a -2 card pins the engine rule itself.)
+    // GIVEN
+    Card card = givePlayerCard(cardsDeck, 1, -2);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 19));
+    Pawn wallBehind = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("1", 16));
+
+    // WHEN
+    createMoveRequest(moveMessage, pawn1, card);
+    gameState.processOnMove(moveMessage, moveResponse);
+
+    // THEN
+    assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
+    assertEquals(new PositionKey("1", 17), gameState.getPawn(pawn1).getCurrentTileId());
   }
 
   // ── Case 4: pawn already on finish, loosely closed in → ping-pong needed ──
