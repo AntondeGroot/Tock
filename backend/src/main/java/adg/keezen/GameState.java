@@ -577,6 +577,10 @@ public final class GameState {
     return tileReachability.moveAndCheckEveryTile(pawn, tileId, nrSteps);
   }
 
+  public boolean moveBouncesOffWall(Pawn pawn, PositionKey tileId, int nrSteps) {
+    return tileReachability.moveBouncesOffWall(pawn, tileId, nrSteps);
+  }
+
   // ── Player navigation ─────────────────────────────────────────────────────
 
   public String nextPlayerId(String playerId) {

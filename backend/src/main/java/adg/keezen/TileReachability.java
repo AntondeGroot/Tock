@@ -169,28 +169,44 @@ class TileReachability {
 
   /** The final tile a pawn lands on, bouncing off walls only once it's inside the finish lane. */
   PositionKey moveAndCheckEveryTile(Pawn pawn, PositionKey tileId, int nrSteps) {
-    int direction = 1;
+    return walkThroughFinish(pawn, tileId, nrSteps).target();
+  }
+
+  /**
+   * Whether the path bounces off a wall in the finish lane — an own pawn standing in it, or its
+   * closed end. Such a move is not an exact one, however far the bouncing pawn happens to end up:
+   * it can even bounce between two walls and land right where it started, so the landing tile alone
+   * cannot tell the two apart.
+   */
+  boolean moveBouncesOffWall(Pawn pawn, PositionKey tileId, int nrSteps) {
+    return walkThroughFinish(pawn, tileId, nrSteps).bounced();
+  }
+
+  /** Where a move ends up, and whether it had to bounce to get there. */
+  private record FinishPath(PositionKey target, boolean bounced) {}
+
+  private FinishPath walkThroughFinish(Pawn pawn, PositionKey tileId, int nrSteps) {
+    int direction = nrSteps < 0 ? -1 : 1;
+    int nrStepsToTake = Math.abs(nrSteps);
     int tileNrToCheck = tileId.getTileNr();
+    boolean bounced = false;
 
-    if (nrSteps < 0) {
-      direction = -1;
-      nrSteps = -nrSteps;
-    }
-
-    for (int i = 0; i < nrSteps; i++) {
+    for (int i = 0; i < nrStepsToTake; i++) {
       tileNrToCheck = tileNrToCheck + direction;
       if (tileNrToCheck > 15) { // only check tiles when they are on the finish
         if (!canMoveToTile(pawn, new PositionKey(pawn.getPlayerId(), tileNrToCheck))) {
           direction = -direction;
           tileNrToCheck = tileNrToCheck + 2 * direction;
+          bounced = true;
         }
       }
     }
 
     if (tileNrToCheck <= 15) { // when back on the last section, change the playerId of the section
-      return new PositionKey(previousPlayerId.apply(pawn.getPlayerId()), tileNrToCheck);
+      return new FinishPath(
+          new PositionKey(previousPlayerId.apply(pawn.getPlayerId()), tileNrToCheck), bounced);
     }
 
-    return new PositionKey(pawn.getPlayerId(), tileNrToCheck);
+    return new FinishPath(new PositionKey(pawn.getPlayerId(), tileNrToCheck), bounced);
   }
 }

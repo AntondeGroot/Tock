@@ -297,22 +297,40 @@ public class ProcessOnMove {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
       return;
     }
+    if (gs.isExactMoveRequired()) {
+      moveOnFinishExactly();
+      return;
+    }
     if (gs.isPawnLooselyClosedIn(pawn1, currentTileId)) {
-      if (gs.isExactMoveRequired()) {
-        if (nrSteps > 0) {
-          // A forward move may still land cleanly without any direction reversal.
-          // Delegate to the normal overshoot check: it rejects overshoots and
-          // allows exact landings, so exactMoveRequired is honoured correctly.
-          executeFinishMoveWithOvershootCheck();
-          return;
-        }
-        reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
-        return;
-      }
       executePingPongMove();
       return;
     }
     executeFinishMoveWithOvershootCheck();
+  }
+
+  /**
+   * With exactMoveRequired only a straight path counts, so the single question is whether the pawn
+   * has to bounce off a wall — not where it ends up. A bouncing pawn can land on the tile it could
+   * have reached anyway, or even back on its own tile, so comparing landing tiles lets such moves
+   * through.
+   */
+  private void moveOnFinishExactly() {
+    if (gs.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
+      rejectBounceAsNotExact();
+      return;
+    }
+    landOnFinishTile(gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps));
+  }
+
+  private void rejectBounceAsNotExact() {
+    if (nrSteps < 0) {
+      // Bouncing backwards means own pawns box this one in from behind.
+      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
+      return;
+    }
+    int highestReachable = gs.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
+    reject(CANNOT_MAKE_MOVE, MoveRejectionReason.MUST_MOVE_EXACT_STEPS,
+        highestReachable - currentTileId.getTileNr());
   }
 
   private void executePingPongMove() {
@@ -329,24 +347,22 @@ public class ProcessOnMove {
     if (nrSteps > 0) {
       int highestReachable = gs.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
       if (highestReachable > targetTileId.getTileNr()) {
-        if (!addFinishBounceWaypoint(highestReachable)) return;
+        addFinishBounceWaypoint(highestReachable);
       }
     }
+    landOnFinishTile(targetTileId);
+  }
+
+  private void landOnFinishTile(PositionKey targetTileId) {
     addFinishReverseWaypoints(targetTileId);
     moves.add(targetTileId);
     response.setMovePawn1(moves);
     gs.processMove(pawn1, targetTileId, moveMessage, response, goToNextPlayer);
   }
 
-  private boolean addFinishBounceWaypoint(int highestReachable) {
-    if (gs.isExactMoveRequired()) {
-      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.MUST_MOVE_EXACT_STEPS,
-          highestReachable - currentTileId.getTileNr());
-      return false;
-    }
+  private void addFinishBounceWaypoint(int highestReachable) {
     Log.info("GameState: OnMove: pawn moves out of the finish");
     moves.add(new PositionKey(playerIdOfTile, highestReachable));
-    return true;
   }
 
   private void addFinishReverseWaypoints(PositionKey targetTile) {
@@ -362,15 +378,8 @@ public class ProcessOnMove {
     Log.info("GameState: OnMove: pawn is on last section and goes into finish");
     addLandmarksToSectionEnd();
     PositionKey targetTileId = gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps);
-    // Start the look-ahead from finish tile 15 (the entry point) with only the steps
-    // that reach into the finish lane. Using currentTileId directly would cause
-    // checkHighestTileNrYouCanMoveTo to check main-board tiles of the player's own
-    // section, which can incorrectly truncate the look-ahead if own pawns sit there.
-    int stepsIntoFinish = next - LAST_TILE;
-    int highestReachable = gs.checkHighestTileNrYouCanMoveTo(
-        pawn1, new PositionKey(gs.nextPlayerId(playerIdOfTile), LAST_TILE), stepsIntoFinish);
-    if (highestReachable > targetTileId.getTileNr()) {
-      if (!addEnteringFinishOvershootWaypoints(targetTileId, highestReachable)) return;
+    if (gs.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
+      if (!addEnteringFinishOvershootWaypoints(targetTileId, highestReachableFinishTile())) return;
     }
     if (gs.cannotMoveToTileBecauseSamePlayer(pawn1, targetTileId)) {
       gs.clearResponse(response);
@@ -380,6 +389,18 @@ public class ProcessOnMove {
     moves.add(targetTileId);
     response.setMovePawn1(moves);
     gs.processMove(pawn1, targetTileId, moveMessage, response, goToNextPlayer);
+  }
+
+  /**
+   * The furthest tile in the finish lane this move can reach. The look-ahead starts at finish tile
+   * 15 (the entry point) with only the steps that reach into the lane: starting from
+   * {@code currentTileId} would make checkHighestTileNrYouCanMoveTo check main-board tiles of the
+   * player's own section, which can incorrectly truncate the look-ahead if own pawns sit there.
+   */
+  private int highestReachableFinishTile() {
+    int stepsIntoFinish = next - LAST_TILE;
+    return gs.checkHighestTileNrYouCanMoveTo(
+        pawn1, new PositionKey(gs.nextPlayerId(playerIdOfTile), LAST_TILE), stepsIntoFinish);
   }
 
   private boolean addEnteringFinishOvershootWaypoints(
