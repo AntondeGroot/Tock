@@ -3,7 +3,7 @@ package adg.util;
 import com.adg.openapi.model.MoveType;
 
 public class SelectionValidation {
-  Selection selection;
+  final Selection selection;
   MoveType moveType;
 
   public SelectionValidation(Selection selection, MoveType moveType) {

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
-import com.adg.openapi.model.Pawn;
 import com.adg.openapi.model.PawnId;
 import com.adg.openapi.model.PositionKey;
 import org.junit.jupiter.api.AfterEach;
