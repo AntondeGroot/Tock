@@ -44,21 +44,24 @@ public class ProcessOnBoard {
 
   private static boolean selectionIsValid(Pawn pawn1, Card card, MoveResponse response) {
     if (pawn1 == null || card == null) {
-      return reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
     }
     return true;
   }
 
   private static boolean cardIsAceOrKing(Card card, MoveResponse response) {
     if (!(isAce(card) || isKing(card))) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.WRONG_CARD_FOR_MOVE);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.WRONG_CARD_FOR_MOVE);
+      return false;
     }
     return true;
   }
 
   private static boolean pawnIsOnNest(PositionKey currentTileId, MoveResponse response) {
     if (currentTileId.getTileNr() >= 0) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_NOT_ON_NEST);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_NOT_ON_NEST);
+      return false;
     }
     return true;
   }
@@ -66,7 +69,8 @@ public class ProcessOnBoard {
   private static boolean targetTileIsFree(
       GameState gs, Pawn pawn1, PositionKey targetTileId, MoveResponse response) {
     if (!gs.canMoveToTile(pawn1, targetTileId)) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.START_TILE_OCCUPIED);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.START_TILE_OCCUPIED);
+      return false;
     }
     return true;
   }

@@ -86,28 +86,32 @@ public class ProcessOnSplit {
 
   private boolean selectionIsValid() {
     if (pawn1 == null || card == null || pawn2 == null) {
-      return reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
     }
     return true;
   }
 
   private boolean pawnsAreSamePlayer() {
     if (!pawn1.getPlayerId().equals(pawn2.getPlayerId())) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.SPLIT_NEEDS_TWO_OWN_PAWNS);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.SPLIT_NEEDS_TWO_OWN_PAWNS);
+      return false;
     }
     return true;
   }
 
   private boolean cardIsSeven() {
     if (!isSeven(card)) {
-      return reject(response, PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.WRONG_CARD_FOR_MOVE);
+      reject(response, PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.WRONG_CARD_FOR_MOVE);
+      return false;
     }
     return true;
   }
 
   private boolean stepsAddUpToSeven() {
     if (nrStepsPawn1 + nrStepsPawn2 != 7) {
-      return reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
+      reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
+      return false;
     }
     return true;
   }
@@ -139,8 +143,9 @@ public class ProcessOnSplit {
     ProcessOnMove.process(gs, moveMessagePawn1, moveResponsePawn1);
     if (moveResponsePawn1.getResult().equals(CANNOT_MAKE_MOVE)) {
       // Surface the reason the first pawn's part of the split could not be made.
-      return reject(response, moveResponsePawn1.getResult(),
+      reject(response, moveResponsePawn1.getResult(),
           moveResponsePawn1.getRejectionReason(), moveResponsePawn1.getRejectionDetail());
+      return false;
     }
 
     temporarilyMovePawn1ToCheckPosition();
@@ -150,8 +155,9 @@ public class ProcessOnSplit {
 
     if (moveResponsePawn2.getResult().equals(CANNOT_MAKE_MOVE)) {
       // Surface the reason the second pawn's part of the split could not be made.
-      return reject(response, moveResponsePawn2.getResult(),
+      reject(response, moveResponsePawn2.getResult(),
           moveResponsePawn2.getRejectionReason(), moveResponsePawn2.getRejectionDetail());
+      return false;
     }
 
     return true;
@@ -185,7 +191,8 @@ public class ProcessOnSplit {
 
   private boolean executeSplitMoves() {
     if (moveMessage.getStepsPawn1() + moveMessage.getStepsPawn2() != 7) {
-      return reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
+      reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
+      return false;
     }
     gs.duplicatePlayerCard(playerId, card);
     moveMessagePawn1.setTempMessageType(MAKE_MOVE);
