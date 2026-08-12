@@ -25,13 +25,12 @@ class MovingOnSwitchTest {
   private MoveRequest moveMessage = new MoveRequest();
   private MoveResponse moveResponse = new MoveResponse();
 
-  private GameSession engine;
   private GameState gameState;
   private CardsDeckInterface cardsDeck;
 
   @BeforeEach
   void setUp() {
-    engine = new GameSession();
+    GameSession engine = new GameSession();
     gameState = engine.getGameState();
     cardsDeck = engine.getCardsDeck();
 
