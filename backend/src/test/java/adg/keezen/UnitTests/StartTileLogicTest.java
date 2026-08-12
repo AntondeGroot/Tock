@@ -18,15 +18,12 @@ class StartTileLogicTest {
 
   PositionKey startTileId;
 
-  private GameSession engine;
   private GameState gameState;
-  private CardsDeckInterface cardsDeck;
 
   @BeforeEach
   void setup() {
-    engine = new GameSession();
+    GameSession engine = new GameSession();
     gameState = engine.getGameState();
-    cardsDeck = engine.getCardsDeck();
 
     createGame_With_NPlayers(gameState, 3);
     startTileId = new PositionKey("0", 0);

@@ -30,13 +30,12 @@ public class TurnBasedTest {
   ArrayList<String> activePlayers = new ArrayList<>();
   HashMap<String, Integer> nrCardsPerPlayer = new HashMap<>();
 
-  private GameSession engine;
   private GameState gameState;
   private CardsDeckInterface cardsDeck;
 
   @BeforeEach
   void setUp() {
-    engine = new GameSession();
+    GameSession engine = new GameSession();
     gameState = engine.getGameState();
     cardsDeck = engine.getCardsDeck();
 

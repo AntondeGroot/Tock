@@ -22,12 +22,11 @@ import org.junit.jupiter.api.Test;
 /** Lifecycle bookkeeping: clearResponse, the must-play timeout, and reset. */
 class GameStateLifecycleTest {
 
-  private GameSession engine;
   private GameState gameState;
 
   @BeforeEach
   void setUp() {
-    engine = new GameSession();
+    GameSession engine = new GameSession();
     gameState = engine.getGameState();
     createGame_With_NPlayers(gameState, 4);
   }

@@ -19,12 +19,10 @@ import org.junit.jupiter.api.Test;
  */
 class MissingTilesTest {
 
-  private GameState gameState;
-
   @BeforeEach
   void setUp() {
     GameSession engine = new GameSession();
-    gameState = engine.getGameState();
+    GameState gameState = engine.getGameState();
 
     gameState.stop();
     gameState.addPlayer(new Player("player0", "0"));

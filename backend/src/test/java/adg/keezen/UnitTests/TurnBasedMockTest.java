@@ -41,13 +41,12 @@ public class TurnBasedMockTest {
   ArrayList<String> activePlayers = new ArrayList<>();
   HashMap<String, Integer> nrCardsPerPlayer = new HashMap<>();
 
-  private GameSession engine;
   private GameState gameState;
   private CardsDeckInterface cardsDeck;
 
   @BeforeEach
   void setUp() {
-    engine = new GameSession(new CardsDeckMock());
+    GameSession engine = new GameSession(new CardsDeckMock());
     gameState = engine.getGameState();
     cardsDeck = engine.getCardsDeck();
 
