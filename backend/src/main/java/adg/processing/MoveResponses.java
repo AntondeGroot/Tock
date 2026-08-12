@@ -14,16 +14,15 @@ final class MoveResponses {
 
   private MoveResponses() {}
 
-  static boolean reject(MoveResponse response, MoveResult result, MoveRejectionReason reason) {
+  static void reject(MoveResponse response, MoveResult result, MoveRejectionReason reason) {
     response.setResult(result);
     response.setRejectionReason(reason);
-    return false;
   }
 
-  static boolean reject(
+  static void reject(
       MoveResponse response, MoveResult result, MoveRejectionReason reason, Integer detail) {
     response.setRejectionDetail(detail);
-    return reject(response, result, reason);
+    reject(response, result, reason);
   }
 
   /**
@@ -33,7 +32,8 @@ final class MoveResponses {
    */
   static boolean requireCardHeld(GameState gs, String playerId, Card card, MoveResponse response) {
     if (!gs.playerHasCard(playerId, card)) {
-      return reject(response, MoveResult.PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.DONT_HAVE_CARD);
+      reject(response, MoveResult.PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.DONT_HAVE_CARD);
+      return false;
     }
     return true;
   }

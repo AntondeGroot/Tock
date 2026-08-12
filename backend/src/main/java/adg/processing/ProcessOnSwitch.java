@@ -49,7 +49,8 @@ public class ProcessOnSwitch {
   private static boolean selectionIsValid(
       Pawn pawn1, Pawn pawn2, Card card, MoveResponse response) {
     if (pawn1 == null || card == null || pawn2 == null) {
-      return reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
     }
     return true;
   }
@@ -59,7 +60,8 @@ public class ProcessOnSwitch {
     if (Objects.equals(
         moveMessage.getPawn1Id().getPlayerId(),
         moveMessage.getPawn2Id().getPlayerId())) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_SWITCH_OWN_PAWNS);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_SWITCH_OWN_PAWNS);
+      return false;
     }
     return true;
   }
@@ -68,7 +70,8 @@ public class ProcessOnSwitch {
       GameState gs, String playerId, Pawn pawn1, Pawn pawn2, MoveResponse response) {
     // You must control one of the two pawns — your own, or a teammate's once your own are home.
     if (!gs.mayControlPawn(playerId, pawn1) && !gs.mayControlPawn(playerId, pawn2)) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.NOT_YOUR_PAWN);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.NOT_YOUR_PAWN);
+      return false;
     }
     return true;
   }
@@ -76,7 +79,8 @@ public class ProcessOnSwitch {
   private static boolean pawnsAreOnBoard(Pawn pawn1, Pawn pawn2, MoveResponse response) {
     if (isPawnOnNest(pawn1) || isPawnOnNest(pawn2)
         || isPawnOnFinish(pawn1) || isPawnOnFinish(pawn2)) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_NOT_ON_BOARD);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_NOT_ON_BOARD);
+      return false;
     }
     return true;
   }
@@ -84,7 +88,8 @@ public class ProcessOnSwitch {
   private static boolean pawn2IsNotOnOwnStart(Pawn pawn2, MoveResponse response) {
     PositionKey tile2 = pawn2.getCurrentTileId();
     if (tile2.getPlayerId().equals(pawn2.getPlayerId()) && tile2.getTileNr() == 0) {
-      return reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_SWITCH_OPPONENT_ON_OWN_START);
+      reject(response, CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_SWITCH_OPPONENT_ON_OWN_START);
+      return false;
     }
     return true;
   }
