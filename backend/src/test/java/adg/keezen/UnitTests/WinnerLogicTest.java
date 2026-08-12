@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 class WinnerLogicTest {
 
-  ArrayList<String> winners = new ArrayList<>();
+  final ArrayList<String> winners = new ArrayList<>();
 
   private GameState gameState;
   private CardsDeckInterface cardsDeck;

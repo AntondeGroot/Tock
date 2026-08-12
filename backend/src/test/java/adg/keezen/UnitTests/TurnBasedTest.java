@@ -27,7 +27,7 @@ public class TurnBasedTest {
 
   MoveRequest moveMessage = new MoveRequest();
   MoveResponse moveResponse = new MoveResponse();
-  ArrayList<String> activePlayers = new ArrayList<>();
+  final ArrayList<String> activePlayers = new ArrayList<>();
   HashMap<String, Integer> nrCardsPerPlayer = new HashMap<>();
 
   private GameState gameState;
