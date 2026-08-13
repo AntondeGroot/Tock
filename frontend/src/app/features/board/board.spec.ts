@@ -112,6 +112,63 @@ describe('Board', () => {
     expect(c.controllablePlayerIds()).toEqual(['1']);
   });
 
+  // The play button is the one that would otherwise be live off-turn: a full, valid selection
+  // survives the turn passing to someone else, so only the turn check can disable it.
+  it('disables the play button off-turn even with a card and a pawn selected', async () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      selection: {
+        setCard: (card: { id: number; value: number }) => void;
+        addPawnById: (id: string) => void;
+      };
+      touch: () => void;
+      canPlay: () => boolean;
+    };
+    const push = (currentPlayerId: string) => ({
+      players: teamPlayers,
+      pawns: [pawnOn('1', 0, 5)],
+      winners: [],
+      playerCards: [{ uuid: 7, suit: 0, value: 5 }],
+      currentPlayerId,
+    });
+
+    c.handleGameState(push('1')); // the viewer's own turn
+    await fixture.whenStable();
+    c.selection.setCard({ id: 7, value: 5 });
+    c.selection.addPawnById('1:0');
+    c.touch();
+    expect(c.canPlay()).toBe(true);
+
+    c.handleGameState(push('2')); // …and the turn moves on, selection untouched
+    await fixture.whenStable();
+    expect(c.canPlay()).toBe(false);
+  });
+
+  // Forfeit has its own server-sent permission (`canForfeit`), and it stays true for a player who
+  // has no legal move — so the turn check has to be an extra gate on top of it, not a substitute.
+  it('disables the forfeit button off-turn even when the server allows a forfeit', async () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      canForfeit: () => boolean;
+    };
+    const push = (currentPlayerId: string) => ({
+      players: teamPlayers,
+      pawns: [pawnOn('1', 0, 5)],
+      winners: [],
+      playerCards: [],
+      currentPlayerId,
+      canForfeit: true,
+    });
+
+    c.handleGameState(push('1')); // the viewer's own turn
+    await fixture.whenStable();
+    expect(c.canForfeit()).toBe(true);
+
+    c.handleGameState(push('2')); // …and the turn moves on
+    await fixture.whenStable();
+    expect(c.canForfeit()).toBe(false);
+  });
+
   // Card uuids are reused across rounds; the client pile must be cleared on a new deal or a
   // redealt card (whose uuid lingered in the pile) gets filtered out of the hand and vanishes.
   it('clears the pile on a new round so a redealt card is not filtered out of the hand', () => {

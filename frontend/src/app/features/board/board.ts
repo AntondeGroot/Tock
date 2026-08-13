@@ -38,6 +38,7 @@ import { MoveRejection } from './move-rejected/move-rejection.service';
 import { TeamHandoff } from './team-handoff/team-handoff.service';
 import { localRejectionKey, rejectionMessageKey } from './rejection-message';
 import { allPawnsHome, teammateOf } from './team-control';
+import { TransitionSounds } from './transition-sounds';
 
 @Component({
   selector: 'app-board',
@@ -186,6 +187,9 @@ export class Board implements OnInit, OnDestroy {
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
 
+  // Turn-change / medal sounds: fed every push, fires on the transition (see transition-sounds.ts).
+  private readonly transitionSounds = new TransitionSounds(this.sound);
+
   // The phone layout, matching the 699px breakpoint the SCSS uses. The 7-split control needs a
   // different PARENT on each layout — the button column on a desktop, a band under the hand on a
   // phone — and no stylesheet can move a node between parents, so the template branches on this.
@@ -210,7 +214,7 @@ export class Board implements OnInit, OnDestroy {
     effect(() => this.flyOpponentPlays());
     effect(() => this.announceTeamHandoff());
     effect(() => this.teamTrade.reactToOutcome());
-    effect(() => this.playTransitionSounds());
+    effect(() => this.transitionSounds.react(this.state()));
   }
 
   /**
@@ -274,28 +278,6 @@ export class Board implements OnInit, OnDestroy {
     }
     this.prevMayPlayTeammatePawns = mayPlay;
   }
-
-  /**
-   * Sound effects (ported from the GWT AudioPlayer): a soft click when the turn passes to a new
-   * player, and a fanfare when a player finishes (gains a place). Fires on the transition.
-   */
-  private playTransitionSounds(): void {
-    const s = this.state();
-    const cur = s?.currentPlayerId;
-    if (cur && this.prevCurrentPlayerId !== undefined && cur !== this.prevCurrentPlayerId) {
-      this.sound.play('turnChange');
-    }
-    if (cur) this.prevCurrentPlayerId = cur;
-
-    const medals = (s?.players ?? []).filter((p) => (p.place ?? -1) > -1).length;
-    if (this.prevMedalCount >= 0 && medals > this.prevMedalCount) {
-      this.sound.play('medalAwarded');
-    }
-    this.prevMedalCount = medals;
-  }
-
-  private prevCurrentPlayerId: string | undefined;
-  private prevMedalCount = -1;
 
   private prevMayPlayTeammatePawns = false;
 
@@ -372,14 +354,24 @@ export class Board implements OnInit, OnDestroy {
   );
   protected readonly stepsPawn1 = computed(() => (this.rev(), this.selection.getNrStepsPawn1()));
   protected readonly stepsPawn2 = computed(() => (this.rev(), this.selection.getNrStepsPawn2()));
+  /** Both action buttons are dead outside your own turn — the server refuses those moves anyway. */
+  protected readonly isMyTurn = computed(
+    () => this.viewerId != null && this.state()?.currentPlayerId === this.viewerId,
+  );
+
   protected readonly canPlay = computed(
-    () => (this.rev(), this.selection.getCard() != null && this.selection.getPawn1() != null),
+    () => (
+      this.rev(),
+      this.isMyTurn() && this.selection.getCard() != null && this.selection.getPawn1() != null
+    ),
   );
 
   // The backend allows a forfeit only when the player has no legal move; when they
   // do have one they must play it, so the Forfeit button is disabled. Defaults to
   // enabled until a state with the flag arrives (don't lock the player out).
-  protected readonly canForfeit = computed(() => this.state()?.canForfeit ?? true);
+  protected readonly canForfeit = computed(
+    () => this.isMyTurn() && (this.state()?.canForfeit ?? true),
+  );
 
   protected selectCard(uuid: number): void {
     const handCard = this.hand().find((c) => c.uuid === uuid);
