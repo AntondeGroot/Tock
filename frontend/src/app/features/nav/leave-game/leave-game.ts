@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { PlayersService } from '../../../api';
 import { Translations } from '../../../i18n/translations.service';
 import { resolveGameSession } from '../../../session';
@@ -14,7 +14,7 @@ import { resolveGameSession } from '../../../session';
   templateUrl: './leave-game.html',
   styleUrl: './leave-game.scss',
 })
-export class LeaveGame {
+export class LeaveGame implements OnInit, OnDestroy {
   protected readonly i18n = inject(Translations);
   private readonly players = inject(PlayersService);
   private readonly session = resolveGameSession();
@@ -24,6 +24,32 @@ export class LeaveGame {
 
   /** Whether the "Leave game?" confirm dialog is open. */
   protected readonly confirming = signal(false);
+
+  /**
+   * The browser's Back button must not drop you out of a running game without asking — it gets the
+   * same confirm dialog as the Leave button. There is no router to guard, so this rides the History
+   * API: a sentinel entry is pushed on top of the game page, and popping it (Back) pushes it
+   * straight back — keeping us on the page — and opens the dialog. Cancelling therefore leaves the
+   * guard armed for the next Back; confirming leaves for real via confirmLeave().
+   */
+  private readonly onPopState = (): void => {
+    this.armBackGuard();
+    this.ask();
+  };
+
+  ngOnInit(): void {
+    if (!this.inGame) return;
+    this.armBackGuard();
+    window.addEventListener('popstate', this.onPopState);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('popstate', this.onPopState);
+  }
+
+  private armBackGuard(): void {
+    history.pushState({ keezenBackGuard: true }, '', location.href);
+  }
 
   protected ask(): void {
     this.confirming.set(true);
