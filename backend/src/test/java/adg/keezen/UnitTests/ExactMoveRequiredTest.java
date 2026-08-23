@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSplit;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRejectionReason;
 import com.adg.openapi.model.MoveRequest;
@@ -70,7 +72,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -89,7 +91,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -112,7 +114,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -131,7 +133,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -155,7 +157,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -174,7 +176,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -198,7 +200,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -219,7 +221,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -242,7 +244,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -259,7 +261,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN — 14 + 5 = 19, no bounce
     assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -282,7 +284,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN — valid forward move, no ping-pong required
     assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -303,7 +305,7 @@ class ExactMoveRequiredTest {
 
     // WHEN: pawn1 moves 1 step (18→19), pawn2 moves 6 steps
     createSplitMessage(moveMessage, pawn1, 1, pawn2, 6, card);
-    gameState.processOnSplit(moveMessage, moveResponse);
+    ProcessOnSplit.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -325,7 +327,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -348,7 +350,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createSplitMessage(moveMessage, pawn1, 3, pawn2, 4, card);
-    gameState.processOnSplit(moveMessage, moveResponse);
+    ProcessOnSplit.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -369,7 +371,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertNotEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -391,7 +393,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -410,7 +412,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -432,7 +434,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -450,7 +452,7 @@ class ExactMoveRequiredTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());

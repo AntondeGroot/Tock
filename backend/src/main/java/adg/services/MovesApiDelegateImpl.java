@@ -6,6 +6,10 @@ import static com.adg.openapi.model.TempMessageType.MAKE_MOVE;
 import adg.keezen.GameRegistry;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnBoard;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSplit;
+import adg.processing.ProcessOnSwitch;
 import adg.processing.SevenSplitRecommender;
 import adg.util.PawnAndCardSelectionValidation;
 import adg.util.SelectionValidation;
@@ -115,10 +119,10 @@ public class MovesApiDelegateImpl implements MovesApiDelegate {
       return new ResponseEntity<>(response, HttpStatus.OK);
     }
     switch (validation.getMoveType()) {
-      case MOVE -> gameState.processOnMove(moveRequest, response);
-      case SPLIT -> gameState.processOnSplit(moveRequest, response);
-      case SWITCH -> gameState.processOnSwitch(moveRequest, response);
-      case ON_BOARD -> gameState.processOnBoard(moveRequest, response);
+      case MOVE -> ProcessOnMove.process(gameState, moveRequest, response);
+      case SPLIT -> ProcessOnSplit.process(gameState, moveRequest, response);
+      case SWITCH -> ProcessOnSwitch.process(gameState, moveRequest, response);
+      case ON_BOARD -> ProcessOnBoard.process(gameState, moveRequest, response);
     }
 
     if (moveRequest.getTempMessageType() == MAKE_MOVE) {

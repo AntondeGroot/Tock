@@ -4,7 +4,9 @@ import static adg.util.BoardLogic.isPawnOnFinish;
 
 import com.adg.openapi.model.Pawn;
 import com.adg.openapi.model.PawnId;
+import com.adg.openapi.model.Player;
 import com.adg.openapi.model.PositionKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -50,6 +52,35 @@ class PawnLocations {
         .filter(pawn -> playerId.equals(pawn.getPlayerId()))
         .filter(pawn -> isPawnOnFinish(pawn))
         .count() == PAWNS_PER_PLAYER;
+  }
+
+  /**
+   * A fresh set of pawns for these players: {@value #PAWNS_PER_PLAYER} each, every pawn starting on
+   * its own nest tile. Returns a new list rather than mutating in place because a restart replaces
+   * the board wholesale.
+   */
+  ArrayList<Pawn> createFor(List<Player> players) {
+    ArrayList<Pawn> created = new ArrayList<>();
+    for (Player player : players) {
+      for (int pawnNr = 0; pawnNr < PAWNS_PER_PLAYER; pawnNr++) {
+        PositionKey nestPosition = new PositionKey(player.getId(), -1 - pawnNr);
+        created.add(
+            new Pawn(player.getId(), new PawnId(player.getId(), pawnNr), nestPosition, nestPosition));
+      }
+    }
+    return created;
+  }
+
+  /** Send every pawn back to its nest, keeping the same pawn objects (used by a round reset). */
+  void resetAllToNest() {
+    for (Pawn pawn : pawns.get()) {
+      pawn.setCurrentTileId(pawn.getNestTileId());
+    }
+  }
+
+  /** Take every one of this player's pawns off the board — they have left the game for good. */
+  void removeAllFor(String playerId) {
+    pawns.get().removeIf(pawn -> playerId.equals(pawn.getPlayerId()));
   }
 
   /** Set a pawn's location without any validation (matched by pawn id). */

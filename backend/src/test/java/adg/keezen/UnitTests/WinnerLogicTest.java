@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -106,7 +107,7 @@ class WinnerLogicTest {
     // WHEN the last card (Ace) is played to move pawn 3 into the finish lane
     MoveRequest moveRequest = new MoveRequest();
     createMoveRequest(moveRequest, pawn3, ace);
-    gameState.processOnMove(moveRequest, new MoveResponse());
+    ProcessOnMove.process(gameState, moveRequest, new MoveResponse());
 
     // THEN player "0" won, hand is emptied, next player plays
     assertTrue(gameState.getWinners().contains("0"));
@@ -133,7 +134,7 @@ class WinnerLogicTest {
     // WHEN player 2 wins by playing Ace
     MoveRequest req2 = new MoveRequest();
     createMoveRequest(req2, pawn2_3, ace2);
-    gameState.processOnMove(req2, new MoveResponse());
+    ProcessOnMove.process(gameState, req2, new MoveResponse());
 
     // THEN a new round started; player 1 has the turn (next after player 0 who started round 1)
     assertTrue(gameState.getWinners().contains("2"));
@@ -149,7 +150,7 @@ class WinnerLogicTest {
     // WHEN player 1 wins by playing Ace
     MoveRequest req1 = new MoveRequest();
     createMoveRequest(req1, pawn1_3, ace1);
-    gameState.processOnMove(req1, new MoveResponse());
+    ProcessOnMove.process(gameState, req1, new MoveResponse());
 
     // THEN it's player 0's turn and no winner is shown as playing or active
     assertTrue(gameState.getWinners().contains("1"));
@@ -201,7 +202,7 @@ class WinnerLogicTest {
     // WHEN player "1" plays the Ace to move their last pawn into the finish
     MoveRequest moveRequest = new MoveRequest();
     createMoveRequest(moveRequest, pawn1_3, ace);
-    gameState.processOnMove(moveRequest, new MoveResponse());
+    ProcessOnMove.process(gameState, moveRequest, new MoveResponse());
 
     // THEN player "1" wins with place 1, and player "0" does NOT receive a medal
     assertTrue(gameState.getWinners().contains("1"), "Player 1 (blue) should be in the winners list");
@@ -231,7 +232,7 @@ class WinnerLogicTest {
     // WHEN player "0" plays the Ace to move their last pawn into the finish
     MoveRequest moveRequest = new MoveRequest();
     createMoveRequest(moveRequest, pawn0_3, ace);
-    gameState.processOnMove(moveRequest, new MoveResponse());
+    ProcessOnMove.process(gameState, moveRequest, new MoveResponse());
 
     // THEN player "0" wins with place 1, and player "1" does NOT receive a medal
     assertTrue(gameState.getWinners().contains("0"), "Player 0 (red) should be in the winners list");

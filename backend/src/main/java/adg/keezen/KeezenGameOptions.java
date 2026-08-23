@@ -1,6 +1,6 @@
 package adg.keezen;
 
-import adg.Log;
+import adg.util.Log;
 import com.adg.openapi.model.GameOption;
 import com.adg.openapi.model.GameOption.TypeEnum;
 import java.util.List;

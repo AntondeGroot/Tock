@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
-import adg.Log;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSwitch;
+import adg.util.Log;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -55,7 +57,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -75,7 +77,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -95,7 +97,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -118,7 +120,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -137,7 +139,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -158,7 +160,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -182,7 +184,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -202,7 +204,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -225,7 +227,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -246,7 +248,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -271,7 +273,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -301,7 +303,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovementPawn1 = new LinkedList<>();
@@ -337,7 +339,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn2, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -366,7 +368,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -394,7 +396,7 @@ public class PawnAnimationTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();

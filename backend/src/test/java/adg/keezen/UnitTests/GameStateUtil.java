@@ -7,6 +7,7 @@ import static com.adg.openapi.model.TempMessageType.MAKE_MOVE;
 
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -151,7 +152,7 @@ public class GameStateUtil {
 
     // process
     MoveResponse moveResponse = new MoveResponse();
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
   }
 
   public static void playRemainingCards(

@@ -18,6 +18,9 @@ import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
 import adg.processing.MoveAvailabilityChecker;
+import adg.processing.ProcessOnBoard;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSplit;
 import adg.processing.SevenSplitRecommender;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRejectionReason;
@@ -98,7 +101,7 @@ class TeamMatePawnMoveTest {
     Pawn pawn = teamMatePawnAt(gameState, new PositionKey("1", 14));
 
     // WHEN the mover plays it three steps forward
-    gameState.processOnMove(moveByMover(pawn, card), moveResponse);
+    ProcessOnMove.process(gameState, moveByMover(pawn, card), moveResponse);
 
     // THEN it turns into its own finish, rather than travelling on over its own start tile
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -114,7 +117,7 @@ class TeamMatePawnMoveTest {
     Pawn pawn = teamMatePawnAt(gameState, new PositionKey("3", 14));
 
     // WHEN the mover plays it three steps forward
-    gameState.processOnMove(moveByMover(pawn, card), moveResponse);
+    ProcessOnMove.process(gameState, moveByMover(pawn, card), moveResponse);
 
     // THEN it simply walks on over the mover's start tile; the mover's finish is not its finish
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -131,7 +134,7 @@ class TeamMatePawnMoveTest {
     // WHEN the mover brings it onto the board
     MoveRequest request = moveByMover(pawn, king);
     request.setMoveType(ON_BOARD);
-    gameState.processOnBoard(request, moveResponse);
+    ProcessOnBoard.process(gameState, request, moveResponse);
 
     // THEN it appears on the teammate's own start tile, not on the mover's
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -149,7 +152,7 @@ class TeamMatePawnMoveTest {
     placePawnOnBoard(gameState, new PawnId(TEAM_MATE, 1), new PositionKey(TEAM_MATE, 18));
 
     // WHEN the mover plays it three steps, overshooting that wall
-    gameState.processOnMove(moveByMover(pawn, card), moveResponse);
+    ProcessOnMove.process(gameState, moveByMover(pawn, card), moveResponse);
 
     // THEN it advances up the teammate's lane to 17 and bounces back to 16
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -168,7 +171,7 @@ class TeamMatePawnMoveTest {
     placePawnOnBoard(gameState, new PawnId(TEAM_MATE, 1), new PositionKey(TEAM_MATE, 18));
 
     // WHEN the mover plays it three steps, which cannot land cleanly
-    gameState.processOnMove(moveByMover(pawn, card), moveResponse);
+    ProcessOnMove.process(gameState, moveByMover(pawn, card), moveResponse);
 
     // THEN the move is refused rather than bounced, and the pawn has not budged
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -190,7 +193,7 @@ class TeamMatePawnMoveTest {
     request.setPawn2Id(second.getPawnId());
     request.setStepsPawn1(3);
     request.setStepsPawn2(4);
-    gameState.processOnSplit(request, moveResponse);
+    ProcessOnSplit.process(gameState, request, moveResponse);
 
     // THEN the split is played from the mover's hand — the teammate need not hold the card
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());

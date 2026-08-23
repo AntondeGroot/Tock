@@ -2,6 +2,7 @@ package adg;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -47,4 +48,28 @@ class ArchitectureTest {
           .areAnnotatedWith(Service.class)
           .should()
           .resideInAPackage("adg.services..");
+
+  /**
+   * Feature packages must form a DAG. Without this, a convenience delegate on one side of a
+   * boundary quietly turns a one-way dependency into a cycle.
+   */
+  @ArchTest
+  static final ArchRule featurePackagesAreFreeOfCycles =
+      slices().matching("adg.(*)..").should().beFreeOfCycles();
+
+  /**
+   * The root package composes the application (entry point, servlet filters); feature packages
+   * must never depend back up onto it. Shared helpers belong in adg.util, not in the root.
+   *
+   * <p>Note: classes directly in "adg" are invisible to the slice rule above (a slice needs at
+   * least one subpackage), so this cycle needs its own rule.
+   */
+  @ArchTest
+  static final ArchRule featurePackagesDoNotDependOnTheApplicationRoot =
+      noClasses()
+          .that()
+          .resideInAnyPackage("adg.keezen..", "adg.processing..", "adg.services..", "adg.util..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("adg");
 }

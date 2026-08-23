@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -56,7 +57,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -77,7 +78,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -93,7 +94,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -113,7 +114,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -133,7 +134,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -153,7 +154,7 @@ class MovingOnBoardSamePlayerBlockingTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());

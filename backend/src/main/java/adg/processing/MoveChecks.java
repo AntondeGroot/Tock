@@ -27,7 +27,7 @@ final class MoveChecks {
     req.setMoveType(MOVE);
     req.setTempMessageType(CHECK_MOVE);
     MoveResponse resp = new MoveResponse();
-    gs.processOnMove(req, resp);
+    ProcessOnMove.process(gs, req, resp);
     return resp;
   }
 }

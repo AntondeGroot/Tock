@@ -39,7 +39,7 @@ public class ProcessOnBoard {
 
     response.setPawn1(pawn1);
     response.setMovePawn1(buildMovePath(currentTileId, targetTileId));
-    gs.processMove(pawn1, targetTileId, moveMessage, response);
+    MoveExecutor.execute(gs, pawn1, targetTileId, moveMessage, response);
   }
 
   private static boolean selectionIsValid(Pawn pawn1, Card card, MoveResponse response) {

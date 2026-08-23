@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -57,7 +58,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response is correct
     assertEquals(
@@ -79,7 +80,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn2, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response is correct
     assertEquals(
@@ -101,7 +102,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(
@@ -123,7 +124,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn2, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(
@@ -145,7 +146,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn2, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(
@@ -167,7 +168,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -187,7 +188,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -207,7 +208,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -227,7 +228,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, ace);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -246,7 +247,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -264,7 +265,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -283,7 +284,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -303,7 +304,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -323,7 +324,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertNull(moveResponse.getPawn1()); // moves the correct pawn
@@ -342,7 +343,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertTrue(moveResponse.getMovePawn1().isEmpty());
@@ -360,7 +361,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertNull(moveResponse.getPawn1());
@@ -378,7 +379,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(pawn1.getPawnId(), moveResponse.getPawn1().getPawnId());
@@ -398,7 +399,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertTrue(moveResponse.getMovePawn1().isEmpty()); // moves the pawn to the correct tile
@@ -416,7 +417,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(pawn1.getPawnId(), moveResponse.getPawn1().getPawnId());
@@ -435,7 +436,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(pawn1.getPawnId(), moveResponse.getPawn1().getPawnId());
@@ -454,7 +455,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(pawn1.getPawnId(), moveResponse.getPawn1().getPawnId());
@@ -473,7 +474,7 @@ class MovingOverStartTileTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(pawn1.getPawnId(), moveResponse.getPawn1().getPawnId());

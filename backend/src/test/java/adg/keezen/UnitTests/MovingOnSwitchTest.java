@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnSwitch;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -59,7 +60,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals("1", gameState.getPlayerIdTurn());
@@ -84,7 +85,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals("1", gameState.getPlayerIdTurn());
@@ -102,7 +103,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(tileId2, moveResponse.getMovePawn1().getLast());
@@ -124,7 +125,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(tileId2, moveResponse.getMovePawn1().getLast());
@@ -148,7 +149,7 @@ class MovingOnSwitchTest {
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
     moveMessage.setPlayerId("2"); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -171,7 +172,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -194,7 +195,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -217,7 +218,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -240,7 +241,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -263,7 +264,7 @@ class MovingOnSwitchTest {
 
     // WHEN green plays a Jack to switch with the red pawn (not on its OWN start)
     createSwitchMessage(moveMessage, greenPawn, redPawn, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN the switch is allowed
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
@@ -281,7 +282,7 @@ class MovingOnSwitchTest {
 
     // WHEN
     createSwitchMessage(moveMessage, pawn1, pawn2, card); // request is made from unrelated player
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     // THEN: response message is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -300,7 +301,7 @@ class MovingOnSwitchTest {
     assertEquals(5, cardsDeck.getCardsForPlayer("0").size());
 
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     assertEquals(4, cardsDeck.getCardsForPlayer("0").size());
     assertEquals("1", gameState.getPlayerIdTurn());
@@ -315,7 +316,7 @@ class MovingOnSwitchTest {
 
     createSwitchMessage(moveMessage, pawn1, pawn2, card);
     moveMessage.setTempMessageType(TempMessageType.CHECK_MOVE);
-    gameState.processOnSwitch(moveMessage, moveResponse);
+    ProcessOnSwitch.process(gameState, moveMessage, moveResponse);
 
     assertEquals(5, cardsDeck.getCardsForPlayer("0").size());
     assertEquals("0", gameState.getPlayerIdTurn());
