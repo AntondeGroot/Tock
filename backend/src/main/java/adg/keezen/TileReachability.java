@@ -1,6 +1,6 @@
 package adg.keezen;
 
-import adg.Log;
+import adg.util.Log;
 import com.adg.openapi.model.Pawn;
 import com.adg.openapi.model.PositionKey;
 import java.util.ArrayList;

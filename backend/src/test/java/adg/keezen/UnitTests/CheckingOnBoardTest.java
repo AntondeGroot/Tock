@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnBoard;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -56,7 +57,7 @@ public class CheckingOnBoardTest {
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
     moveMessage.setTempMessageType(TempMessageType.CHECK_MOVE);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(nrCards, cardsDeck.getCardsForPlayer("0").size());
@@ -72,7 +73,7 @@ public class CheckingOnBoardTest {
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
     moveMessage.setTempMessageType(TempMessageType.CHECK_MOVE);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
   }

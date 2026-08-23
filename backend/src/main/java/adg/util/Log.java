@@ -1,4 +1,4 @@
-package adg;
+package adg.util;
 
 /***
  * do not System.out.println() when in CI environment

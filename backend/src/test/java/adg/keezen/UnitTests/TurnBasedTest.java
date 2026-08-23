@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnSplit;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -241,7 +242,7 @@ public class TurnBasedTest {
     //
     //        // process
     //        MoveResponse moveResponse = new MoveResponse();
-    //        gameState.processOnMove(moveMessage, moveResponse);
+    //        ProcessOnMove.process(gameState, moveMessage, moveResponse);
     //
     //        // THEN
     //        assertNull(moveResponse.getMovePawn1());
@@ -561,7 +562,7 @@ public class TurnBasedTest {
     createSplitMessage(moveMessage, pawn1, 3, pawn2, 4, card);
     // process
     MoveResponse moveResponse = new MoveResponse();
-    gameState.processOnSplit(moveMessage, moveResponse);
+    ProcessOnSplit.process(gameState, moveMessage, moveResponse);
 
     assertEquals(CAN_MAKE_MOVE, moveResponse.getResult());
     assertEquals("1", gameState.getPlayerIdTurn());

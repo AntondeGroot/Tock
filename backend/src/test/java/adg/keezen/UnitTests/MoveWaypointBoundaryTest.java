@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -52,7 +53,7 @@ class MoveWaypointBoundaryTest {
     Card card = givePlayerCard(cardsDeck, 0, cardValue);
     Pawn pawn1 = placePawnOnNest(gameState, "0", new PositionKey("0", startTile));
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
     return moveResponse.getMovePawn1();
   }
 

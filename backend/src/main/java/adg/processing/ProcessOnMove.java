@@ -8,7 +8,7 @@ import static com.adg.openapi.model.MoveResult.PLAYER_DOES_NOT_HAVE_CARD;
 import static com.adg.openapi.model.MoveType.MOVE;
 
 import adg.keezen.GameState;
-import adg.Log;
+import adg.util.Log;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRejectionReason;
 import com.adg.openapi.model.MoveRequest;

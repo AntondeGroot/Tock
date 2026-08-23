@@ -10,6 +10,10 @@ import adg.keezen.CardsDeckInterface;
 import adg.keezen.CardsDeckMock;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnBoard;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSplit;
+import adg.processing.ProcessOnSwitch;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -50,7 +54,7 @@ public class GameStateVersionTest {
     MoveRequest request = new MoveRequest();
     createMoveRequest(request, pawn, card);
     MoveResponse response = new MoveResponse();
-    gameState.processOnMove(request, response);
+    ProcessOnMove.process(gameState, request, response);
 
     assertEquals(CAN_MAKE_MOVE, response.getResult());
     assertEquals(versionBefore + 1, gameState.getVersion());
@@ -67,7 +71,7 @@ public class GameStateVersionTest {
     MoveRequest request = new MoveRequest();
     createSwitchMessage(request, pawn0, pawn1, jack);
     MoveResponse response = new MoveResponse();
-    gameState.processOnSwitch(request, response);
+    ProcessOnSwitch.process(gameState, request, response);
 
     assertEquals(CAN_MAKE_MOVE, response.getResult());
     assertEquals(versionBefore + 1, gameState.getVersion());
@@ -87,7 +91,7 @@ public class GameStateVersionTest {
     request.setCardId(ace.getUuid());
     request.setTempMessageType(MAKE_MOVE);
     MoveResponse response = new MoveResponse();
-    gameState.processOnBoard(request, response);
+    ProcessOnBoard.process(gameState, request, response);
 
     assertEquals(CAN_MAKE_MOVE, response.getResult());
     assertEquals(versionBefore + 1, gameState.getVersion());
@@ -104,7 +108,7 @@ public class GameStateVersionTest {
     MoveRequest request = new MoveRequest();
     createSplitMessage(request, pawn0, 3, pawn1, 4, seven);
     MoveResponse response = new MoveResponse();
-    gameState.processOnSplit(request, response);
+    ProcessOnSplit.process(gameState, request, response);
 
     assertEquals(CAN_MAKE_MOVE, response.getResult());
     assertEquals(versionBefore + 1, gameState.getVersion());
@@ -122,7 +126,7 @@ public class GameStateVersionTest {
     request.setTempMessageType(CHECK_MOVE); // override to check-only
 
     MoveResponse response = new MoveResponse();
-    gameState.processOnMove(request, response, false);
+    ProcessOnMove.process(gameState, request, response, false);
 
     assertEquals(CAN_MAKE_MOVE, response.getResult());
     assertEquals(versionBefore, gameState.getVersion());

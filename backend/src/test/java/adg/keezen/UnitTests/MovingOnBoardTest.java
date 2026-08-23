@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnBoard;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -57,7 +58,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, ace);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN
     // response message is correct
@@ -77,7 +78,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, ace);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals("1", gameState.getPlayerIdTurn());
@@ -98,7 +99,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, ace);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals("1", gameState.getPlayerIdTurn());
@@ -113,7 +114,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, ace);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -131,7 +132,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, ace);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
@@ -149,7 +150,7 @@ class MovingOnBoardTest {
 
     // WHEN
     createOnBoardMessage("0", pawn1, king);
-    gameState.processOnBoard(moveMessage, moveResponse);
+    ProcessOnBoard.process(gameState, moveMessage, moveResponse);
 
     // THEN response msg is correct
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());

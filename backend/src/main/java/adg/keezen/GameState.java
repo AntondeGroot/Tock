@@ -6,11 +6,7 @@ import static com.adg.openapi.model.MoveResult.CANNOT_MAKE_MOVE;
 import static com.adg.openapi.model.MoveResult.CAN_MAKE_MOVE;
 import static com.adg.openapi.model.MoveResult.PLAYER_DOES_NOT_HAVE_CARD;
 
-import adg.Log;
-import adg.processing.ProcessOnBoard;
-import adg.processing.ProcessOnMove;
-import adg.processing.ProcessOnSplit;
-import adg.processing.ProcessOnSwitch;
+import adg.util.Log;
 import adg.util.PlayerStatus;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
@@ -338,26 +334,6 @@ public final class GameState {
   }
 
   // ── Move processing ───────────────────────────────────────────────────────
-
-  public void processOnMove(MoveRequest moveMessage, MoveResponse response) {
-    ProcessOnMove.process(this, moveMessage, response);
-  }
-
-  public void processOnMove(MoveRequest moveMessage, MoveResponse response, boolean goToNextPlayer) {
-    ProcessOnMove.process(this, moveMessage, response, goToNextPlayer);
-  }
-
-  public void processOnSplit(MoveRequest moveMessage, MoveResponse response) {
-    ProcessOnSplit.process(this, moveMessage, response);
-  }
-
-  public void processOnSwitch(MoveRequest moveMessage, MoveResponse moveResponse) {
-    ProcessOnSwitch.process(this, moveMessage, moveResponse);
-  }
-
-  public void processOnBoard(MoveRequest moveMessage, MoveResponse response) {
-    ProcessOnBoard.process(this, moveMessage, response);
-  }
 
   public void processMove(
       Pawn pawn, PositionKey targetTileId, MoveRequest moveMessage, MoveResponse response) {

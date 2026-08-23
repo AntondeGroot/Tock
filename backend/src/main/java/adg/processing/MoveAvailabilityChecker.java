@@ -124,7 +124,7 @@ public class MoveAvailabilityChecker {
   private static boolean tryOnBoard(GameState gs, String playerId, Card card, Pawn pawn) {
     MoveRequest req = checkRequest(playerId, card, pawn);
     MoveResponse resp = new MoveResponse();
-    gs.processOnBoard(req, resp);
+    ProcessOnBoard.process(gs, req, resp);
     return CAN_MAKE_MOVE.equals(resp.getResult());
   }
 
@@ -138,7 +138,7 @@ public class MoveAvailabilityChecker {
     req.setPawn2Id(opp.getPawnId());
     req.setMoveType(SWITCH);
     MoveResponse resp = new MoveResponse();
-    gs.processOnSwitch(req, resp);
+    ProcessOnSwitch.process(gs, req, resp);
     return CAN_MAKE_MOVE.equals(resp.getResult());
   }
 

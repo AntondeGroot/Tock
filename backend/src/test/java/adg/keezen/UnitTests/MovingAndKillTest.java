@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import adg.keezen.CardsDeckInterface;
 import adg.keezen.GameSession;
 import adg.keezen.GameState;
+import adg.processing.ProcessOnMove;
+import adg.processing.ProcessOnSplit;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
@@ -53,7 +55,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -76,7 +78,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
@@ -103,7 +105,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -126,7 +128,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -149,7 +151,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -172,7 +174,7 @@ class MovingAndKillTest {
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
-    gameState.processOnMove(moveMessage, moveResponse);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
 
     // THEN response message is correct
     assertEquals(
@@ -196,7 +198,7 @@ class MovingAndKillTest {
 
     // WHEN no decision was made how to split the 7 among the two pawns
     createSplitMessage(moveMessage, pawn1, 3, pawn2, 4, card);
-    gameState.processOnSplit(moveMessage, moveResponse);
+    ProcessOnSplit.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(otherPawn1.getNestTileId(), gameState.getPawn(otherPawn1).getCurrentTileId());
@@ -214,7 +216,7 @@ class MovingAndKillTest {
 
     // WHEN no decision was made how to split the 7 among the two pawns
     createSplitMessage(moveMessage, pawn1, 5, pawn2, 2, card);
-    gameState.processOnSplit(moveMessage, moveResponse);
+    ProcessOnSplit.process(gameState, moveMessage, moveResponse);
 
     // THEN
     assertEquals(otherPawn1.getNestTileId(), gameState.getPawn(otherPawn1).getCurrentTileId());
