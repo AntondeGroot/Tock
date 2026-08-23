@@ -339,7 +339,7 @@ public class ProcessOnMove {
     moves.clear();
     moves.addAll(pingpongmoves);
     response.setMovePawn1(moves);
-    gs.processMove(pawn1, pingpongmoves.getLast(), moveMessage, response, goToNextPlayer);
+    MoveExecutor.execute(gs, pawn1, pingpongmoves.getLast(), moveMessage, response, goToNextPlayer);
   }
 
   private void executeFinishMoveWithOvershootCheck() {
@@ -357,7 +357,7 @@ public class ProcessOnMove {
     addFinishReverseWaypoints(targetTileId);
     moves.add(targetTileId);
     response.setMovePawn1(moves);
-    gs.processMove(pawn1, targetTileId, moveMessage, response, goToNextPlayer);
+    MoveExecutor.execute(gs, pawn1, targetTileId, moveMessage, response, goToNextPlayer);
   }
 
   private void addFinishBounceWaypoint(int highestReachable) {
@@ -388,7 +388,7 @@ public class ProcessOnMove {
     }
     moves.add(targetTileId);
     response.setMovePawn1(moves);
-    gs.processMove(pawn1, targetTileId, moveMessage, response, goToNextPlayer);
+    MoveExecutor.execute(gs, pawn1, targetTileId, moveMessage, response, goToNextPlayer);
   }
 
   /**
@@ -426,7 +426,7 @@ public class ProcessOnMove {
     moves.add(nextTileId);
     if (gs.canMoveToTile(pawn1, nextTileId)) {
       response.setMovePawn1(moves);
-      gs.processMove(pawn1, nextTileId, moveMessage, response, goToNextPlayer);
+      MoveExecutor.execute(gs, pawn1, nextTileId, moveMessage, response, goToNextPlayer);
     } else {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_BLOCKED);
     }
@@ -435,6 +435,6 @@ public class ProcessOnMove {
   private void landOnTile(PositionKey targetTile) {
     moves.add(targetTile);
     response.setMovePawn1(moves);
-    gs.processMove(pawn1, targetTile, moveMessage, response, goToNextPlayer);
+    MoveExecutor.execute(gs, pawn1, targetTile, moveMessage, response, goToNextPlayer);
   }
 }

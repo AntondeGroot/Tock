@@ -25,18 +25,21 @@ class TurnOrder {
   private final Set<String> leavers;
   private final PlayerRoster roster;
   private final Runnable clearMustPlayBlocked;
+  private final Runnable dealRoundCards;
 
   TurnOrder(
       List<Player> players,
       List<String> winners,
       Set<String> leavers,
       PlayerRoster roster,
-      Runnable clearMustPlayBlocked) {
+      Runnable clearMustPlayBlocked,
+      Runnable dealRoundCards) {
     this.players = players;
     this.winners = winners;
     this.leavers = leavers;
     this.roster = roster;
     this.clearMustPlayBlocked = clearMustPlayBlocked;
+    this.dealRoundCards = dealRoundCards;
   }
 
   String getPlayerIdTurn() {
@@ -105,6 +108,29 @@ class TurnOrder {
       setPlayingPlayer(playerIdTurn);
     }
     // If activePlayers is empty, no one is set as playing (game is between rounds or over)
+  }
+
+  /** Open the next round: everyone still in play is active again, with fresh hands. */
+  void startNewRound() {
+    resetActivePlayers();
+    dealRoundCards.run();
+    nextRoundPlayer();
+  }
+
+  /**
+   * Drop the player from the round: if that leaves no one active, start a fresh round; otherwise
+   * remove them from the active list and, when {@code advanceTurn}, pass the turn to the next
+   * active player.
+   */
+  void dropFromRound(String playerId, boolean advanceTurn) {
+    if (allActivePlayersExhausted()) {
+      startNewRound();
+    } else {
+      removeActive(playerId);
+      if (advanceTurn) {
+        nextActivePlayer();
+      }
+    }
   }
 
   /** Clear the round's active list (used when the game stops). */

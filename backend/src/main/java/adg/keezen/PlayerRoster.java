@@ -1,8 +1,12 @@
 package adg.keezen;
 
+import adg.util.PlayerStatus;
 import com.adg.openapi.model.Player;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The player roster and seating order: look players up by id, find a teammate, and walk the turn
@@ -11,12 +15,68 @@ import java.util.Map;
  */
 class PlayerRoster {
 
+  private static final int MAX_PLAYERS = 8;
+
   private final List<Player> players;
   private final Map<String, Integer> playerColors;
 
   PlayerRoster(List<Player> players, Map<String, Integer> playerColors) {
     this.players = players;
     this.playerColors = playerColors;
+  }
+
+  /**
+   * Seat a new player, unless they are already seated or the table is full.
+   *
+   * @return whether the roster actually changed, so the caller can bump the state version.
+   */
+  boolean add(Player player) {
+    if (players.contains(player) || players.size() >= MAX_PLAYERS) {
+      return false;
+    }
+    PlayerStatus.setActive(player);
+    player.setPlace(-1);
+    player.isPlaying(false);
+    players.add(player);
+    return true;
+  }
+
+  /**
+   * Fix the seating order: each player's playerInt is their index in the (already shuffled) list,
+   * and the seat map holds the same index — the turn order reads it back from there.
+   */
+  void assignSeats() {
+    int seat = 0;
+    for (Player player : players) {
+      player.setPlayerInt(seat);
+      playerColors.put(player.getId(), seat);
+      seat++;
+    }
+  }
+
+  void activateAll() {
+    for (Player player : players) {
+      PlayerStatus.setActive(player);
+    }
+  }
+
+  /** Clear every player's finishing place, so a new round starts with nobody home. */
+  void clearPlaces() {
+    for (Player player : players) {
+      player.setPlace(-1);
+    }
+  }
+
+  ArrayList<String> activePlayerIds() {
+    return players.stream()
+        .filter(Player::getIsActive)
+        .map(Player::getId)
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  /** True once every seated player has left — an empty table does not count. */
+  boolean allHaveLeft(Set<String> leavers) {
+    return !players.isEmpty() && players.stream().allMatch(p -> leavers.contains(p.getId()));
   }
 
   Player findById(String playerId) {

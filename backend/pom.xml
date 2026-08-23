@@ -317,7 +317,7 @@
           <!-- RATCHET: current score ~72%. Floor raised 60 ... -> 69 -> 70; keep climbing toward 75-80 as weak tests are strengthened. -->
           <mutationThreshold>72</mutationThreshold>
           <avoidCallsTo>
-            <avoidCallsTo>adg.Log</avoidCallsTo>
+            <avoidCallsTo>adg.util.Log</avoidCallsTo>
           </avoidCallsTo>
           <jvmArgs>
             <jvmArg>--add-opens=java.base/java.lang=ALL-UNNAMED</jvmArg>
