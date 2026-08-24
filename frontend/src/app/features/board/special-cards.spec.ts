@@ -48,9 +48,9 @@ describe('Special cards: highlight + hint', () => {
 
     fixture = TestBed.createComponent(Board);
     i18n = TestBed.inject(Translations);
-    (fixture.componentInstance as unknown as { state: { set(v: GameStatePush): void } }).state.set(
-      stateWithHand(),
-    );
+    (
+      fixture.componentInstance as unknown as { handleGameState(v: GameStatePush): void }
+    ).handleGameState(stateWithHand());
     fixture.detectChanges();
   });
 

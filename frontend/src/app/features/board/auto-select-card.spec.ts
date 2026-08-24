@@ -55,9 +55,9 @@ describe('Auto-select card (AutoSelectCardBorder_IT)', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Board);
-    (fixture.componentInstance as unknown as { state: { set(v: GameStatePush): void } }).state.set(
-      stateOnlyKing(),
-    );
+    (
+      fixture.componentInstance as unknown as { handleGameState(v: GameStatePush): void }
+    ).handleGameState(stateOnlyKing());
     fixture.detectChanges();
   });
 

@@ -56,9 +56,9 @@ describe('Board rendering (Board_IT / MobileLocale_IT)', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Board);
-    (fixture.componentInstance as unknown as { state: { set(v: GameStatePush): void } }).state.set(
-      threePlayerState(),
-    );
+    (
+      fixture.componentInstance as unknown as { handleGameState(v: GameStatePush): void }
+    ).handleGameState(threePlayerState());
     fixture.detectChanges();
   });
 
