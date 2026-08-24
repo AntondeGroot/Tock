@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { Board } from './board';
 import { Translations } from '../../i18n/translations.service';
@@ -17,6 +18,19 @@ const teamPlayers = [
   { id: '1', name: 'me', playerInt: 0, teamId: 0 },
   { id: '2', name: 'mate', playerInt: 1, teamId: 0 },
 ];
+
+/**
+ * A state where the viewer is on turn and the server already permits a forfeit — the hand is the
+ * only thing that varies, so the deal-in is the sole reason the button's state can differ.
+ */
+const forfeitablePush = (playerCards: { uuid: number; suit: number; value: number }[]) => ({
+  players: teamPlayers,
+  pawns: [pawnOn('1', 0, 5)],
+  winners: [],
+  playerCards,
+  currentPlayerId: '1',
+  canForfeit: true,
+});
 
 describe('Board', () => {
   let component: Board;
@@ -38,6 +52,7 @@ describe('Board', () => {
 
   afterEach(() => {
     document.cookie = 'playerid=; max-age=0';
+    vi.useRealTimers(); // no-op unless a test installed a fake clock
   });
 
   it('should create', () => {
@@ -167,6 +182,66 @@ describe('Board', () => {
     c.handleGameState(push('2')); // …and the turn moves on
     await fixture.whenStable();
     expect(c.canForfeit()).toBe(false);
+  });
+
+  // The server computes `canForfeit` from the complete new hand and pushes it before a single card
+  // has landed, so an enabled Forfeit button would tell the player their whole incoming hand is
+  // unplayable while it is still flying in. The deal is the reveal; the button must not spoil it.
+  it('keeps forfeit disabled while the new hand is still dealing in', async () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      canForfeit: () => boolean;
+      cardTable: { dealing: () => boolean };
+    };
+    c.handleGameState(forfeitablePush([])); // baseline: hand empty, round over — nothing animating
+    await fixture.whenStable();
+    expect(c.canForfeit()).toBe(true);
+
+    c.handleGameState(forfeitablePush([{ uuid: 7, suit: 0, value: 5 }])); // a fresh card → deal-in starts
+    await fixture.whenStable();
+    expect(c.cardTable.dealing()).toBe(true);
+    expect(c.canForfeit()).toBe(false);
+  });
+
+  // The other half of the gate: it is a delay, not a mute. Once the last card has landed the
+  // player has seen their hand, so the button must come back — a gate that never reopens would
+  // leave a player with no legal move unable to end their turn at all.
+  // Synchronous on purpose: `whenStable()` awaits promises, which a fake clock can stall.
+  it('enables forfeit again once the deal-in has finished', () => {
+    vi.useFakeTimers();
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      canForfeit: () => boolean;
+      cardTable: { dealing: () => boolean };
+    };
+    c.handleGameState(forfeitablePush([])); // baseline, so the next push reads as a deal
+    c.handleGameState(forfeitablePush([{ uuid: 7, suit: 0, value: 5 }]));
+    expect(c.canForfeit()).toBe(false); // still in flight
+
+    vi.advanceTimersByTime(3000); // past the one card's 700ms stagger + the 2s clear buffer
+    expect(c.cardTable.dealing()).toBe(false);
+    expect(c.canForfeit()).toBe(true);
+  });
+
+  // A trade flies a card into the hand exactly like a deal does, so the naive "something is
+  // animating" gate would catch it too — but you ASKED for that King, you already know what it is.
+  // Nothing to spoil, and disabling forfeit mid-swap would just look broken.
+  it('leaves forfeit enabled while a single traded-in card animates', async () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      canForfeit: () => boolean;
+      cardTable: { dealing: () => boolean };
+    };
+    const king = { uuid: 7, suit: 0, value: 13 };
+    const ace = { uuid: 9, suit: 1, value: 1 };
+
+    c.handleGameState(forfeitablePush([king])); // baseline: a settled one-card hand
+    await fixture.whenStable();
+
+    c.handleGameState(forfeitablePush([ace])); // the trade: king out, ace in — the hand never grows
+    await fixture.whenStable();
+    expect(c.cardTable.dealing()).toBe(true); // the incoming card IS animating…
+    expect(c.canForfeit()).toBe(true); // …but it is not a round deal, so the button stays live
   });
 
   // Card uuids are reused across rounds; the client pile must be cleared on a new deal or a

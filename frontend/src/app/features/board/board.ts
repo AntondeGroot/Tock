@@ -39,6 +39,7 @@ import { TeamHandoff } from './team-handoff/team-handoff.service';
 import { localRejectionKey, rejectionMessageKey } from './rejection-message';
 import { allPawnsHome, teammateOf } from './team-control';
 import { TransitionSounds } from './transition-sounds';
+import { HandDealAnimator } from './hand-deal-animator';
 
 @Component({
   selector: 'app-board',
@@ -59,7 +60,7 @@ export class Board implements OnInit, OnDestroy {
       // drop it's stale, and the fresh snapshot is authoritative, so the reconnect starts clean.
       () => {
         this.prevMoveKey = undefined;
-        this.prevHandUuids = undefined;
+        this.handDeal.reset();
         this.cardTable.clearPile();
       },
     );
@@ -90,24 +91,9 @@ export class Board implements OnInit, OnDestroy {
     }
     this.prevMoveKey = moveKey;
 
-    // Detect a deal (cards that weren't in the hand before) and start the
-    // deal-in BEFORE setting state, so those cards render at the deck rather
-    // than flashing at their slots first. The FIRST push after (re)connecting
-    // has no baseline, so it isn't animated — a refresh mid-game just shows the
-    // current hand; only a genuine new round during the session deals in.
-    const cards = next.playerCards ?? [];
-    const prev = this.prevHandUuids;
-    if (prev) {
-      // A new round deals a fresh batch, growing the hand. Card uuids are REUSED across rounds, so
-      // the finished round's pile must be cleared here — otherwise a redealt card whose uuid still
-      // lingers in the (never-otherwise-cleared) pile is filtered out of the hand and silently
-      // vanishes. Gate on the hand actually growing so a net-neutral trade (1 out, 1 in) doesn't
-      // wipe the current round's pile.
-      if (cards.length > prev.size) this.cardTable.clearPile();
-      const fresh = cards.filter((c) => !prev.has(c.uuid)).map((c) => c.uuid);
-      if (fresh.length > 0) this.cardTable.dealIn(fresh);
-    }
-    this.prevHandUuids = new Set(cards.map((c) => c.uuid));
+    // Deal in any cards that weren't in the hand before, BEFORE setting state, so they render at
+    // the deck rather than flashing at their slots first.
+    this.handDeal.accept(next.playerCards ?? []);
     this.gameStore.players.set(next.players ?? []);
     this.gameStore.winners.set(next.winners ?? []);
     this.state.set(next);
@@ -170,6 +156,8 @@ export class Board implements OnInit, OnDestroy {
   // board drives it (dealIn / flyToPile / clearPile) from its GameStatePush diffing below.
   private readonly positioner = new DefaultCardPositioner();
   protected readonly cardTable = new CardTable(() => this.hand(), this.positioner);
+  // Diffs each pushed hand into deal-in animations (and tells a round deal from a trade).
+  private readonly handDeal = new HandDealAnimator(this.cardTable);
   // Bridges Keezen board geometry to the card-table for opponents' plays/forfeits and team trades.
   private readonly cardFly = new BoardCardFly(
     () => this.geometry(),
@@ -181,7 +169,6 @@ export class Board implements OnInit, OnDestroy {
   protected readonly isSpecial = isSpecialCard;
 
   private prevCounts: Record<string, number> | undefined;
-  private prevHandUuids: Set<number> | undefined;
 
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
@@ -369,8 +356,15 @@ export class Board implements OnInit, OnDestroy {
   // The backend allows a forfeit only when the player has no legal move; when they
   // do have one they must play it, so the Forfeit button is disabled. Defaults to
   // enabled until a state with the flag arrives (don't lock the player out).
+  //
+  // Held shut while a new ROUND is still dealing in. The server computes `canForfeit`
+  // from the COMPLETE new hand and pushes it before the first card has landed, so an
+  // enabled Forfeit button would announce "nothing you're about to be dealt is
+  // playable" while the cards are still flying in — the reveal is the suspense.
+  // A team trade also flies a card into the hand, but that one you asked for and already know
+  // about — nothing to spoil there, so only a round deal holds the button shut.
   protected readonly canForfeit = computed(
-    () => this.isMyTurn() && (this.state()?.canForfeit ?? true),
+    () => this.isMyTurn() && !this.handDeal.dealingNewRound() && (this.state()?.canForfeit ?? true),
   );
 
   protected selectCard(uuid: number): void {
