@@ -52,6 +52,7 @@ export const nl: Dictionary = {
   moveRejectedSplitStepsNotSeven: 'De twee delen van de 7 moeten samen 7 stappen zijn.',
   moveRejectedMustFinishOwnPawnsFirst:
     'Breng eerst al je eigen pionnen thuis voordat je die van je teamgenoot speelt.',
+  moveRejectedCannotMoveOutOfFinish: 'Een pion op de finish kan daar nooit meer weg.',
   teamHandoffTitle: 'Je pionnen zijn thuis!',
   teamHandoffMessage: 'Je kunt nu de pionnen van je teamgenoot spelen.',
   tradeAskButton: 'Vraag om een Heer of Aas',

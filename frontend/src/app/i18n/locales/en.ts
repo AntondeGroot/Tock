@@ -53,6 +53,7 @@ export const en: Dictionary = {
   moveRejectedSplitStepsNotSeven: 'The two parts of the 7 must add up to 7 steps.',
   moveRejectedMustFinishOwnPawnsFirst:
     "Finish getting your own pawns home before you play your teammate's.",
+  moveRejectedCannotMoveOutOfFinish: 'A pawn on the finish can never leave it again.',
   teamHandoffTitle: 'Your pawns are home!',
   teamHandoffMessage: "You can now play your teammate's pawns.",
   tradeAskButton: 'Ask for a King or Ace',

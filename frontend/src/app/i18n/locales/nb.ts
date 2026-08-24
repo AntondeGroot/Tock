@@ -52,6 +52,7 @@ export const nb: Dictionary = {
   moveRejectedSplitStepsNotSeven: 'De to delene av 7-eren må til sammen bli 7 steg.',
   moveRejectedMustFinishOwnPawnsFirst:
     'Få alle dine egne brikker i mål før du spiller lagkameratens.',
+  moveRejectedCannotMoveOutOfFinish: 'En brikke i mål kan aldri forlate det igjen.',
   teamHandoffTitle: 'Brikkene dine er i mål!',
   teamHandoffMessage: 'Du kan nå spille lagkameratens brikker.',
   tradeAskButton: 'Be om en Konge eller Ess',

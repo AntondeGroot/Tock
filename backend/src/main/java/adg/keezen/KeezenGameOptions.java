@@ -40,6 +40,16 @@ public class KeezenGameOptions {
             .labelKey("gameOption.mustPlayIfPossible.label")
             .descriptionKey("gameOption.mustPlayIfPossible.description"),
         new GameOption(
+            "cannotMoveOutOfFinish",
+            "Cannot move out of the finish",
+            "When enabled, a pawn that has reached the finish can never leave it again. "
+                + "Only the four moves backwards, so this is what stops a four from pulling a "
+                + "pawn back out of the finish onto the board.",
+            TypeEnum.BOOLEAN,
+            "true")
+            .labelKey("gameOption.cannotMoveOutOfFinish.label")
+            .descriptionKey("gameOption.cannotMoveOutOfFinish.description"),
+        new GameOption(
             "teamPlay",
             "Team play",
             "Play in teams of two: each player pairs with the player directly opposite, so the "
@@ -72,6 +82,7 @@ public class KeezenGameOptions {
     switch (key) {
       case "exactMoveRequired"    -> gameState.setExactMoveRequired(toBoolean(value));
       case "mustPlayIfPossible"   -> gameState.setMustPlayIfPossible(toBoolean(value));
+      case "cannotMoveOutOfFinish" -> gameState.setCannotMoveOutOfFinish(toBoolean(value));
       case "teamPlay"             -> gameState.setTeamPlay(toBoolean(value));
       case "teamCardTrade"        -> gameState.setTeamCardTrade(toBoolean(value));
       default -> Log.info("KeezenGameOptions: unknown option key '" + key + "', ignoring");

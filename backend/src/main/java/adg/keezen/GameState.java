@@ -29,6 +29,7 @@ public final class GameState {
   private volatile boolean exactMoveRequired = false;
   private volatile boolean mustPlayIfPossible = false;
   private volatile boolean teamPlay = false;
+  private volatile boolean cannotMoveOutOfFinish = false;
   private final TradeManager tradeManager;
   private final TileReachability tileReachability;
   private final PlayerRoster roster;
@@ -447,6 +448,14 @@ public final class GameState {
 
   public boolean isMustPlayIfPossible() {
     return mustPlayIfPossible;
+  }
+
+  public void setCannotMoveOutOfFinish(boolean cannotMoveOutOfFinish) {
+    this.cannotMoveOutOfFinish = cannotMoveOutOfFinish;
+  }
+
+  public boolean isCannotMoveOutOfFinish() {
+    return cannotMoveOutOfFinish;
   }
 
   public void setTeamPlay(boolean teamPlay) {
