@@ -297,6 +297,10 @@ public class ProcessOnMove {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
       return;
     }
+    if (movesOutOfFinish()) {
+      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_MOVE_OUT_OF_FINISH);
+      return;
+    }
     if (gs.isExactMoveRequired()) {
       moveOnFinishExactly();
       return;
@@ -306,6 +310,18 @@ public class ProcessOnMove {
       return;
     }
     executeFinishMoveWithOvershootCheck();
+  }
+
+  /**
+   * Whether this move would take the pawn back out of the finish, with the option that forbids it
+   * enabled. Only the four moves backwards, so it is the only card that can do this — but the test
+   * is on where the pawn LANDS, not on the card: a four that bounces off a wall inside the lane
+   * never leaves it, and must stay legal.
+   */
+  private boolean movesOutOfFinish() {
+    return gs.isCannotMoveOutOfFinish()
+        && nrSteps < 0
+        && gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps).getTileNr() <= LAST_TILE;
   }
 
   /**

@@ -53,6 +53,7 @@ export const fr: Dictionary = {
   moveRejectedSplitStepsNotSeven: 'Les deux parties du 7 doivent totaliser 7 cases.',
   moveRejectedMustFinishOwnPawnsFirst:
     "Rentre d'abord tous tes propres pions avant de jouer ceux de ton coéquipier.",
+  moveRejectedCannotMoveOutOfFinish: "Un pion à l'arrivée ne peut plus jamais en sortir.",
   teamHandoffTitle: "Tes pions sont à l'arrivée !",
   teamHandoffMessage: 'Tu peux maintenant jouer les pions de ton coéquipier.',
   tradeAskButton: 'Demander un Roi ou un As',

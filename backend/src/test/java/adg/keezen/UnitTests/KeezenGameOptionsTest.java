@@ -22,8 +22,8 @@ class KeezenGameOptionsTest {
   // ── all() ─────────────────────────────────────────────────────────────────
 
   @Test
-  void all_returnsFourOptions() {
-    assertEquals(4, KeezenGameOptions.all().size());
+  void all_returnsFiveOptions() {
+    assertEquals(5, KeezenGameOptions.all().size());
   }
 
   @Test
@@ -121,6 +121,14 @@ class KeezenGameOptionsTest {
   void apply_mustPlayIfPossible_booleanTrue_setsTrue() {
     KeezenGameOptions.apply(gameState, Map.of("mustPlayIfPossible", Boolean.TRUE));
     assertTrue(gameState.isMustPlayIfPossible());
+  }
+
+  // ── cannotMoveOutOfFinish ─────────────────────────────────────────────────
+
+  @Test
+  void apply_cannotMoveOutOfFinish_stringTrue_setsTrue() {
+    KeezenGameOptions.apply(gameState, Map.of("cannotMoveOutOfFinish", "true"));
+    assertTrue(gameState.isCannotMoveOutOfFinish());
   }
 
   // ── default / unknown key ─────────────────────────────────────────────────

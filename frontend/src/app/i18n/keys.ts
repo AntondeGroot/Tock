@@ -58,6 +58,7 @@ export type TranslationKey =
   | 'moveRejectedSplitNeedsTwoOwnPawns'
   | 'moveRejectedSplitStepsNotSeven'
   | 'moveRejectedMustFinishOwnPawnsFirst'
+  | 'moveRejectedCannotMoveOutOfFinish'
   | 'teamHandoffTitle'
   | 'teamHandoffMessage'
   | 'tradeAskButton'

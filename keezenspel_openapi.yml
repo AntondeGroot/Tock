@@ -818,6 +818,7 @@ components:
         - SPLIT_NEEDS_TWO_OWN_PAWNS
         - SPLIT_STEPS_NOT_SEVEN
         - MUST_FINISH_OWN_PAWNS_FIRST
+        - CANNOT_MOVE_OUT_OF_FINISH
     MoveSet:
       type: array
       items:
