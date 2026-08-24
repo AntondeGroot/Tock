@@ -65,9 +65,9 @@ describe('Card selection (Card_IT)', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Board);
-    (fixture.componentInstance as unknown as { state: { set(v: GameStatePush): void } }).state.set(
-      stateWithHand(),
-    );
+    (
+      fixture.componentInstance as unknown as { handleGameState(v: GameStatePush): void }
+    ).handleGameState(stateWithHand());
     fixture.detectChanges();
     cards = handCards();
   });

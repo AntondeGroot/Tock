@@ -35,9 +35,9 @@ async function render(viewerId: string, state: GameStatePush): Promise<Component
     providers: [provideHttpClient(), provideApi('')],
   }).compileComponents();
   const fixture = TestBed.createComponent(Board);
-  (fixture.componentInstance as unknown as { state: { set(v: GameStatePush): void } }).state.set(
-    state,
-  );
+  (
+    fixture.componentInstance as unknown as { handleGameState(v: GameStatePush): void }
+  ).handleGameState(state);
   fixture.detectChanges();
   return fixture;
 }

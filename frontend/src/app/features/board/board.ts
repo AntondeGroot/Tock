@@ -39,7 +39,7 @@ import { TeamHandoff } from './team-handoff/team-handoff.service';
 import { localRejectionKey, rejectionMessageKey } from './rejection-message';
 import { allPawnsHome, teammateOf } from './team-control';
 import { TransitionSounds } from './transition-sounds';
-import { HandDealAnimator } from './hand-deal-animator';
+import { RoundCardsAnimator } from './round-cards-animator';
 
 @Component({
   selector: 'app-board',
@@ -60,7 +60,7 @@ export class Board implements OnInit, OnDestroy {
       // drop it's stale, and the fresh snapshot is authoritative, so the reconnect starts clean.
       () => {
         this.prevMoveKey = undefined;
-        this.handDeal.reset();
+        this.roundCards.reset();
         this.cardTable.clearPile();
       },
     );
@@ -91,9 +91,9 @@ export class Board implements OnInit, OnDestroy {
     }
     this.prevMoveKey = moveKey;
 
-    // Deal in any cards that weren't in the hand before, BEFORE setting state, so they render at
-    // the deck rather than flashing at their slots first.
-    this.handDeal.accept(next.playerCards ?? []);
+    // Hand the card fields to the animator: it deals in anything new and decides what may be
+    // rendered yet — a fresh round waits for the last play/forfeit to finish first.
+    this.roundCards.accept(next.playerCards ?? [], next.nrOfCardsPerPlayer ?? {});
     this.gameStore.players.set(next.players ?? []);
     this.gameStore.winners.set(next.winners ?? []);
     this.state.set(next);
@@ -137,11 +137,10 @@ export class Board implements OnInit, OnDestroy {
   // Face-down card backs for every OTHER player, fanned by their public card count.
   protected readonly cardBacks = computed(() => {
     const g = this.geometry();
-    const counts = this.state()?.nrOfCardsPerPlayer;
-    return g && counts
+    return g
       ? projectCardBacks(
           g,
-          counts,
+          this.roundCards.counts(),
           this.viewerId,
           this.cardTable.dealing(),
           this.cardTable.stacked(),
@@ -149,15 +148,21 @@ export class Board implements OnInit, OnDestroy {
       : [];
   });
 
-  protected readonly hand = computed(() => this.state()?.playerCards ?? []);
-
   // The reusable card table: owns the pile, the flyer layer and the deal-in FLIP, and computes
   // each card's on-table position (hand fan / pile / deck). Keezen uses the default layout; the
   // board drives it (dealIn / flyToPile / clearPile) from its GameStatePush diffing below.
+  // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
+  // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
+  private readonly pawnAnimator = new PawnAnimator();
   private readonly positioner = new DefaultCardPositioner();
-  protected readonly cardTable = new CardTable(() => this.hand(), this.positioner);
-  // Diffs each pushed hand into deal-in animations (and tells a round deal from a trade).
-  private readonly handDeal = new HandDealAnimator(this.cardTable);
+  // Explicitly typed: the hand it reads now comes from roundCards, which takes the table back
+  // as a constructor argument — without the annotation that cycle infers as `any`.
+  protected readonly cardTable: CardTable = new CardTable(() => this.hand(), this.positioner);
+  // Owns the hand and counts the board renders: it diffs each push into deal-in animations and
+  // holds a new round back until the play or forfeit that ended the previous one has settled.
+  private readonly roundCards = new RoundCardsAnimator(this.cardTable, this.pawnAnimator);
+  /** The hand as SHOWN — the animator's, which holds a new round back until the table settles. */
+  protected readonly hand = this.roundCards.hand;
   // Bridges Keezen board geometry to the card-table for opponents' plays/forfeits and team trades.
   private readonly cardFly = new BoardCardFly(
     () => this.geometry(),
@@ -169,10 +174,6 @@ export class Board implements OnInit, OnDestroy {
   protected readonly isSpecial = isSpecialCard;
 
   private prevCounts: Record<string, number> | undefined;
-
-  // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
-  // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
-  private readonly pawnAnimator = new PawnAnimator();
 
   // Turn-change / medal sounds: fed every push, fires on the transition (see transition-sounds.ts).
   private readonly transitionSounds = new TransitionSounds(this.sound);
@@ -225,7 +226,7 @@ export class Board implements OnInit, OnDestroy {
     // lingering in the server's playerCards for a beat after it flew to the pile.
     const pileUuids = new Set(this.cardTable.pile().map((c) => c.uuid));
     this.selection.setHand(
-      (s?.playerCards ?? [])
+      this.hand()
         .filter((c) => !pileUuids.has(c.uuid))
         .map((c) => ({ id: c.uuid, value: c.value })),
     );
@@ -237,7 +238,7 @@ export class Board implements OnInit, OnDestroy {
    * pile. A forfeit drops the count by more than one, so it is deliberately not animated the same.
    */
   private flyOpponentPlays(): void {
-    const counts = this.state()?.nrOfCardsPerPlayer;
+    const counts = this.roundCards.counts();
     const played = this.state()?.playedCards ?? [];
     const prev = this.prevCounts;
     if (counts && prev) {
@@ -364,7 +365,8 @@ export class Board implements OnInit, OnDestroy {
   // A team trade also flies a card into the hand, but that one you asked for and already know
   // about — nothing to spoil there, so only a round deal holds the button shut.
   protected readonly canForfeit = computed(
-    () => this.isMyTurn() && !this.handDeal.dealingNewRound() && (this.state()?.canForfeit ?? true),
+    () =>
+      this.isMyTurn() && !this.roundCards.dealingNewRound() && (this.state()?.canForfeit ?? true),
   );
 
   protected selectCard(uuid: number): void {

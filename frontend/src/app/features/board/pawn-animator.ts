@@ -71,6 +71,11 @@ export class PawnAnimator {
    *
    * @return how long this group waits before it starts (ms) — sequence sounds off it.
    */
+  /** How long until the queue runs dry (ms); 0 when nothing is moving. */
+  remainingMs(): number {
+    return Math.max(0, this.busyUntil - Date.now());
+  }
+
   enqueue(walks: PawnWalk[]): number {
     const legs = walks.filter((w) => w.points.length >= 2);
     if (legs.length === 0) return 0;
