@@ -503,6 +503,14 @@ components:
         teamId:
           description: 0-based team index in team play (0 = Team A, 1 = Team B); null when teams are off
           type: integer
+        placeholder:
+          description: |
+            True for an empty seat that exists only to widen the board — nobody sits there. It has
+            no pawns, no cards, no turn and no colour, and clients must leave it out of the roster
+            and render its section as plain, unowned board. Used by the "two players on a
+            four-seat board" option, which seats real players opposite each other with one of
+            these between them.
+          type: boolean
 
     GameState:
       type: object

@@ -1,6 +1,7 @@
 package adg.keezen;
 
 import static adg.util.PlayerStatus.hasFinished;
+import static adg.util.PlayerStatus.isPlaceholder;
 import static adg.util.PlayerStatus.setActive;
 
 import com.adg.openapi.model.Player;
@@ -68,6 +69,11 @@ class TurnOrder {
   void resetActivePlayers() {
     activePlayers.clear();
     for (Player player : players) {
+      // An empty seat owns a section of board but never takes a turn — and this list is also what
+      // the deal reads, so leaving it in would hand cards to a chair.
+      if (isPlaceholder(player)) {
+        continue;
+      }
       if (!hasFinished(player) && !leavers.contains(player.getId())) {
         setActive(player);
         activePlayers.add(player.getId());

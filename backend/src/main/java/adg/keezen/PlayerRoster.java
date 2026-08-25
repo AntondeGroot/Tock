@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 class PlayerRoster {
 
   private static final int MAX_PLAYERS = 8;
+  private static final int PAIR = 2;
+  /** Ids of the empty seats; the "p" keeps them clear of the GameRoom's uuids. */
+  private static final String EMPTY_SEAT_ID = "empty-seat-p";
 
   private final List<Player> players;
   private final Map<String, Integer> playerColors;
@@ -56,8 +59,41 @@ class PlayerRoster {
 
   void activateAll() {
     for (Player player : players) {
-      PlayerStatus.setActive(player);
+      if (!PlayerStatus.isPlaceholder(player)) {
+        PlayerStatus.setActive(player);
+      }
     }
+  }
+
+  /**
+   * Widen a two-player table onto four seats: an empty seat is slotted in on either side of the
+   * pair, so the two players end up sitting opposite each other (seats 0 and 2) with a stretch of
+   * unowned board between them. Runs before {@link #assignSeats}, which then numbers all four.
+   *
+   * @return whether the table was actually widened — only a table of exactly two can be.
+   */
+  boolean seatEmptySeatsForPair() {
+    if (players.size() != PAIR) {
+      return false;
+    }
+    players.add(1, emptySeat(1));
+    players.add(3, emptySeat(3));
+    return true;
+  }
+
+  /** A seat nobody sits in: it owns a board section and nothing else. */
+  private static Player emptySeat(int seat) {
+    Player empty = new Player(EMPTY_SEAT_ID + seat, "");
+    empty.setPlaceholder(true);
+    empty.setIsActive(false);
+    empty.setIsPlaying(false);
+    empty.setPlace(-1);
+    return empty;
+  }
+
+  /** The people at the table — the empty seats of a widened board are not among them. */
+  List<Player> seatedPlayers() {
+    return players.stream().filter(p -> !PlayerStatus.isPlaceholder(p)).toList();
   }
 
   /** Clear every player's finishing place, so a new round starts with nobody home. */
@@ -76,7 +112,9 @@ class PlayerRoster {
 
   /** True once every seated player has left — an empty table does not count. */
   boolean allHaveLeft(Set<String> leavers) {
-    return !players.isEmpty() && players.stream().allMatch(p -> leavers.contains(p.getId()));
+    // Empty seats never leave, so counting them would keep an abandoned table alive forever.
+    List<Player> seated = seatedPlayers();
+    return !seated.isEmpty() && seated.stream().allMatch(p -> leavers.contains(p.getId()));
   }
 
   Player findById(String playerId) {

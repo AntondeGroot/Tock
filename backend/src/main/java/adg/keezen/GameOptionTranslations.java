@@ -45,6 +45,28 @@ public final class GameOptionTranslations {
           "it", "Se attivo, una pedina che ha raggiunto l'arrivo non può più uscirne. Solo il "
               + "quattro va all'indietro, quindi è questo a impedire che un quattro riporti una "
               + "pedina fuori dall'arrivo, di nuovo sul tabellone.")),
+      Map.entry("gameOption.twoPlayersOnFourSeats.label", Map.of(
+          "nl", "Met z'n tweeën op een bord voor vier",
+          "de", "Zu zweit auf einem Brett für vier",
+          "fr", "À deux sur un plateau pour quatre",
+          "nb", "To spillere på et brett for fire",
+          "it", "In due su un tabellone per quattro")),
+      Map.entry("gameOption.twoPlayersOnFourSeats.description", Map.of(
+          "nl", "Alleen bij twee spelers: speel op een bord voor vier in plaats van voor twee. "
+              + "De twee spelers zitten tegenover elkaar met een leeg stuk bord ertussen — "
+              + "twee keer zo ver te gaan, en niemand die op die plaatsen wacht.",
+          "de", "Nur zu zweit: auf einem Brett für vier statt für zwei spielen. Die beiden "
+              + "Spieler sitzen einander gegenüber, mit einem leeren Stück Brett dazwischen — "
+              + "der doppelte Weg, und auf diesen Plätzen wartet niemand.",
+          "fr", "À deux joueurs seulement : jouer sur un plateau pour quatre plutôt que pour "
+              + "deux. Les deux joueurs sont face à face avec une portion de plateau vide entre "
+              + "eux — deux fois plus de chemin, et personne n'attend à ces places.",
+          "nb", "Bare med to spillere: spill på et brett for fire i stedet for to. De to "
+              + "spillerne sitter rett overfor hverandre med en tom brettdel imellom — dobbelt "
+              + "så lang vei, og ingen som venter på de plassene.",
+          "it", "Solo in due: si gioca su un tabellone per quattro invece che per due. I due "
+              + "giocatori siedono uno di fronte all'altro con un tratto vuoto in mezzo — il "
+              + "doppio della strada, e nessuno che aspetta su quei posti.")),
       Map.entry("gameOption.exactMoveRequired.label", Map.of(
           "nl", "Exacte zet vereist",
           "de", "Exakter Zug erforderlich",

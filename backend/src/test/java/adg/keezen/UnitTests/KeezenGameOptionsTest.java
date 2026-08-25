@@ -22,8 +22,8 @@ class KeezenGameOptionsTest {
   // ── all() ─────────────────────────────────────────────────────────────────
 
   @Test
-  void all_returnsFiveOptions() {
-    assertEquals(5, KeezenGameOptions.all().size());
+  void all_returnsSixOptions() {
+    assertEquals(6, KeezenGameOptions.all().size());
   }
 
   @Test
@@ -129,6 +129,14 @@ class KeezenGameOptionsTest {
   void apply_cannotMoveOutOfFinish_stringTrue_setsTrue() {
     KeezenGameOptions.apply(gameState, Map.of("cannotMoveOutOfFinish", "true"));
     assertTrue(gameState.isCannotMoveOutOfFinish());
+  }
+
+  // ── twoPlayersOnFourSeats ─────────────────────────────────────────────────
+
+  @Test
+  void apply_twoPlayersOnFourSeats_stringTrue_setsTrue() {
+    KeezenGameOptions.apply(gameState, Map.of("twoPlayersOnFourSeats", "true"));
+    assertTrue(gameState.isTwoPlayersOnFourSeats());
   }
 
   // ── default / unknown key ─────────────────────────────────────────────────

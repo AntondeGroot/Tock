@@ -2,6 +2,7 @@ package adg.keezen;
 
 import static adg.util.BoardLogic.isPawnOnFinish;
 
+import adg.util.PlayerStatus;
 import com.adg.openapi.model.Pawn;
 import com.adg.openapi.model.PawnId;
 import com.adg.openapi.model.Player;
@@ -62,6 +63,9 @@ class PawnLocations {
   ArrayList<Pawn> createFor(List<Player> players) {
     ArrayList<Pawn> created = new ArrayList<>();
     for (Player player : players) {
+      if (PlayerStatus.isPlaceholder(player)) {
+        continue; // an empty seat owns a section of board, but nobody plays it
+      }
       for (int pawnNr = 0; pawnNr < PAWNS_PER_PLAYER; pawnNr++) {
         PositionKey nestPosition = new PositionKey(player.getId(), -1 - pawnNr);
         created.add(
