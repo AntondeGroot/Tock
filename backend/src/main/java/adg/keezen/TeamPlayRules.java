@@ -38,7 +38,10 @@ class TeamPlayRules {
    */
   boolean assignTeams(List<Player> players) {
     if (!teamPlay.getAsBoolean()) return false;
-    int n = players.size();
+    // Count the people, not the seats: a widened two-player board has four seats but only two
+    // players, and pairing on the seat count would make those two opponents each other's teammate.
+    List<Player> seated = roster.seatedPlayers();
+    int n = seated.size();
     if (n < 4 || n % 2 != 0) {
       return false;
     }
@@ -46,7 +49,7 @@ class TeamPlayRules {
     // The loop index is the seat: this runs right after assignPlayerInts over the same list,
     // so index == playerInt (and avoids unboxing the nullable getPlayerInt()).
     int seat = 0;
-    for (Player player : players) {
+    for (Player player : seated) {
       player.setTeamId(seat % teamCount);
       seat++;
     }

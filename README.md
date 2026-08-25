@@ -19,6 +19,14 @@ The smallest game: two sections facing each other. Every player plays for themse
 | --- | --- |
 | <img src="readme-images/game-2-players-desktop.png" alt="2 players, on a computer" width="620"> | <img src="readme-images/game-2-players-mobile.png" alt="2 players, on a phone" width="200"> |
 
+### 2 players on a four-seat board
+
+The same two players, given twice as much board to cross. With this option on they sit opposite each other on a four-seat board and the seats between them stay empty: plain track with no nest, no finish lane and nobody waiting for a turn there.
+
+| On a computer | On a phone |
+| --- | --- |
+| <img src="readme-images/game-2-players-wide-board-desktop.png" alt="2 players on a four-seat board, on a computer" width="620"> | <img src="readme-images/game-2-players-wide-board-mobile.png" alt="2 players on a four-seat board, on a phone" width="200"> |
+
 ### 4 players
 
 The classic setup: four sections, four pawns each. The board always rotates so your own section is at the bottom and the other players fan their cards around you.

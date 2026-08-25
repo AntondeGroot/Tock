@@ -32,12 +32,24 @@ export interface PawnVM {
 
 /** Colour each player's home/finish tiles by seat; the shared track stays neutral. */
 export function projectTiles(g: BoardGeometry, players: Player[]): TileVM[] {
-  const colorOf = (playerId: string) =>
-    seatColor(players.find((p) => p.id === playerId)?.playerInt);
-  return g.tiles.map((t) => ({
-    ...t,
-    color: t.tileNr <= 0 || t.tileNr >= 16 ? colorOf(t.playerId) : NEUTRAL_TILE,
-  }));
+  const seatOf = (playerId: string) => players.find((p) => p.id === playerId);
+  const emptySeat = (playerId: string) => seatOf(playerId)?.placeholder === true;
+  // The tiles a seat owns: its nest (negative), its start tile (0) and its finish lane (16+).
+  // Everything between is the shared track that all pawns travel.
+  const ownTile = (tileNr: number) => tileNr <= 0 || tileNr >= 16;
+  return (
+    g.tiles
+      // An empty seat is board to cross, not somewhere to live: no nest and no finish lane, only
+      // the track — its start tile included, which no one owns and every pawn passes over.
+      .filter((t) => !emptySeat(t.playerId) || (t.tileNr >= 0 && t.tileNr < 16))
+      .map((t) => ({
+        ...t,
+        color:
+          ownTile(t.tileNr) && !emptySeat(t.playerId)
+            ? seatColor(seatOf(t.playerId)?.playerInt)
+            : NEUTRAL_TILE,
+      }))
+  );
 }
 
 /**

@@ -30,6 +30,7 @@ public final class GameState {
   private volatile boolean mustPlayIfPossible = false;
   private volatile boolean teamPlay = false;
   private volatile boolean cannotMoveOutOfFinish = false;
+  private volatile boolean twoPlayersOnFourSeats = false;
   private final TradeManager tradeManager;
   private final TileReachability tileReachability;
   private final PlayerRoster roster;
@@ -75,6 +76,9 @@ public final class GameState {
   public void start(boolean shuffle) {
     hasStarted = true;
     if (shuffle) shufflePlayers();
+    // Widen the table BEFORE seats are numbered, so the empty seats are numbered along with the
+    // players and every section of the ring has an owner to key its tiles by.
+    if (twoPlayersOnFourSeats) roster.seatEmptySeatsForPair();
     roster.assignSeats();
     teamPlay = teamPlayRules.assignTeams(players);
     roster.activateAll();
@@ -448,6 +452,14 @@ public final class GameState {
 
   public boolean isMustPlayIfPossible() {
     return mustPlayIfPossible;
+  }
+
+  public void setTwoPlayersOnFourSeats(boolean twoPlayersOnFourSeats) {
+    this.twoPlayersOnFourSeats = twoPlayersOnFourSeats;
+  }
+
+  public boolean isTwoPlayersOnFourSeats() {
+    return twoPlayersOnFourSeats;
   }
 
   public void setCannotMoveOutOfFinish(boolean cannotMoveOutOfFinish) {

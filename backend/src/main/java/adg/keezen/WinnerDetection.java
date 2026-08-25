@@ -45,7 +45,7 @@ class WinnerDetection {
       checkTeams(winners);
       return;
     }
-    for (Player player : players) {
+    for (Player player : roster.seatedPlayers()) {
       if (!winners.contains(player.getId()) && pawnLocations.allPawnsOnFinish(player.getId())) {
         record(player, winners.size() + 1, winners);
       }

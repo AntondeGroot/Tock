@@ -32,8 +32,14 @@ export async function createGame(
 
   const players = (await (await api.get(`/games/${sessionId}/players`)).json()) as {
     id: string;
+    placeholder?: boolean;
   }[];
-  return { sessionId, playerIds: players.map((p) => p.id) };
+  // A widened two-player board seats empty placeholders to stretch the track. They own board, not
+  // pawns or cards, so nothing a caller does per player applies to them.
+  return {
+    sessionId,
+    playerIds: players.filter((p) => p.placeholder !== true).map((p) => p.id),
+  };
 }
 
 /** POST /test/set-pawn/{session}/{player}/{pawnNr}/{sectionOwner}/{tileNr}. */

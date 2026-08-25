@@ -101,4 +101,19 @@ describe('PlayerList (scoreboard)', () => {
     expect(line(lines[0])).toEqual({ lbl: 'Team A:', who: 'Aria & Cato' });
     expect(line(lines[1])).toEqual({ lbl: 'Team B:', who: 'Bram & Dex' });
   });
+
+  // A widened two-player board seats empty placeholders between the players to stretch the track.
+  // They own board, not a chair: the scoreboard is a list of people, and a nameless colourless
+  // entry there would read as a player who has not connected yet.
+  it('leaves the empty seats of a widened board out of the roster', () => {
+    store.players.set([
+      player({ id: 'a', name: 'alice', playerInt: 0 }),
+      player({ id: 'empty-seat-p1', name: '', playerInt: 1, placeholder: true }),
+      player({ id: 'b', name: 'bob', playerInt: 2 }),
+      player({ id: 'empty-seat-p3', name: '', playerInt: 3, placeholder: true }),
+    ]);
+    fixture.detectChanges();
+
+    expect(names()).toEqual(['alice', 'bob']);
+  });
 });

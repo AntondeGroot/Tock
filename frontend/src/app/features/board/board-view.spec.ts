@@ -32,6 +32,31 @@ describe('projectTiles', () => {
     expect(nest.color).toBe(seatColor(0));
     expect(finish.color).toBe(seatColor(0));
   });
+
+  // An empty seat of a widened two-player board is board to cross, not somewhere to live: it has
+  // nobody to colour it, no pawns to nest and no finish to aim for. Only its track is drawn — its
+  // start tile included, which here belongs to no one and every pawn simply passes over.
+  it('draws an empty seat as plain track, with no nest, finish or seat colour', () => {
+    const widened: Player[] = [
+      { id: '0', name: 'P0', playerInt: 0 },
+      { id: 'empty-seat-p1', name: '', playerInt: 1, placeholder: true },
+      { id: '2', name: 'P2', playerInt: 2 },
+      { id: 'empty-seat-p3', name: '', playerInt: 3, placeholder: true },
+    ];
+    const board = buildBoard(
+      widened.map((p) => ({ id: p.id, playerInt: p.playerInt! })),
+      '0',
+    );
+    const tiles = projectTiles(board, widened);
+    const empty = tiles.filter((t) => t.playerId === 'empty-seat-p1');
+
+    // the full 0..15 stretch of track is there to be travelled (geometry order is not tile order)
+    expect(empty.map((t) => t.tileNr).sort((a, b) => a - b)).toEqual([...Array(16).keys()]);
+    // …and every one of it is plain, the start tile included
+    expect(empty.every((t) => t.color === '#f2f2f2')).toBe(true);
+    // …while a seated player next to it keeps their own coloured nest and finish
+    expect(tiles.find((t) => t.playerId === '2' && t.tileNr === -1)!.color).toBe(seatColor(2));
+  });
 });
 
 describe('projectPawns', () => {

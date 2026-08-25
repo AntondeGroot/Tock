@@ -42,10 +42,12 @@ export class PlayerList {
   private readonly store = inject(GameStore);
 
   private readonly view = computed(() => {
-    // Sort by seat/turn order so the strip always reads in the order of play.
-    const players = [...this.store.players()].sort(
-      (a, b) => (a.playerInt ?? 0) - (b.playerInt ?? 0),
-    );
+    // Sort by seat/turn order so the strip always reads in the order of play. The empty seats of
+    // a widened board are not players — they belong to the board, not to the roster.
+    const players = this.store
+      .players()
+      .filter((p) => p.placeholder !== true)
+      .sort((a, b) => (a.playerInt ?? 0) - (b.playerInt ?? 0));
     const teamsOn = players.some((p) => teamOf(p) != null);
 
     const chips: Chip[] = players.map((p, i) => ({

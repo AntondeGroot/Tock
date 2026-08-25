@@ -106,6 +106,16 @@ const SCENARIOS: Scenario[] = [
     players: 2,
   },
   {
+    key: 'game-2-players-wide-board',
+    title: '2 players on a four-seat board',
+    description:
+      'The same two players, given twice as much board to cross. With this option on they sit ' +
+      'opposite each other on a four-seat board and the seats between them stay empty: plain ' +
+      'track with no nest, no finish lane and nobody waiting for a turn there.',
+    players: 2,
+    gameOptions: { twoPlayersOnFourSeats: true },
+  },
+  {
     key: 'game-4-players',
     title: '4 players',
     description:

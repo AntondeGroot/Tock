@@ -50,6 +50,16 @@ public class KeezenGameOptions {
             .labelKey("gameOption.cannotMoveOutOfFinish.label")
             .descriptionKey("gameOption.cannotMoveOutOfFinish.description"),
         new GameOption(
+            "twoPlayersOnFourSeats",
+            "Two players on a four-seat board",
+            "Two-player games only: play on a four-seat board instead of a two-seat one. The two "
+                + "players sit opposite each other with an empty stretch of board between them — "
+                + "twice the distance to travel, and no one waiting on those seats.",
+            TypeEnum.BOOLEAN,
+            "false")
+            .labelKey("gameOption.twoPlayersOnFourSeats.label")
+            .descriptionKey("gameOption.twoPlayersOnFourSeats.description"),
+        new GameOption(
             "teamPlay",
             "Team play",
             "Play in teams of two: each player pairs with the player directly opposite, so the "
@@ -83,6 +93,7 @@ public class KeezenGameOptions {
       case "exactMoveRequired"    -> gameState.setExactMoveRequired(toBoolean(value));
       case "mustPlayIfPossible"   -> gameState.setMustPlayIfPossible(toBoolean(value));
       case "cannotMoveOutOfFinish" -> gameState.setCannotMoveOutOfFinish(toBoolean(value));
+      case "twoPlayersOnFourSeats" -> gameState.setTwoPlayersOnFourSeats(toBoolean(value));
       case "teamPlay"             -> gameState.setTeamPlay(toBoolean(value));
       case "teamCardTrade"        -> gameState.setTeamCardTrade(toBoolean(value));
       default -> Log.info("KeezenGameOptions: unknown option key '" + key + "', ignoring");
