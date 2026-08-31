@@ -156,8 +156,10 @@
 
 // Hover feedback — a subtle brighten + shadow so it reads as clickable, with no
 // size change (the pawn keeps its footprint).
-.pawn:hover {
-  filter: brightness(1.15) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+@media (hover: hover) and (pointer: fine) {
+  .pawn:hover {
+    filter: brightness(1.15) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+  }
 }
 
 // Leave animation (animate.leave): when a player leaves, their pawns are removed from the push —
@@ -248,8 +250,10 @@
     3px 3px 10px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
   }
   &:active:not(:disabled) {
     transform: translateY(1px);
@@ -272,8 +276,10 @@
   color: #0e2b0b;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
 
-  &:hover:not(:disabled) {
-    background: linear-gradient(145deg, #b8f8b0, #72e464);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: linear-gradient(145deg, #b8f8b0, #72e464);
+    }
   }
 }
 
@@ -283,8 +289,10 @@
   color: #4a2000;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 
-  &:hover:not(:disabled) {
-    background: linear-gradient(145deg, #fff0d0, #ffd870);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: linear-gradient(145deg, #fff0d0, #ffd870);
+    }
   }
 }
 
@@ -295,8 +303,10 @@
   color: #12233a;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
 
-  &:hover:not(:disabled) {
-    background: linear-gradient(145deg, #dcebfb, #9db8d8);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: linear-gradient(145deg, #dcebfb, #9db8d8);
+    }
   }
 }
 

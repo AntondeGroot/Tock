@@ -18,8 +18,10 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition: border-color 0.15s ease;
 }
-.vol:hover {
-  border-color: #e0b830;
+@media (hover: hover) and (pointer: fine) {
+  .vol:hover {
+    border-color: #e0b830;
+  }
 }
 
 // ── Speaker glyph (also the mute toggle) ────────────────────────────────────
@@ -36,8 +38,10 @@
   place-items: center;
   transition: color 0.15s ease;
 }
-.vol__icon:hover {
-  color: #ffe07a;
+@media (hover: hover) and (pointer: fine) {
+  .vol__icon:hover {
+    color: #ffe07a;
+  }
 }
 .vol__icon svg {
   width: 20px;
@@ -115,8 +119,10 @@
     inset 0 1px 1px rgba(255, 255, 255, 0.55);
   transition: transform 0.1s ease;
 }
-.vol__range:hover::-webkit-slider-thumb {
-  transform: scale(1.12);
+@media (hover: hover) and (pointer: fine) {
+  .vol__range:hover::-webkit-slider-thumb {
+    transform: scale(1.12);
+  }
 }
 
 // Firefox

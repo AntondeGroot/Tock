@@ -20,9 +20,11 @@
   outline: none;
   transition: background 0.15s ease;
 
-  &:hover {
-    background: linear-gradient(145deg, #4a2800, #341a00);
-    border-color: #e0b830;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: linear-gradient(145deg, #4a2800, #341a00);
+      border-color: #e0b830;
+    }
   }
 }
 

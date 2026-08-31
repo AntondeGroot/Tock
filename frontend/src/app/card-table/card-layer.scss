@@ -75,19 +75,20 @@
     4px 5px 14px rgba(0, 0, 0, 0.5);
 }
 
-.card:hover {
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-8px) scale(1.03);
+// Hover lift — only on devices with a real hovering pointer. On touch, a tap leaves :hover stuck
+// on the tapped element until you tap elsewhere, so a deselected card would stay parked 8px up
+// instead of dropping back to its resting position.
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-8px) scale(1.03);
+  }
 }
 
-// Played cards (on the pile) are inert: no clicks, no hover/selected growth —
-// they keep their pile transform (position + rotation + 0.6 scale).
+// Played cards (on the pile) are inert: they keep their pile transform (position + rotation +
+// 0.6 scale). pointer-events: none also rules out :hover, so no hover reset is needed here.
 .card.played {
   pointer-events: none;
   cursor: default;
-
-  &:hover {
-    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--card-scale, 1));
-  }
 }
 
 // A card flying from an opponent's hand to the pile — inert, on top during flight.
