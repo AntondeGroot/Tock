@@ -57,6 +57,8 @@ jobs:
       - run: npm ci
       - name: Lint (eslint, --max-warnings=0)
         run: npm run lint
+      - name: Lint styles (stylelint)
+        run: npm run lint:styles
       - name: Format check (prettier)
         run: npm run format:check
       - name: Unit tests + coverage

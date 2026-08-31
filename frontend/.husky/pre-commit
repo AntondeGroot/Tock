@@ -2,6 +2,7 @@
 cd frontend || exit 1
 
 npm run lint || exit 1
+npm run lint:styles || exit 1
 
 if ! npm run format:check; then
   echo ""

@@ -169,6 +169,8 @@
   font-weight: 800;
   cursor: pointer;
 }
-.chat__send:hover {
-  background: #d8b53b;
+@media (hover: hover) and (pointer: fine) {
+  .chat__send:hover {
+    background: #d8b53b;
+  }
 }
