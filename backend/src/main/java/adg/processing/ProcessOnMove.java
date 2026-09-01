@@ -1,10 +1,7 @@
 package adg.processing;
 
 import static adg.util.BoardLogic.isPawnOnFinish;
-import static adg.util.CardValueCheck.isJack;
 import static com.adg.openapi.model.MoveResult.CANNOT_MAKE_MOVE;
-import static com.adg.openapi.model.MoveResult.INVALID_SELECTION;
-import static com.adg.openapi.model.MoveResult.PLAYER_DOES_NOT_HAVE_CARD;
 import static com.adg.openapi.model.MoveType.MOVE;
 
 import adg.keezen.GameState;
@@ -16,7 +13,7 @@ import com.adg.openapi.model.MoveResponse;
 import com.adg.openapi.model.MoveResult;
 import com.adg.openapi.model.Pawn;
 import com.adg.openapi.model.PositionKey;
-import java.util.LinkedList;
+import java.util.Optional;
 
 public class ProcessOnMove {
 
@@ -25,9 +22,6 @@ public class ProcessOnMove {
   private static final int START_TILE = 0; // first board tile of a section
   private static final int LAST_TILE = 15; // last board tile of a section (before the finish)
   private static final int SECTION_SIZE = 16; // a section spans tiles 0..15
-
-  /** A section turns at these "corner" tiles; the animation bends there. */
-  private static final int[] SECTION_CORNERS = {1, 7, 13};
 
   // ── Entry points ──────────────────────────────────────────────────────────
 
@@ -49,13 +43,12 @@ public class ProcessOnMove {
 
   private Pawn pawn1;
   private Card card;
-  private String playerId;
   private String pawnOwnerId;
   private PositionKey currentTileId;
   private String playerIdOfTile;
   private int nrSteps;
   private int next;
-  private final LinkedList<PositionKey> moves = new LinkedList<>();
+  private final WaypointTrail trail = new WaypointTrail();
 
   private ProcessOnMove(
       GameState gs, MoveRequest moveMessage, MoveResponse response, boolean goToNextPlayer) {
@@ -80,14 +73,16 @@ public class ProcessOnMove {
   private void execute() {
     pawn1 = gs.getPawn(moveMessage.getPawn1Id());
     card = gs.getCard(moveMessage.getCardId(), moveMessage.getPlayerId());
-    playerId = moveMessage.getPlayerId();
 
-    if (!selectionIsValid()) return;
-    if (!playerHasCard()) return;
-    if (!pawnOwnershipIsValid()) return;
+    Optional<MovePreconditions.Refusal> refusal =
+        MovePreconditions.check(gs, moveMessage, pawn1, card);
+    if (refusal.isPresent()) {
+      reject(refusal.get().result(), refusal.get().reason());
+      return;
+    }
 
     initializeRouting();
-    moves.add(currentTileId);
+    trail.add(currentTileId);
     response.setMoveType(MOVE);
     Log.info("GameState: OnMove: received msg: " + moveMessage);
 
@@ -97,44 +92,6 @@ public class ProcessOnMove {
     if (next == START_TILE)                { routeBackwardToStartTile(); return; }
     if (isPawnOnFinish(pawn1))    { routeAlreadyOnFinish();     return; }
     if (isEnteringFinish())       { routeEnteringFinish(); }
-  }
-
-  // ── Validation ────────────────────────────────────────────────────────────
-
-  private boolean selectionIsValid() {
-    if (pawn1 == null || card == null) {
-      reject(INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
-      return false;
-    }
-    if (pawn1.getCurrentTileId().getTileNr() < 0) {
-      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_ON_NEST);
-      return false;
-    }
-    return true;
-  }
-
-  private boolean playerHasCard() {
-    if (!gs.playerHasCard(playerId, card)) {
-      reject(PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.DONT_HAVE_CARD);
-      return false;
-    }
-    return true;
-  }
-
-  private boolean pawnOwnershipIsValid() {
-    if (isJack(card)) return true;
-    // Your own pawns, plus a teammate's once your own are all home (mayControlPawn).
-    if (moveMessage.getPawn1Id() != null
-        && !gs.mayControlPawn(playerId, gs.getPawn(moveMessage.getPawn1Id()))) {
-      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.NOT_YOUR_PAWN);
-      return false;
-    }
-    if (moveMessage.getPawn2Id() != null
-        && !gs.mayControlPawn(playerId, gs.getPawn(moveMessage.getPawn2Id()))) {
-      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.NOT_YOUR_PAWN);
-      return false;
-    }
-    return true;
   }
 
   // ── Routing setup ─────────────────────────────────────────────────────────
@@ -179,15 +136,15 @@ public class ProcessOnMove {
 
   private void addLandmarksToSectionEnd() {
     int from = currentTileId.getTileNr();
-    addCornerWaypointsBetween(playerIdOfTile, from, LAST_TILE);
-    if (from < LAST_TILE) moves.add(new PositionKey(playerIdOfTile, LAST_TILE));
+    trail.addCornersBetween(playerIdOfTile, from, LAST_TILE);
+    if (from < LAST_TILE) trail.add(playerIdOfTile, LAST_TILE);
   }
 
   private void enterNextSection() {
     Log.info("GameState: OnMove: normal route can move to the next section");
     next = next % SECTION_SIZE;
     playerIdOfTile = gs.nextPlayerId(playerIdOfTile);
-    addCornerWaypointsBetween(playerIdOfTile, START_TILE, next);
+    trail.addCornersBetween(playerIdOfTile, START_TILE, next);
   }
 
   private boolean reverseBackInCurrentSection() {
@@ -197,8 +154,8 @@ public class ProcessOnMove {
       return false;
     }
     next = LAST_TILE - next % LAST_TILE;
-    moves.add(new PositionKey(playerIdOfTile, LAST_TILE));
-    addCornerWaypointsBetween(playerIdOfTile, LAST_TILE, next);
+    trail.add(playerIdOfTile, LAST_TILE);
+    trail.addCornersBetween(playerIdOfTile, LAST_TILE, next);
     return true;
   }
 
@@ -210,31 +167,15 @@ public class ProcessOnMove {
     finalizeMoveToPosition(new PositionKey(playerIdOfTile, next));
   }
 
-  /**
-   * Add a waypoint (in {@code sectionId}) at each section corner the pawn passes as it travels from
-   * {@code fromTile} to {@code toTile} (in that travel order), so the animation bends at each corner.
-   */
-  private void addCornerWaypointsBetween(String sectionId, int fromTile, int toTile) {
-    boolean forward = toTile > fromTile;
-    int low = Math.min(fromTile, toTile);
-    int high = Math.max(fromTile, toTile);
-    for (int i = 0; i < SECTION_CORNERS.length; i++) {
-      int corner = SECTION_CORNERS[forward ? i : SECTION_CORNERS.length - 1 - i];
-      if (corner > low && corner < high) {
-        moves.add(new PositionKey(sectionId, corner));
-      }
-    }
-  }
-
   private void addWaypointsWithinSection() {
-    addCornerWaypointsBetween(playerIdOfTile, currentTileId.getTileNr(), next);
+    trail.addCornersBetween(playerIdOfTile, currentTileId.getTileNr(), next);
   }
 
   // ── Route: backward past section ─────────────────────────────────────────
 
   private void routeBackward() {
     Log.info("GameState: OnMove: pawn goes backwards");
-    if (currentTileId.getTileNr() > 1) moves.add(new PositionKey(playerIdOfTile, 1));
+    if (currentTileId.getTileNr() > 1) trail.add(playerIdOfTile, 1);
     PositionKey ownStartTile = new PositionKey(playerIdOfTile, START_TILE);
     if (gs.canPassStartTile(pawn1, ownStartTile)) {
       crossIntoPreviousSection();
@@ -247,7 +188,7 @@ public class ProcessOnMove {
   private void crossIntoPreviousSection() {
     next = SECTION_SIZE + next;
     playerIdOfTile = gs.previousPlayerId(playerIdOfTile);
-    if (next < 13) moves.add(new PositionKey(playerIdOfTile, 13));
+    if (next < 13) trail.add(playerIdOfTile, 13);
   }
 
   private boolean reverseForwardFromStartTile() {
@@ -264,7 +205,7 @@ public class ProcessOnMove {
 
   private void routeBackwardToStartTile() {
     Log.info("GameState: OnMove: pawn ends exactly on start tile");
-    if (currentTileId.getTileNr() > 1) moves.add(new PositionKey(playerIdOfTile, 1));
+    if (currentTileId.getTileNr() > 1) trail.add(playerIdOfTile, 1);
     PositionKey startTile = new PositionKey(playerIdOfTile, START_TILE);
     if (gs.canMoveToTile(pawn1, startTile)) {
       landOnTile(startTile);
@@ -350,12 +291,8 @@ public class ProcessOnMove {
   }
 
   private void executePingPongMove() {
-    LinkedList<PositionKey> pingpongmoves =
-        new LinkedList<>(gs.pingpongMove(pawn1, currentTileId, nrSteps));
-    moves.clear();
-    moves.addAll(pingpongmoves);
-    response.setMovePawn1(moves);
-    MoveExecutor.execute(gs, pawn1, pingpongmoves.getLast(), moveMessage, response, goToNextPlayer);
+    trail.replaceWith(gs.pingpongMove(pawn1, currentTileId, nrSteps));
+    executeMoveAlongTrail(trail.last());
   }
 
   private void executeFinishMoveWithOvershootCheck() {
@@ -371,21 +308,19 @@ public class ProcessOnMove {
 
   private void landOnFinishTile(PositionKey targetTileId) {
     addFinishReverseWaypoints(targetTileId);
-    moves.add(targetTileId);
-    response.setMovePawn1(moves);
-    MoveExecutor.execute(gs, pawn1, targetTileId, moveMessage, response, goToNextPlayer);
+    landOnTile(targetTileId);
   }
 
   private void addFinishBounceWaypoint(int highestReachable) {
     Log.info("GameState: OnMove: pawn moves out of the finish");
-    moves.add(new PositionKey(playerIdOfTile, highestReachable));
+    trail.add(playerIdOfTile, highestReachable);
   }
 
   private void addFinishReverseWaypoints(PositionKey targetTile) {
     if (targetTile.getTileNr() < LAST_TILE) {
-      moves.add(new PositionKey(targetTile.getPlayerId(), LAST_TILE));
+      trail.add(targetTile.getPlayerId(), LAST_TILE);
     }
-    addCornerWaypointsBetween(targetTile.getPlayerId(), LAST_TILE, targetTile.getTileNr());
+    trail.addCornersBetween(targetTile.getPlayerId(), LAST_TILE, targetTile.getTileNr());
   }
 
   // ── Route: entering finish from last section ──────────────────────────────
@@ -402,9 +337,7 @@ public class ProcessOnMove {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_OCCUPIED_BY_OWN_PAWN);
       return;
     }
-    moves.add(targetTileId);
-    response.setMovePawn1(moves);
-    MoveExecutor.execute(gs, pawn1, targetTileId, moveMessage, response, goToNextPlayer);
+    landOnTile(targetTileId);
   }
 
   /**
@@ -427,30 +360,35 @@ public class ProcessOnMove {
       return false;
     }
     if (highestReachable > LAST_TILE) {
-      moves.add(new PositionKey(gs.nextPlayerId(playerIdOfTile), highestReachable));
+      trail.add(gs.nextPlayerId(playerIdOfTile), highestReachable);
       if (targetTileId.getTileNr() < LAST_TILE) {
-        moves.add(new PositionKey(targetTileId.getPlayerId(), LAST_TILE));
+        trail.add(targetTileId.getPlayerId(), LAST_TILE);
       }
     }
-    addCornerWaypointsBetween(targetTileId.getPlayerId(), LAST_TILE, targetTileId.getTileNr());
+    trail.addCornersBetween(targetTileId.getPlayerId(), LAST_TILE, targetTileId.getTileNr());
     return true;
   }
 
   // ── Common helpers ────────────────────────────────────────────────────────
 
   private void finalizeMoveToPosition(PositionKey nextTileId) {
-    moves.add(nextTileId);
+    trail.add(nextTileId);
     if (gs.canMoveToTile(pawn1, nextTileId)) {
-      response.setMovePawn1(moves);
-      MoveExecutor.execute(gs, pawn1, nextTileId, moveMessage, response, goToNextPlayer);
+      executeMoveAlongTrail(nextTileId);
     } else {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_BLOCKED);
     }
   }
 
+  /** Land on {@code targetTile}: it closes the trail, and the move is carried out along it. */
   private void landOnTile(PositionKey targetTile) {
-    moves.add(targetTile);
-    response.setMovePawn1(moves);
+    trail.add(targetTile);
+    executeMoveAlongTrail(targetTile);
+  }
+
+  /** Publish the trail as this move's path and carry the move out, landing on {@code targetTile}. */
+  private void executeMoveAlongTrail(PositionKey targetTile) {
+    response.setMovePawn1(trail.toList());
     MoveExecutor.execute(gs, pawn1, targetTile, moveMessage, response, goToNextPlayer);
   }
 }
