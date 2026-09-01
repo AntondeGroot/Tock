@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { vi } from 'vitest';
 
 import { Board } from './board';
+import { provideApi } from '../../api';
 import { Translations } from '../../i18n/translations.service';
 import { TeamHandoff } from '../team-handoff/team-handoff.service';
 
@@ -43,6 +46,8 @@ describe('Board', () => {
     document.cookie = 'playerid=1';
     await TestBed.configureTestingModule({
       imports: [Board],
+      // Selecting a pawn asks the server to preview the move; capture those instead of firing them.
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideApi('')],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Board);
@@ -133,10 +138,9 @@ describe('Board', () => {
     const c = component as unknown as {
       handleGameState: (push: unknown) => void;
       selection: {
-        setCard: (card: { id: number; value: number }) => void;
-        addPawnById: (id: string) => void;
+        selectCard: (uuid: number) => void;
+        selectPawn: (id: string) => void;
       };
-      touch: () => void;
       canPlay: () => boolean;
     };
     const push = (currentPlayerId: string) => ({
@@ -149,9 +153,8 @@ describe('Board', () => {
 
     c.handleGameState(push('1')); // the viewer's own turn
     await fixture.whenStable();
-    c.selection.setCard({ id: 7, value: 5 });
-    c.selection.addPawnById('1:0');
-    c.touch();
+    c.selection.selectCard(7);
+    c.selection.selectPawn('1:0'); // a complete move — and a move preview, captured below
     expect(c.canPlay()).toBe(true);
 
     c.handleGameState(push('2')); // …and the turn moves on, selection untouched

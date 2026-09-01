@@ -85,10 +85,10 @@
               "src/app/app.config.ts"
             ],
             "coverageThresholds": {
-              "statements": 60,
-              "branches": 60,
-              "functions": 52,
-              "lines": 64
+              "statements": 78,
+              "branches": 75,
+              "functions": 75,
+              "lines": 82
             }
           }
         },

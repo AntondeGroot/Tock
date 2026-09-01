@@ -28,7 +28,7 @@ import { PawnAnimator } from './pawn/pawn-animator';
 import { SplitSteps } from './selection/split-steps/split-steps';
 import { moveAnimation } from './pawn/move-animation';
 import { postTradeAction } from './trade/trade-actions';
-import { PawnAndCardSelection } from './selection/pawn-and-card-selection';
+import { MoveSelection } from './selection/move-selection';
 import { teammateCaptureTiles } from './selection/teammate-capture';
 import { pawnKey } from './pawn/pawn-key';
 import { hintKeyFor, isSpecialCard } from './cards/special-cards';
@@ -169,11 +169,10 @@ export class Board implements OnInit, OnDestroy {
     () => this.hand(),
     this.cardTable,
     this.positioner,
+    this.viewerId,
   );
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;
-
-  private prevCounts: Record<string, number> | undefined;
 
   // Turn-change / medal sounds: fed every push, fires on the transition (see transition-sounds.ts).
   private readonly transitionSounds = new TransitionSounds(this.sound);
@@ -186,20 +185,19 @@ export class Board implements OnInit, OnDestroy {
   private readonly onLayoutChange = (e: MediaQueryListEvent) => this.isPhone.set(e.matches);
   private prevMoveKey: string | undefined;
 
-  // --- Selection: delegated to the ported PawnAndCardSelection state machine ---
-  private readonly selection = new PawnAndCardSelection();
-  // The selection is a plain mutable object, not a signal; bump `rev` after every
-  // change so the computed selectors below recompute and the view updates.
-  private readonly rev = signal(0);
-  private touch(): void {
-    this.rev.update((v) => v + 1);
-  }
+  // The move being composed: card, pawn(s), the 7-split and the server-side landing preview.
+  // See selection/move-selection.ts — the template drives it directly.
+  protected readonly selection = new MoveSelection(this.movesService, this.session, (id) =>
+    this.findPawn(id),
+  );
 
   constructor() {
     // Reactions to each server push. Each effect dynamically tracks whatever signals its
     // method reads, so the split is purely for readability.
     effect(() => this.syncSelection());
-    effect(() => this.flyOpponentPlays());
+    effect(() =>
+      this.cardFly.reactToCounts(this.roundCards.counts(), this.state()?.playedCards ?? []),
+    );
     effect(() => this.announceTeamHandoff());
     effect(() => this.teamTrade.reactToOutcome());
     effect(() => this.transitionSounds.react(this.state()));
@@ -211,48 +209,21 @@ export class Board implements OnInit, OnDestroy {
    */
   private syncSelection(): void {
     const s = this.state();
-    if (this.viewerId) this.selection.setPlayerId(this.viewerId);
-    // In team play you may also move your teammate's pawns once all your own are home.
-    this.selection.setControllablePlayerIds(this.controllablePlayerIds());
-    this.selection.updatePawns(
-      (s?.pawns ?? []).map((p) => ({
+    this.selection.sync({
+      viewerId: this.viewerId,
+      // In team play you may also move your teammate's pawns once all your own are home.
+      controllablePlayerIds: this.controllablePlayerIds(),
+      pawns: (s?.pawns ?? []).map((p) => ({
         id: pawnKey(p.pawnId),
         playerId: p.pawnId.playerId,
         tileNr: p.currentTileId.tileNr,
       })),
-    );
-    // Exclude cards already on the pile so a played card can never be (auto-)selected —
-    // the display hand does the same (see `handCards`). Guards against a played card
-    // lingering in the server's playerCards for a beat after it flew to the pile.
-    const pileUuids = new Set(this.cardTable.pile().map((c) => c.uuid));
-    this.selection.setHand(
-      this.hand()
-        .filter((c) => !pileUuids.has(c.uuid))
-        .map((c) => ({ id: c.uuid, value: c.value })),
-    );
-    this.touch();
-  }
-
-  /**
-   * Detect when another player plays a single card (count −1) and fly it from their fan to the
-   * pile. A forfeit drops the count by more than one, so it is deliberately not animated the same.
-   */
-  private flyOpponentPlays(): void {
-    const counts = this.roundCards.counts();
-    const played = this.state()?.playedCards ?? [];
-    const prev = this.prevCounts;
-    if (counts && prev) {
-      for (const [pid, n] of Object.entries(counts)) {
-        if (pid === this.viewerId) continue;
-        if (!(pid in prev)) continue;
-        const before = prev[pid];
-        const dropped = before - n;
-        if (dropped === 1)
-          this.cardFly.opponentPlayed(pid, before, played); // played one card
-        else if (dropped > 1) this.cardFly.opponentForfeit(pid, before, dropped, played); // forfeit
-      }
-    }
-    this.prevCounts = counts ? { ...counts } : undefined;
+      hand: this.hand(),
+      version: s?.version,
+      // A played card can linger in the server's hand for a beat after flying to the pile; the
+      // display hand does the same, so it can never be (auto-)selected.
+      pileUuids: new Set(this.cardTable.pile().map((c) => c.uuid)),
+    });
   }
 
   /**
@@ -333,26 +304,12 @@ export class Board implements OnInit, OnDestroy {
     return this.state()?.pawns?.find((p) => pawnKey(p.pawnId) === id);
   }
 
-  // Reactive selectors over the selection (reading rev() makes them recompute).
-  protected readonly selectedCardUuid = computed(() => (this.rev(), this.selection.getCard()?.id));
-  protected readonly pawn1Id = computed(() => (this.rev(), this.selection.getPawnId1()));
-  protected readonly pawn2Id = computed(() => (this.rev(), this.selection.getPawnId2()));
-  protected readonly splitVisible = computed(
-    () => (this.rev(), this.selection.isSplitBoxesVisible()),
-  );
-  protected readonly stepsPawn1 = computed(() => (this.rev(), this.selection.getNrStepsPawn1()));
-  protected readonly stepsPawn2 = computed(() => (this.rev(), this.selection.getNrStepsPawn2()));
   /** Both action buttons are dead outside your own turn — the server refuses those moves anyway. */
   protected readonly isMyTurn = computed(
     () => this.viewerId != null && this.state()?.currentPlayerId === this.viewerId,
   );
 
-  protected readonly canPlay = computed(
-    () => (
-      this.rev(),
-      this.isMyTurn() && this.selection.getCard() != null && this.selection.getPawn1() != null
-    ),
-  );
+  protected readonly canPlay = computed(() => this.isMyTurn() && this.selection.isComplete());
 
   // The backend allows a forfeit only when the player has no legal move; when they
   // do have one they must play it, so the Forfeit button is disabled. Defaults to
@@ -369,14 +326,6 @@ export class Board implements OnInit, OnDestroy {
       this.isMyTurn() && !this.roundCards.dealingNewRound() && (this.state()?.canForfeit ?? true),
   );
 
-  protected selectCard(uuid: number): void {
-    const handCard = this.hand().find((c) => c.uuid === uuid);
-    if (!handCard) return;
-    this.selection.setCard({ id: handCard.uuid, value: handCard.value });
-    this.touch();
-    this.checkMove();
-  }
-
   /** The card value currently hovered in the hand (drives the hint), or null. */
   private readonly hoveredCardValue = signal<number | null>(null);
   protected hoverCard(value: number | null): void {
@@ -387,31 +336,22 @@ export class Board implements OnInit, OnDestroy {
    * Hint/suggestion for the special card the player is eyeing: the hovered card,
    * falling back to the selected card when nothing is hovered. Empty for a regular
    * card — only Ace/Four/Seven/Jack/Queen/King have a hint (mirrors the GWT
-   * updateCardHint). `rev()` makes it recompute when the selection changes.
+   * updateCardHint).
    */
   protected readonly hint = computed(() => {
-    this.rev();
-    const key = hintKeyFor(this.hoveredCardValue() ?? this.selection.getCard()?.value ?? null);
+    const key = hintKeyFor(this.hoveredCardValue() ?? this.selection.cardValue());
     return key ? this.i18n.t(key) : '';
   });
 
-  protected selectPawn(id: string): void {
-    this.selection.addPawnById(id);
-    this.touch();
-    this.checkMove();
-  }
-
-  // Tiles the previewed move would land on (key = "playerId:tileNr"); they pulse.
-  protected readonly previewTiles = signal<Set<string>>(new Set());
   protected isPreview(playerId: string, tileNr: number): boolean {
-    return this.previewTiles().has(`${playerId}:${tileNr}`);
+    return this.selection.isPreview(playerId, tileNr);
   }
 
   // Of those, the ones that would land on a teammate's pawn (team play only) — the board warns on
   // these in red instead of the usual gold.
   protected readonly teammateCaptureTiles = computed(() =>
     teammateCaptureTiles(
-      this.previewTiles(),
+      this.selection.previewTiles(),
       this.state()?.pawns ?? [],
       this.state()?.players ?? [],
       this.viewerId,
@@ -421,90 +361,13 @@ export class Board implements OnInit, OnDestroy {
     return this.teammateCaptureTiles().has(`${playerId}:${tileNr}`);
   }
 
-  // Preview the current selection: ask the server which tile(s) it would land on
-  // and pulse them. When a 7-split first forms, adopt the recommended allocation
-  // once, then re-check to preview it. Mirrors the GWT presenter's checkMove().
-  /**
-   * Assemble the current (card + pawn) selection into a MoveRequest, or undefined if it isn't yet
-   * a complete, resolvable move. Shared by the live preview (checkMove) and the actual play.
-   */
-  private buildMoveRequest(
-    tempMessageType: MoveRequest['tempMessageType'],
-  ): MoveRequest | undefined {
-    const card = this.selection.getCard();
-    const pawn1 = this.selection.getPawn1();
-    if (!card || !pawn1 || !this.viewerId) return undefined;
-    const apiPawn1 = this.findPawn(pawn1.id);
-    if (!apiPawn1) return undefined;
-    const apiPawn2 = this.selection.getPawn2()?.id;
-    return {
-      playerId: this.viewerId,
-      cardId: card.id,
-      pawn1Id: apiPawn1.pawnId,
-      pawn2Id: apiPawn2 ? this.findPawn(apiPawn2)?.pawnId : undefined,
-      stepsPawn1: this.selection.getNrStepsPawn1(),
-      stepsPawn2: this.selection.getNrStepsPawn2(),
-      tempMessageType,
-    };
-  }
-
-  private checkMove(): void {
-    const move = this.buildMoveRequest('CHECK_MOVE');
-    if (!move || !this.sessionId || !this.viewerId) {
-      this.previewTiles.set(new Set());
-      return;
-    }
-    this.movesService.checkMove(this.sessionId, this.viewerId, move).subscribe({
-      next: (res) => {
-        // First time a 7-split forms: adopt the recommended split, then re-check.
-        if (this.selection.isSplitDefaultPending()) {
-          this.selection.clearSplitDefaultPending();
-          const s1 = res.recommendedStepsPawn1 ?? -1;
-          const s2 = res.recommendedStepsPawn2 ?? -1;
-          if (s1 >= 0 && s2 >= 0) {
-            this.selection.setNrStepsPawn1(s1);
-            this.selection.setNrStepsPawn2(s2);
-            this.touch();
-            this.checkMove();
-            return;
-          }
-        }
-        // Highlight the landing tile(s) — the last tile of each pawn's path.
-        this.previewTiles.set(new Set((res.tiles ?? []).map((t) => `${t.playerId}:${t.tileNr}`)));
-      },
-      error: () => {
-        /* fire-and-forget: errors are non-critical here */
-      },
-    });
-  }
-
-  // The 7-split step inputs (shown when splitVisible()).
-  protected onStepsPawn1(value: string): void {
-    this.selection.setNrStepsPawn1ForSplit(value);
-    this.touch();
-    this.checkMove();
-  }
-  protected onStepsPawn2(value: string): void {
-    this.selection.setNrStepsPawn2ForSplit(value);
-    this.touch();
-    this.checkMove();
-  }
-
-  // The − / + steppers; setNr...ForSplit wraps 8→0 and −1→7, like the GWT.
-  protected stepPawn1(delta: number): void {
-    this.onStepsPawn1(String(this.stepsPawn1() + delta));
-  }
-  protected stepPawn2(delta: number): void {
-    this.onStepsPawn2(String(this.stepsPawn2() + delta));
-  }
-
   // Step-box label + input-border colours match each pawn's board highlight colour
   // (which depends on the pawn's own colour), like the GWT updateStepBoxColors.
   protected readonly pawn1Highlight = computed(() =>
-    stepBoxColor(this.pawn1Id(), this.state()?.players ?? [], 1),
+    stepBoxColor(this.selection.pawn1Id(), this.state()?.players ?? [], 1),
   );
   protected readonly pawn2Highlight = computed(() =>
-    stepBoxColor(this.pawn2Id(), this.state()?.players ?? [], 2),
+    stepBoxColor(this.selection.pawn2Id(), this.state()?.players ?? [], 2),
   );
 
   protected readonly highlightForPawn1 = highlightForPawn1;
@@ -513,8 +376,8 @@ export class Board implements OnInit, OnDestroy {
   // Submit the current selection (the green "play card" button). The server
   // re-derives the move type from the card + pawns, so we just send the pieces.
   protected playCard(): void {
-    const card = this.selection.getCard();
-    const pawn1 = this.selection.getPawn1();
+    const card = this.selection.card();
+    const pawn1 = this.selection.pawn1();
     if (!card || !pawn1 || !this.sessionId || !this.viewerId) return;
     this.sound.play('buttonClick');
 
@@ -526,7 +389,7 @@ export class Board implements OnInit, OnDestroy {
       return;
     }
 
-    const move = this.buildMoveRequest('MAKE_MOVE');
+    const move = this.selection.moveRequest('MAKE_MOVE');
     if (!move) return;
     const handCard = this.hand().find((c) => c.uuid === card.id);
     this.send(handCard, move);
@@ -534,20 +397,13 @@ export class Board implements OnInit, OnDestroy {
 
   private send(card: CardModel | undefined, move: MoveRequest): void {
     if (!this.sessionId || !this.viewerId) return;
-    this.previewTiles.set(new Set()); // stop the move preview while submitting
-    // Snapshot the played card's current hand slot BEFORE sending: the server push
-    // will have removed it from the hand by the time the move is confirmed, so on
-    // success we fly a clone from here (ported from the GWT captureCardStartPos).
-    const start = card ? this.cardTable.cards().find((c) => c.uuid === card.uuid) : undefined;
-    this.touch();
+    this.selection.clearPreview(); // stop the move preview while submitting
+    const from = this.cardFly.handSlotOf(card); // the hand slot the card flies from, if accepted
     this.movesService.makeMove(this.sessionId, this.viewerId, move).subscribe({
       next: (response) => {
         if (response.result === 'CAN_MAKE_MOVE') {
           this.selection.reset(); // accepted → clear the selection
-          // Fly the captured card (its id + face + hand slot) to the pile, popping as it goes.
-          if (start) this.cardTable.flyToPile(start, { pop: true });
-          else if (card) this.cardTable.pile.update((p) => [...p, card]);
-          this.touch();
+          this.cardFly.ownPlay(from, card);
         } else {
           // Rejected by the rules (still a 200): explain why, and keep the
           // selection so the player can adjust it.
@@ -570,17 +426,13 @@ export class Board implements OnInit, OnDestroy {
   protected forfeit(): void {
     if (!this.sessionId || !this.viewerId) return;
     this.sound.play('buttonClick');
-    // Snapshot my hand-card positions BEFORE the server push clears them, then fly
-    // each to the pile, staggered (same as an opponent's forfeit).
-    const myCards = this.cardTable.cards().filter((c) => !c.inPile);
     this.cardsService.playerForfeits(this.sessionId, this.viewerId).subscribe({
       error: () => {
         /* fire-and-forget: errors are non-critical here */
       },
     });
     this.selection.reset();
-    this.previewTiles.set(new Set());
-    this.touch();
-    myCards.forEach((c, i) => setTimeout(() => this.cardTable.flyToPile(c), i * 120));
+    this.selection.clearPreview();
+    this.cardFly.ownForfeit(); // the hand empties onto the pile, one card at a time
   }
 }
