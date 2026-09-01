@@ -7,6 +7,7 @@ import { Board } from './board';
 import { provideApi } from '../../api';
 import { Translations } from '../../i18n/translations.service';
 import { TeamHandoff } from '../team-handoff/team-handoff.service';
+import { SoundService } from '../../sound.service';
 
 /** A pawn of `playerId` standing on `tileNr` (≥ 16 is a finish tile, i.e. home). */
 const pawnOn = (playerId: string, pawnNr: number, tileNr: number) => ({
@@ -62,6 +63,38 @@ describe('Board', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // An Angular effect runs once before any push arrives, so the medal baseline used to be taken
+  // from an empty player list. Reloading into a game somebody had already won then read as a jump
+  // from zero and blew the fanfare for a medal awarded before the viewer got there. The sounds are
+  // fed straight from handleGameState now, so the first push is the baseline.
+  it('does not fanfare for a medal awarded before the viewer arrived', async () => {
+    const c = component as unknown as { handleGameState: (push: unknown) => void };
+    const play = vi.spyOn(TestBed.inject(SoundService), 'play');
+    const fanfares = () => play.mock.calls.filter(([name]) => name === 'medalAwarded').length;
+    const push = (mine: number, theirs: number) => ({
+      players: [
+        { id: '1', name: 'me', playerInt: 0, place: mine },
+        { id: '2', name: 'other', playerInt: 1, place: theirs },
+      ],
+      pawns: [],
+      winners: [],
+      playerCards: [],
+      currentPlayerId: '1',
+    });
+
+    // GIVEN the viewer lands in a game player 1 has already finished
+    c.handleGameState(push(1, -1));
+    await fixture.whenStable();
+
+    // THEN the medal they missed is not sounded
+    expect(fanfares()).toBe(0);
+
+    // WHEN player 2 finishes with the viewer watching, the fanfare still plays
+    c.handleGameState(push(1, 2));
+    await fixture.whenStable();
+    expect(fanfares()).toBe(1);
   });
 
   // Coming home LAST of your team ends the game for that team: the winner banner pops, and there
