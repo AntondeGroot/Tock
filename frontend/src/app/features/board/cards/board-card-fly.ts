@@ -3,11 +3,17 @@ import { CardTable } from '../../../card-table/card-table';
 import { CardPositioner } from '../../../card-table/card-table.types';
 import { BoardGeometry, fanCardBacks } from '../geometry/board-geometry';
 
+/** A hand card with its live table position — what a flight to the pile starts from. */
+type PlayedCardSlot = Parameters<CardTable['flyToPile']>[0];
+
 /** Parse a public "suit_value" played-card string into its sprite coordinates. */
 function parseCard(str: string): { suit: number; value: number } {
   const [suit, value] = str.split('_').map(Number);
   return { suit, value };
 }
+
+/** Discards leave one at a time, so a forfeited hand reads as a sequence rather than a blur. */
+const FORFEIT_STAGGER_MS = 120;
 
 /** A fanned card-back slot (board px) → the card-layer's %-space (board px / 6). */
 function toLayerSlot(slot: { x: number; y: number; rotDeg: number }): {
@@ -30,7 +36,54 @@ export class BoardCardFly {
     private readonly hand: () => CardModel[],
     private readonly cardTable: CardTable,
     private readonly positioner: CardPositioner,
+    private readonly viewerId: string | null,
   ) {}
+
+  /**
+   * Diff the public per-player card counts against the previous push and animate what the other
+   * players did: a drop of exactly one is a play (that card flies from their fan to the pile),
+   * while a bigger drop is a forfeit, which staggers its cards out instead. Their hands are only
+   * ever known as counts, so this diff is the only way those events are visible at all.
+   */
+  reactToCounts(counts: Record<string, number>, played: string[]): void {
+    const previous = this.previousCounts;
+    this.previousCounts = { ...counts };
+    if (!previous) return;
+
+    for (const [playerId, remaining] of Object.entries(counts)) {
+      if (playerId === this.viewerId || !(playerId in previous)) continue;
+      const before = previous[playerId];
+      const dropped = before - remaining;
+      if (dropped === 1) this.opponentPlayed(playerId, before, played);
+      else if (dropped > 1) this.opponentForfeit(playerId, before, dropped, played);
+    }
+  }
+
+  /**
+   * The viewer's own card as it currently sits in their hand. Snapshot it BEFORE the move is sent:
+   * by the time the server confirms, the push has already taken the card out of the hand, so this
+   * is the only moment its slot can be read (ported from the GWT captureCardStartPos).
+   */
+  handSlotOf(card: CardModel | undefined): PlayedCardSlot | undefined {
+    return card ? this.cardTable.cards().find((c) => c.uuid === card.uuid) : undefined;
+  }
+
+  /** Fly the viewer's accepted card from its snapshotted hand slot to the pile, popping as it goes. */
+  ownPlay(from: PlayedCardSlot | undefined, card: CardModel | undefined): void {
+    if (from) this.cardTable.flyToPile(from, { pop: true });
+    else if (card) this.cardTable.pile.update((pile) => [...pile, card]);
+  }
+
+  /** Forfeit: fly every card still in the viewer's hand to the pile, staggered like an opponent's. */
+  ownForfeit(): void {
+    this.cardTable
+      .cards()
+      .filter((c) => !c.inPile)
+      .forEach((c, i) => setTimeout(() => this.cardTable.flyToPile(c), i * FORFEIT_STAGGER_MS));
+  }
+
+  /** Last push's public counts, so the next one can be read as a diff. */
+  private previousCounts?: Record<string, number>;
 
   /** Animate an opponent's just-played card from its (outermost) fan slot to the pile. */
   opponentPlayed(playerId: string, fanCount: number, played: string[]): void {
@@ -56,7 +109,7 @@ export class BoardCardFly {
       if (!slot) return;
       setTimeout(
         () => this.cardTable.flyToPile({ ...parseCard(str), ...toLayerSlot(slot) }),
-        i * 120, // small stagger between cards
+        i * FORFEIT_STAGGER_MS,
       );
     });
   }

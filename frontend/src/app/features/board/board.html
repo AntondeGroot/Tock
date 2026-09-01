@@ -21,11 +21,11 @@
             [attr.data-testid]="'pawn-' + p.id"
             [color]="p.color"
             [teamId]="p.teamId"
-            (click)="selectPawn(p.id)"
+            (click)="selection.selectPawn(p.id)"
             [highlight]="
-              p.id === pawn1Id()
+              p.id === selection.pawn1Id()
                 ? highlightForPawn1(p.color)
-                : p.id === pawn2Id()
+                : p.id === selection.pawn2Id()
                   ? highlightForPawn2(p.color)
                   : undefined
             "
@@ -46,9 +46,9 @@
         [flyers]="cardTable.flyers()"
         [backs]="cardBacks()"
         [options]="cardTable.options"
-        [selectedUuid]="selectedCardUuid() ?? null"
+        [selectedUuid]="selection.cardUuid() ?? null"
         [isSpecial]="isSpecial"
-        (cardClick)="selectCard($event)"
+        (cardClick)="selection.selectCard($event)"
         (cardHover)="hoverCard($event)"
       />
     </div>
@@ -61,20 +61,20 @@
          tall block under the buttons that ran off the bottom of the screen. The hint itself goes
          quiet as soon as a second pawn is picked — by then you are plainly past needing it — but
          the row keeps its height so nothing below shifts. -->
-    @if (splitVisible() && isPhone()) {
+    @if (selection.splitVisible() && isPhone()) {
       <app-split-steps
         class="split-steps--inline"
-        [steps1]="stepsPawn1()"
-        [steps2]="stepsPawn2()"
+        [steps1]="selection.stepsPawn1()"
+        [steps2]="selection.stepsPawn2()"
         [color1]="pawn1Highlight()"
         [color2]="pawn2Highlight()"
         [label1]="i18n.t('pawn1')"
         [label2]="i18n.t('pawn2')"
-        (steps1Change)="onStepsPawn1($event)"
-        (steps2Change)="onStepsPawn2($event)"
+        (steps1Change)="selection.setStepsPawn1($event)"
+        (steps2Change)="selection.setStepsPawn2($event)"
       />
     } @else {
-      <div class="card-hint">{{ splitVisible() ? '' : hint() }}</div>
+      <div class="card-hint">{{ selection.splitVisible() ? '' : hint() }}</div>
     }
 
     <!-- Actions + roster. Desktop: a column pinned to the right gutter. Mobile: a
@@ -95,16 +95,16 @@
 
         <!-- 7-split: divide the 7 across the two selected pawns (sum stays 7). The phone
              layout renders this under the hand instead (see the hint slot above). -->
-        @if (splitVisible() && !isPhone()) {
+        @if (selection.splitVisible() && !isPhone()) {
           <app-split-steps
-            [steps1]="stepsPawn1()"
-            [steps2]="stepsPawn2()"
+            [steps1]="selection.stepsPawn1()"
+            [steps2]="selection.stepsPawn2()"
             [color1]="pawn1Highlight()"
             [color2]="pawn2Highlight()"
             [label1]="i18n.t('pawn1')"
             [label2]="i18n.t('pawn2')"
-            (steps1Change)="onStepsPawn1($event)"
-            (steps2Change)="onStepsPawn2($event)"
+            (steps1Change)="selection.setStepsPawn1($event)"
+            (steps2Change)="selection.setStepsPawn2($event)"
           />
         }
       </div>

@@ -16,6 +16,9 @@ const geo = buildBoard(
 );
 const positioner = new DefaultCardPositioner();
 
+/** The viewer whose own hand is excluded from the public count diffing. */
+const VIEWER = 'me';
+
 describe('BoardCardFly', () => {
   let hand: CardModel[];
   let table: CardTable;
@@ -29,6 +32,7 @@ describe('BoardCardFly', () => {
       () => hand,
       table,
       positioner,
+      VIEWER,
     );
     vi.useFakeTimers();
   });
@@ -86,6 +90,7 @@ describe('BoardCardFly', () => {
       () => [],
       table,
       positioner,
+      VIEWER,
     );
     const spy = vi.spyOn(table, 'flyToPile');
     noGeo.opponentPlayed('1', 3, ['2_13']);
