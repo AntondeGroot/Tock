@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameStatePush, Player } from '../../../api';
+import { GameStatePush, Pawn, Player } from '../../../api';
 import { SoundService } from '../../../sound.service';
 import { TransitionSounds } from './transition-sounds';
 
@@ -12,6 +12,31 @@ const push = (finished: number, currentPlayerId = '1'): GameStatePush => ({
   players: [
     { id: '1', name: 'me', place: finished > 0 ? 1 : -1 },
     { id: '2', name: 'mate', place: finished > 1 ? 2 : -1 },
+  ] satisfies Player[],
+});
+
+/** All four of a player's pawns, `home` of them parked in the finish lane and the rest out. */
+const pawnsOf = (playerId: string, home: number): Pawn[] =>
+  [0, 1, 2, 3].map((pawnNr) => ({
+    playerId,
+    pawnId: { playerId, pawnNr },
+    currentTileId: { playerId, tileNr: pawnNr < home ? 16 + pawnNr : 5 },
+    nestTileId: { playerId, tileNr: -pawnNr - 1 },
+  }));
+
+/** A team-play push: how many pawns each teammate has home, and the places awarded so far. */
+const teamPush = (
+  homeMine: number,
+  homeTheirs: number,
+  places: [number, number] = [-1, -1],
+): GameStatePush => ({
+  currentPlayerId: '1',
+  pawns: [...pawnsOf('1', homeMine), ...pawnsOf('2', homeTheirs)],
+  winners: [],
+  version: 1,
+  players: [
+    { id: '1', name: 'me', teamId: 0, place: places[0] },
+    { id: '2', name: 'mate', teamId: 0, place: places[1] },
   ] satisfies Player[],
 });
 
@@ -84,5 +109,39 @@ describe('TransitionSounds', () => {
 
     // THEN the click sounds, and at once: it announces the server's handover, not an animation
     expect(play.mock.calls).toEqual([['turnChange']]);
+  });
+
+  // In team play the two moments come apart: you bring your own four home long before the team
+  // places (the team waits for BOTH), and that first arrival is an occasion in its own right.
+  it('sounds when a player brings their last pawn home, before their team has placed', () => {
+    // GIVEN a team game in which the viewer still has a pawn out on the board
+    sounds.react(teamPush(3, 0));
+
+    // WHEN their fourth pawn comes home — the teammate is still out, so no place is awarded
+    sounds.react(teamPush(4, 0));
+
+    // THEN the fanfare marks it anyway: coming home is the occasion, not the medal
+    expect(play.mock.calls).toEqual([['medalAwarded', 0]]);
+  });
+
+  // The winning push says three things at once — the teammate is home, and BOTH members are
+  // awarded the team's place. Treating the places as their own occasion would stack two more
+  // fanfares on top of the arrival that earned them, and the viewer's own place would fire a
+  // second time for a finish already celebrated pushes ago.
+  it('sounds once when the last teammate comes home and the team places at once', () => {
+    const fanfares = () => play.mock.calls.filter(([name]) => name === 'medalAwarded').length;
+
+    // GIVEN a team game with a pawn still out on each side
+    sounds.react(teamPush(3, 3));
+
+    // WHEN the viewer comes home first, that is its own occasion
+    sounds.react(teamPush(4, 3));
+    expect(fanfares()).toBe(1);
+
+    // WHEN the teammate's last pawn then lands, winning the game for the team
+    sounds.react(teamPush(4, 4, [1, 1]));
+
+    // THEN exactly one more fanfare — not one per finisher, and not one per medal on top
+    expect(fanfares()).toBe(2);
   });
 });
