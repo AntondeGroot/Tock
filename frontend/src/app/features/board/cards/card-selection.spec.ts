@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Board } from './board';
-import { provideApi, GameStatePush, Card as CardModel } from '../../api';
+import { Board } from '../board';
+import { provideApi, GameStatePush, Card as CardModel } from '../../../api';
 
 // Port of the GWT client's Card_IT (bucket C — frontend-only, Angular component test).
 //

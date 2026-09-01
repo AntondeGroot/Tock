@@ -1,7 +1,7 @@
-import { Card as CardModel } from '../../api';
-import { CardTable } from '../../card-table/card-table';
-import { CardPositioner } from '../../card-table/card-table.types';
-import { BoardGeometry, fanCardBacks } from './board-geometry';
+import { Card as CardModel } from '../../../api';
+import { CardTable } from '../../../card-table/card-table';
+import { CardPositioner } from '../../../card-table/card-table.types';
+import { BoardGeometry, fanCardBacks } from '../geometry/board-geometry';
 
 /** Parse a public "suit_value" played-card string into its sprite coordinates. */
 function parseCard(str: string): { suit: number; value: number } {

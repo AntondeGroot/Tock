@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Translations } from '../../../i18n/translations.service';
+import { Translations } from '../../../../i18n/translations.service';
 import { MoveRejection } from './move-rejection.service';
 
 /**

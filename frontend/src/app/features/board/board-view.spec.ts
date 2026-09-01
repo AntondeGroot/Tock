@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Pawn as ApiPawn, Player } from '../../api';
 import { seatColor } from '../../player-colors';
-import { buildBoard } from './board-geometry';
+import { buildBoard } from './geometry/board-geometry';
 import { projectCardBacks, projectPawns, projectTiles } from './board-view';
-import { pawnKey } from './pawn-key';
+import { pawnKey } from './pawn/pawn-key';
 
 // A real geometry for a 3-player game (viewer = player 0), so the projections are exercised
 // against the same board maths the app uses.

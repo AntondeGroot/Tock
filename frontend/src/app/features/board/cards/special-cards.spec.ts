@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Board } from './board';
-import { Translations } from '../../i18n/translations.service';
-import { provideApi, GameStatePush, Card as CardModel } from '../../api';
+import { Board } from '../board';
+import { Translations } from '../../../i18n/translations.service';
+import { provideApi, GameStatePush, Card as CardModel } from '../../../api';
 
 // Special-card highlight + hint/suggestion (ported from the GWT GameBoardView).
 // Special cards are Ace(1)/Four(4)/Seven(7)/Jack(11)/Queen(12)/King(13): they get

@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { Pt } from './board-geometry';
+import { Pt } from '../geometry/board-geometry';
 
 /** A pawn's live animated position: pixel coordinates + the transition duration of the step
  *  currently underway (ms). Present in {@link PawnAnimator.positions} only while it is moving. */

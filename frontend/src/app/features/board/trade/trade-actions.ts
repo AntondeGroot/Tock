@@ -1,4 +1,4 @@
-import { Card as CardModel, TradeAction, TradeService } from '../../api';
+import { Card as CardModel, TradeAction, TradeService } from '../../../api';
 
 /**
  * Post one team card-trade action (ask, offer, accept, decline, withdraw).

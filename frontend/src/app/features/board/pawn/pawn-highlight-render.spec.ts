@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Board } from './board';
+import { Board } from '../board';
 import { RED, BLUE } from './pawn-highlight';
-import { provideApi, GameStatePush, Pawn as ApiPawn } from '../../api';
+import { provideApi, GameStatePush, Pawn as ApiPawn } from '../../../api';
 
 // Port of PawnHighlightColors_IT (bucket C, Angular component test) — the
 // *rendering wiring*. The colour maths itself (forPawn1/forPawn2 clash + fallback)

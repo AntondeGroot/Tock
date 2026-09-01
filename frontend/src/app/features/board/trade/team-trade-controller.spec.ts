@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Card as CardModel, GameStatePush } from '../../api';
+import { Card as CardModel, GameStatePush } from '../../../api';
 import { TeamTradeController } from './team-trade-controller';
 
 const card = (uuid: number, value: number): CardModel => ({ uuid, suit: 0, value });

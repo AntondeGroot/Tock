@@ -1,4 +1,4 @@
-import { Pawn as ApiPawn, Player } from '../../api';
+import { Pawn as ApiPawn, Player } from '../../../api';
 
 /**
  * Team play, step 3: which previewed landing tiles would capture a *teammate's* pawn.

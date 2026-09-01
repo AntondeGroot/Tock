@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { Card } from '../../../card-table/card/card';
-import { Card as CardModel, Trade, TradeAction, TradeService } from '../../../api';
-import { Translations } from '../../../i18n/translations.service';
+import { Card } from '../../../../card-table/card/card';
+import { Card as CardModel, Trade, TradeAction, TradeService } from '../../../../api';
+import { Translations } from '../../../../i18n/translations.service';
 import { postTradeAction } from '../trade-actions';
 
 type Mode = 'pick' | 'respond' | 'closed';

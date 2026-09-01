@@ -1,5 +1,5 @@
-import { MoveRejectionReason } from '../../api';
-import { TranslationKey } from '../../i18n/translations';
+import { MoveRejectionReason } from '../../../api';
+import { TranslationKey } from '../../../i18n/translations';
 
 /**
  * Maps a server move-rejection reason to its i18n key (ported from the GWT

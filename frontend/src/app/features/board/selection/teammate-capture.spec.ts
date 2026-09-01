@@ -1,4 +1,4 @@
-import { Pawn as ApiPawn, Player } from '../../api';
+import { Pawn as ApiPawn, Player } from '../../../api';
 import { teammateCaptureKeys, teammateCaptureTiles } from './teammate-capture';
 
 // 4-player team game: seats 0 & 2 = team 0, seats 1 & 3 = team 1.
