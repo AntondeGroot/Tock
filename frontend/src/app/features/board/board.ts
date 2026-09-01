@@ -97,6 +97,9 @@ export class Board implements OnInit, OnDestroy {
     this.gameStore.players.set(next.players ?? []);
     this.gameStore.winners.set(next.winners ?? []);
     this.state.set(next);
+    // Last: the fanfare for a player who just finished is delayed by the pawn animation queued
+    // above, so this has to run after animateMove — an ordering an effect would leave implicit.
+    this.transitionSounds.react(next);
   }
   private readonly movesService = inject(MovesService);
   private readonly cardsService = inject(CardsService);
@@ -174,8 +177,8 @@ export class Board implements OnInit, OnDestroy {
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;
 
-  // Turn-change / medal sounds: fed every push, fires on the transition (see transition-sounds.ts).
-  private readonly transitionSounds = new TransitionSounds(this.sound);
+  // Turn-change / medal sounds: fed every push from handleGameState, fires on the transition.
+  private readonly transitionSounds = new TransitionSounds(this.sound, this.pawnAnimator);
 
   // The phone layout, matching the 699px breakpoint the SCSS uses. The 7-split control needs a
   // different PARENT on each layout — the button column on a desktop, a band under the hand on a
@@ -200,7 +203,6 @@ export class Board implements OnInit, OnDestroy {
     );
     effect(() => this.announceTeamHandoff());
     effect(() => this.teamTrade.reactToOutcome());
-    effect(() => this.transitionSounds.react(this.state()));
   }
 
   /**
