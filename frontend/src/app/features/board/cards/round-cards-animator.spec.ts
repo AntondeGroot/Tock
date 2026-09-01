@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoundCardsAnimator } from './round-cards-animator';
-import { CardTable } from '../../card-table/card-table';
-import { DefaultCardPositioner } from '../../card-table/default-positioner';
-import { Card as CardModel } from '../../api';
+import { CardTable } from '../../../card-table/card-table';
+import { DefaultCardPositioner } from '../../../card-table/default-positioner';
+import { Card as CardModel } from '../../../api';
 
 const card = (uuid: number, value = 5): CardModel => ({ uuid, suit: 0, value });
 

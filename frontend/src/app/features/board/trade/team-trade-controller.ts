@@ -1,6 +1,6 @@
 import { computed } from '@angular/core';
-import { Card as CardModel, GameStatePush, Trade } from '../../api';
-import { TranslationKey } from '../../i18n/keys';
+import { Card as CardModel, GameStatePush, Trade } from '../../../api';
+import { TranslationKey } from '../../../i18n/keys';
 
 type Translate = (key: TranslationKey, ...args: (string | number)[]) => string;
 

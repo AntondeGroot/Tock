@@ -1,4 +1,4 @@
-import { PawnId } from '../../api';
+import { PawnId } from '../../../api';
 
 /**
  * The string key identifying a pawn's DOM/animation element, in the format

@@ -1,5 +1,5 @@
-import { GameStatePush } from '../../api';
-import { SoundService } from '../../sound.service';
+import { GameStatePush } from '../../../api';
+import { SoundService } from '../../../sound.service';
 
 /**
  * Sound effects (ported from the GWT AudioPlayer): a soft click when the turn passes to a new

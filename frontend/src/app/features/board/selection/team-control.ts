@@ -1,4 +1,4 @@
-import { Pawn, Player } from '../../api';
+import { Pawn, Player } from '../../../api';
 
 /** The finish lane is tiles 16-19, so a pawn standing on one of them is home. */
 const FIRST_FINISH_TILE = 16;

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PawnAnimator, walkDurationMs } from './pawn-animator';
-import { Pt } from './board-geometry';
+import { Pt } from '../geometry/board-geometry';
 
 const pt = (x: number, y: number): Pt => ({ x, y });
 

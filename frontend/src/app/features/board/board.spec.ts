@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 
 import { Board } from './board';
 import { Translations } from '../../i18n/translations.service';
-import { TeamHandoff } from './team-handoff/team-handoff.service';
+import { TeamHandoff } from '../team-handoff/team-handoff.service';
 
 /** A pawn of `playerId` standing on `tileNr` (≥ 16 is a finish tile, i.e. home). */
 const pawnOn = (playerId: string, pawnNr: number, tileNr: number) => ({

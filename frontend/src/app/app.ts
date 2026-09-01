@@ -4,8 +4,8 @@ import { LanguageSelector } from './features/nav/language-selector/language-sele
 import { VolumeSlider } from './features/nav/volume-slider/volume-slider';
 import { GameRules } from './features/nav/game-rules/game-rules';
 import { LeaveGame } from './features/nav/leave-game/leave-game';
-import { MoveRejected } from './features/board/move-rejected/move-rejected';
-import { TeamHandoffPopup } from './features/board/team-handoff/team-handoff';
+import { MoveRejected } from './features/board/feedback/move-rejected/move-rejected';
+import { TeamHandoffPopup } from './features/team-handoff/team-handoff';
 import { WinnerBanner } from './features/winner-banner/winner-banner';
 import { ChatPanel } from './features/chat/chat';
 import { Translations } from './i18n/translations.service';

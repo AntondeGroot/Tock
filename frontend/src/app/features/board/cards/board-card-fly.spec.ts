@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Card as CardModel } from '../../api';
-import { CardTable } from '../../card-table/card-table';
-import { DefaultCardPositioner } from '../../card-table/default-positioner';
+import { Card as CardModel } from '../../../api';
+import { CardTable } from '../../../card-table/card-table';
+import { DefaultCardPositioner } from '../../../card-table/default-positioner';
 import { BoardCardFly } from './board-card-fly';
-import { buildBoard, fanCardBacks } from './board-geometry';
+import { buildBoard, fanCardBacks } from '../geometry/board-geometry';
 
 // Real geometry (viewer = player 0) so the fan-slot maths matches the app.
 const geo = buildBoard(

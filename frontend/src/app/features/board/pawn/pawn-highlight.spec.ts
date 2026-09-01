@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Player } from '../../api';
-import { seatColor } from '../../player-colors';
+import { Player } from '../../../api';
+import { seatColor } from '../../../player-colors';
 import {
   BLUE,
   GREEN,

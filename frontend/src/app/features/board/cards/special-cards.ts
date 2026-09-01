@@ -1,4 +1,4 @@
-import { TranslationKey } from '../../i18n/keys';
+import { TranslationKey } from '../../../i18n/keys';
 
 // Cards that do something special (Ace, Four, Seven, Jack, Queen, King): they get a gold highlight
 // in the hand and a hint/suggestion when hovered or selected (ported from the GWT GameBoardView).

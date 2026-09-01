@@ -1,5 +1,5 @@
-import { MoveResponse, Pawn as ApiPawn, PositionKey } from '../../api';
-import { BoardGeometry, Pt } from './board-geometry';
+import { MoveResponse, Pawn as ApiPawn, PositionKey } from '../../../api';
+import { BoardGeometry, Pt } from '../geometry/board-geometry';
 import { PawnWalk, walkDurationMs } from './pawn-animator';
 import { pawnKey } from './pawn-key';
 

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Board } from './board';
-import { provideApi, GameStatePush, MoveResponse, Pawn as ApiPawn } from '../../api';
+import { Board } from '../board';
+import { provideApi, GameStatePush, MoveResponse, Pawn as ApiPawn } from '../../../api';
 
 // A Jack switch must WALK both pawns to each other's tile, not teleport them. The board sets the
 // animation up from the push's lastMoveResponse *before* applying the new state, so right after

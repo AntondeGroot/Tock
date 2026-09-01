@@ -1,9 +1,9 @@
 import { Pawn as ApiPawn, Player } from '../../api';
 import { CardBackVM } from '../../card-table/card-table.types';
 import { seatColor } from '../../player-colors';
-import { BoardGeometry, fanCardBacks, Pt, Tile } from './board-geometry';
-import { PawnPos } from './pawn-animator';
-import { pawnKey } from './pawn-key';
+import { BoardGeometry, fanCardBacks, Pt, Tile } from './geometry/board-geometry';
+import { PawnPos } from './pawn/pawn-animator';
+import { pawnKey } from './pawn/pawn-key';
 
 // Pure projections from (board geometry + server state) to the view models the board renders.
 // Kept out of the component so they can be unit-tested with plain inputs — no signals, no DI.

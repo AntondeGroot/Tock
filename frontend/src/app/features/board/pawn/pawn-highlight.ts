@@ -1,5 +1,5 @@
-import { Player } from '../../api';
-import { seatColor } from '../../player-colors';
+import { Player } from '../../../api';
+import { seatColor } from '../../../player-colors';
 
 /**
  * Selection-highlight colours for a pawn — a faithful port of the GWT

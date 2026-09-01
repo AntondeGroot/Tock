@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PawnId } from '../../api';
+import { PawnId } from '../../../api';
 import { pawnKey } from './pawn-key';
 
 // Port of the GWT client's PawnAnimationKeyTest (JUnit -> Vitest).

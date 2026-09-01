@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Board } from './board';
-import { provideApi, GameStatePush, Pawn as ApiPawn } from '../../api';
+import { Board } from '../board';
+import { provideApi, GameStatePush, Pawn as ApiPawn } from '../../../api';
 
 // Port of AutoSelectCardBorder_IT (bucket C, Angular component test).
 //

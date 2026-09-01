@@ -2,9 +2,9 @@
 //
 // NOTE: architectural-boundary linting (eslint-plugin-boundaries) is deliberately
 // NOT used. This app is feature-co-located — a component (features/board/board.ts)
-// sits beside its pure helpers (features/board/board-geometry.ts) with no path
-// convention separating layers, so boundaries can't classify them without a brittle
-// hand-list. Its load-bearing rule (forbid component -> store) is also inappropriate
+// sits beside its pure helpers, grouped by concept (features/board/geometry/,
+// pawn/, cards/, selection/, trade/, feedback/) rather than by layer, so boundaries
+// can't classify them without a brittle hand-list. Its load-bearing rule (forbid component -> store) is also inappropriate
 // here: GameStore is a tiny signal holder that components idiomatically read directly.
 // The sonarjs design rules + size caps below cover the god-object risk instead.
 const eslint = require('@eslint/js');

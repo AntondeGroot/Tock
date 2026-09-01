@@ -9,7 +9,7 @@ import {
   TradeAction,
   TradeService,
 } from '../../api';
-import { buildBoard } from './board-geometry';
+import { buildBoard } from './geometry/board-geometry';
 import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
@@ -18,28 +18,28 @@ import { CardLayer } from '../../card-table/card-layer';
 import { CardTable } from '../../card-table/card-table';
 import { DefaultCardPositioner } from '../../card-table/default-positioner';
 import { PlayerList } from '../player-list/player-list';
-import { TradePanel } from './trade-panel/trade-panel';
-import { highlightForPawn1, highlightForPawn2, stepBoxColor } from './pawn-highlight';
-import { BoardCardFly } from './board-card-fly';
+import { TradePanel } from './trade/trade-panel/trade-panel';
+import { highlightForPawn1, highlightForPawn2, stepBoxColor } from './pawn/pawn-highlight';
+import { BoardCardFly } from './cards/board-card-fly';
 import { projectCardBacks, projectPawns, projectTiles } from './board-view';
-import { TeamTradeController } from './team-trade-controller';
+import { TeamTradeController } from './trade/team-trade-controller';
 import { GameStateStream } from './game-state-stream';
-import { PawnAnimator } from './pawn-animator';
-import { SplitSteps } from './split-steps/split-steps';
-import { moveAnimation } from './move-animation';
-import { postTradeAction } from './trade-actions';
-import { PawnAndCardSelection } from './pawn-and-card-selection';
-import { teammateCaptureTiles } from './teammate-capture';
-import { pawnKey } from './pawn-key';
-import { hintKeyFor, isSpecialCard } from './special-cards';
+import { PawnAnimator } from './pawn/pawn-animator';
+import { SplitSteps } from './selection/split-steps/split-steps';
+import { moveAnimation } from './pawn/move-animation';
+import { postTradeAction } from './trade/trade-actions';
+import { PawnAndCardSelection } from './selection/pawn-and-card-selection';
+import { teammateCaptureTiles } from './selection/teammate-capture';
+import { pawnKey } from './pawn/pawn-key';
+import { hintKeyFor, isSpecialCard } from './cards/special-cards';
 import { Translations } from '../../i18n/translations.service';
 import { GameStore } from '../../game-store';
-import { MoveRejection } from './move-rejected/move-rejection.service';
-import { TeamHandoff } from './team-handoff/team-handoff.service';
-import { localRejectionKey, rejectionMessageKey } from './rejection-message';
-import { allPawnsHome, teammateOf } from './team-control';
-import { TransitionSounds } from './transition-sounds';
-import { RoundCardsAnimator } from './round-cards-animator';
+import { MoveRejection } from './feedback/move-rejected/move-rejection.service';
+import { TeamHandoff } from '../team-handoff/team-handoff.service';
+import { localRejectionKey, rejectionMessageKey } from './feedback/rejection-message';
+import { allPawnsHome, teammateOf } from './selection/team-control';
+import { TransitionSounds } from './feedback/transition-sounds';
+import { RoundCardsAnimator } from './cards/round-cards-animator';
 
 @Component({
   selector: 'app-board',
