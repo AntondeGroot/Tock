@@ -603,6 +603,11 @@ components:
         teamCardTrade:
           type: boolean
           description: Whether the King/Ace team trade sub-option is enabled (drives the Ask button)
+        exactMoveRequired:
+          type: boolean
+          description: |
+            Whether the exact-move option is on: a move that would have a pawn turn around at a
+            blocked start tile or the end of the finish is refused instead (drives the game rules)
         trade:
           $ref: '#/components/schemas/Trade'
 

@@ -98,6 +98,7 @@ export class Board implements OnInit, OnDestroy {
     // Before the winners: the banner reads it to wait for the move animated above.
     this.gameStore.pawnsSettleMs.set(this.pawnAnimator.remainingMs());
     this.gameStore.winners.set(next.winners ?? []);
+    this.gameStore.exactMoveRequired.set(next.exactMoveRequired ?? false);
     this.state.set(next);
     // Last: the fanfare for a player who just finished is delayed by the pawn animation queued
     // above, so this has to run after animateMove — an ordering an effect would leave implicit.

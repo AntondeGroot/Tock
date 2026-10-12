@@ -146,6 +146,7 @@ public class SseEmitterService {
     push.setPlayers(gs.getPlayers());
     push.setWinners(gs.getWinners());
     push.setVersion(gs.getVersion());
+    push.setExactMoveRequired(gs.isExactMoveRequired());
     push.setLastMoveResponse(omitLastMove ? null : session.getLastMoveResponse());
   }
 

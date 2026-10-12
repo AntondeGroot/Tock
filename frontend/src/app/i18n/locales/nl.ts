@@ -27,6 +27,14 @@ export const nl: Dictionary = {
   rulesGettingOnBoard: 'Op het bord komen',
   rulesSpecialCards: 'Speciale kaarten',
   rulesClickToClose: 'Klik ergens om te sluiten',
+  rulesMoving: 'Over het bord bewegen',
+  rulesStartBlocks:
+    'Een pion op zijn eigen startveld blokkeert de weg: geen enkele pion kan erlangs — ook geen andere pion van dezelfde speler.',
+  rulesFinishNoPassing: 'Op je finish kun je niet over je eigen pionnen heen springen.',
+  rulesBounceBack:
+    'Loop je tegen een geblokkeerd startveld of het einde van je finish aan, dan keert je pion om en loopt hij de resterende stappen terug.',
+  rulesExactMoves:
+    'In dit spel zijn exacte zetten vereist: een pion mag niet omkeren bij een geblokkeerd startveld of het einde van je finish — een zet waarbij dat zou moeten, is niet toegestaan.',
   moveRejectedTitle: 'Deze zet kan niet',
   moveRejectedGeneric: 'Deze zet is niet toegestaan.',
   moveRejectedNotYourTurn: 'Je bent niet aan de beurt (of deze zet is al gedaan).',
