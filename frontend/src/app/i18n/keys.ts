@@ -2,13 +2,14 @@
 // selectable languages. Each locale file (locales/*.ts) types its dictionary as
 // `Record<TranslationKey, string>`, so the compiler enforces every key is present.
 
-export type Locale = 'de' | 'en' | 'fr' | 'nl' | 'nb';
+export type Locale = 'de' | 'en' | 'fr' | 'it' | 'nl' | 'nb';
 
 /** Selectable languages, in the GWT enum's order, with their display names. */
 export const LANGUAGES: { code: Locale; name: string }[] = [
   { code: 'de', name: 'Deutsch' },
   { code: 'en', name: 'English' },
   { code: 'fr', name: 'Français' },
+  { code: 'it', name: 'Italiano' },
   { code: 'nl', name: 'Nederlands' },
   { code: 'nb', name: 'Norsk' },
 ];

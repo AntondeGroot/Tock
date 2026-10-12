@@ -13,7 +13,7 @@ const VIEWPORTS = [
 const PLAYER_COUNTS = [2, 4, 8];
 // The button labels vary a lot in width per language (e.g. "Play Card" vs
 // "Kaart spelen"), which drives the controls layout — so test them all.
-const LANGS = ['en', 'nl', 'de', 'fr', 'nb'];
+const LANGS = ['en', 'nl', 'de', 'fr', 'nb', 'it'];
 
 test.describe('controls + roster placement', () => {
   const sessions: Record<number, string> = {};

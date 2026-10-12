@@ -11,7 +11,7 @@ const VIEWPORTS = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
-const LANGS = ['en', 'nl', 'de', 'fr', 'nb'];
+const LANGS = ['en', 'nl', 'de', 'fr', 'nb', 'it'];
 
 // The six special cards and their hint labels (for readable test names).
 const HINTS = [
