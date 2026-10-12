@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { GameStore } from '../../game-store';
 import { Translations } from '../../i18n/translations.service';
 import { seatColor } from '../../player-colors';
@@ -53,16 +53,26 @@ export class WinnerBanner {
           .map((id) => players.find((p) => p.id === id))
           .filter((p) => p !== undefined);
         const place = finishers[0]?.place ?? winners.length; // `place` is optional in the API
-        this.announce({
+        const view = {
           name: finishers.map((p) => p.name ?? '').join(' + '),
           // Only the top three are medalled; the rest are still announced, just bare — the same
           // rule the roster's medal column follows, so a standing reads the same in both places.
           medal: MEDALS[place] ?? '',
           color: seatColor(finishers[0]?.playerInt),
-        });
+        };
+        // Pop together with the fanfare, once the winning pawn has landed.
+        this.announceAfter(untracked(this.store.pawnsSettleMs), view);
       }
       this.seen = winners.length;
     });
+  }
+
+  private announceAfter(delayMs: number, w: WinnerView): void {
+    if (delayMs > 0) {
+      setTimeout(() => this.announce(w), delayMs);
+    } else {
+      this.announce(w);
+    }
   }
 
   private announce(w: WinnerView): void {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WinnerBanner } from './winner-banner';
 import { GameStore } from '../../game-store';
@@ -31,6 +31,31 @@ describe('WinnerBanner', () => {
     expect(banner()).not.toBeNull();
     expect(banner()!.querySelector('.winner-banner__medal')!.textContent).toBe('🥇');
     expect(banner()!.querySelector('.winner-banner__name')!.textContent!.trim()).toBe('Aria');
+  });
+
+  // The server awards the place in the same push that carries the winning move, so popping the
+  // banner straight away would crown a pawn that is still crossing the board — and run ahead of
+  // the fanfare, which already waits for the pawns to land. Banner and trumpets come together.
+  it('holds the banner back until the pawns have finished walking', () => {
+    vi.useFakeTimers();
+    try {
+      // GIVEN a game in which nobody has finished yet
+      store.players.set([{ id: 'p0', name: 'Aria' } as Player]);
+      fixture.detectChanges();
+
+      // WHEN Aria wins with a move whose pawns are still 1200ms from landing
+      store.pawnsSettleMs.set(1200);
+      store.winners.set(['p0']);
+      fixture.detectChanges();
+
+      // THEN the banner waits for the last pawn to land
+      expect(banner(), 'shown while the pawn is still walking').toBeNull();
+      vi.advanceTimersByTime(1200);
+      fixture.detectChanges();
+      expect(banner()).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('gives the second finisher the silver medal', () => {

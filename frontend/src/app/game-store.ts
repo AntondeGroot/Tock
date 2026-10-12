@@ -13,4 +13,10 @@ export class GameStore {
 
   /** Player ids in the order they finished (1st, 2nd, 3rd, …). */
   readonly winners = signal<string[]>([]);
+
+  /**
+   * How long the pawns of the latest push still have to walk. A finish arrives in the same push
+   * as the winning move, so anything that celebrates it waits this long to match the board.
+   */
+  readonly pawnsSettleMs = signal(0);
 }
