@@ -14,12 +14,16 @@
     <div class="rules-content">
       <span class="rules-title">{{ i18n.t('rulesTitle') }}</span>
 
-      @for (section of sections; track section.titleKey) {
+      @for (section of sections(); track section.titleKey) {
         <div class="rules-section">
           <span class="rules-section-title">{{ i18n.t(section.titleKey) }}</span>
-          @for (row of section.rows; track row.card) {
+          @for (row of section.rows; track row.hint) {
             <div class="rules-row">
-              <div class="rules-card-chip" [class.rules-card-red]="row.red">{{ row.card }}</div>
+              @if (row.card) {
+                <div class="rules-card-chip" [class.rules-card-red]="row.red">{{ row.card }}</div>
+              } @else {
+                <div class="rules-bullet" aria-hidden="true"></div>
+              }
               <div class="rules-row-text">{{ i18n.t(row.hint) }}</div>
             </div>
           }

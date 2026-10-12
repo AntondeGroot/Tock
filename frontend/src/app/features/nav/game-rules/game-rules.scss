@@ -142,6 +142,16 @@
   flex-shrink: 0;
 }
 
+// Marks a rule that isn't tied to a card, lined up with the text's first line.
+.rules-bullet {
+  width: 8px;
+  height: 8px;
+  margin: 10px 4px 0 4px;
+  border-radius: 50%;
+  background: #c9a227;
+  flex-shrink: 0;
+}
+
 .rules-card-red {
   color: #c0392b;
 }

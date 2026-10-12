@@ -38,6 +38,9 @@ public class GameStatePush {
   // Whether the King/Ace team trade sub-option is enabled
   private boolean teamCardTrade = false;
 
+  // Whether the exact-move option is on (the game rules describe the game being played)
+  private boolean exactMoveRequired = false;
+
   // The pending team card-trade, if any (null otherwise)
   private Trade trade;
 
@@ -76,6 +79,9 @@ public class GameStatePush {
 
   public boolean isTeamCardTrade() { return teamCardTrade; }
   public void setTeamCardTrade(boolean v) { teamCardTrade = v; }
+
+  public boolean isExactMoveRequired() { return exactMoveRequired; }
+  public void setExactMoveRequired(boolean v) { exactMoveRequired = v; }
 
   public Trade getTrade() { return trade; }
   public void setTrade(Trade v) { trade = v; }

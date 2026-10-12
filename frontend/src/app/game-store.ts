@@ -19,4 +19,7 @@ export class GameStore {
    * as the winning move, so anything that celebrates it waits this long to match the board.
    */
   readonly pawnsSettleMs = signal(0);
+
+  /** The game option that refuses a move instead of letting a blocked pawn turn around. */
+  readonly exactMoveRequired = signal(false);
 }

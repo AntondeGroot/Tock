@@ -27,6 +27,15 @@ export const fr: Dictionary = {
   rulesGettingOnBoard: 'Entrer sur le plateau',
   rulesSpecialCards: 'Cartes spéciales',
   rulesClickToClose: "Cliquez n'importe où pour fermer",
+  rulesMoving: 'Se déplacer sur le plateau',
+  rulesStartBlocks:
+    'Un pion sur sa propre case de départ bloque le chemin : aucun pion ne peut le dépasser — pas même un autre pion du même joueur.',
+  rulesFinishNoPassing:
+    'Dans votre arrivée, vous ne pouvez pas sauter par-dessus vos propres pions.',
+  rulesBounceBack:
+    'Si votre pion bute contre une case de départ bloquée ou le bout de votre arrivée, il fait demi-tour et recule des pas restants.',
+  rulesExactMoves:
+    "Cette partie exige des coups exacts : un pion ne peut pas faire demi-tour devant une case de départ bloquée ou au bout de votre arrivée — un coup qui l'exigerait est refusé.",
   moveRejectedTitle: 'Ce coup est impossible',
   moveRejectedGeneric: "Ce coup n'est pas autorisé.",
   moveRejectedNotYourTurn: "Ce n'est pas votre tour (ou le coup a déjà été joué).",

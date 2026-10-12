@@ -27,6 +27,14 @@ export const de: Dictionary = {
   rulesGettingOnBoard: 'Auf das Spielfeld kommen',
   rulesSpecialCards: 'Sonderkarten',
   rulesClickToClose: 'Klicke irgendwo zum Schließen',
+  rulesMoving: 'Auf dem Spielfeld ziehen',
+  rulesStartBlocks:
+    'Eine Figur auf ihrem eigenen Startfeld blockiert den Weg: keine Figur kann an ihr vorbeiziehen — auch keine andere Figur desselben Spielers.',
+  rulesFinishNoPassing: 'Im Ziel kannst du deine eigenen Figuren nicht überspringen.',
+  rulesBounceBack:
+    'Stößt deine Figur an ein blockiertes Startfeld oder an das Ende deines Ziels, kehrt sie um und geht die restlichen Schritte zurück.',
+  rulesExactMoves:
+    'In diesem Spiel sind exakte Züge erforderlich: eine Figur darf an einem blockierten Startfeld oder am Ende deines Ziels nicht umkehren — ein Zug, der das erfordern würde, ist nicht erlaubt.',
   moveRejectedTitle: 'Dieser Zug ist nicht möglich',
   moveRejectedGeneric: 'Dieser Zug ist nicht erlaubt.',
   moveRejectedNotYourTurn: 'Du bist nicht an der Reihe (oder der Zug wurde bereits gespielt).',

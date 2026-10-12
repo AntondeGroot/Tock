@@ -28,6 +28,14 @@ export const it: Dictionary = {
   rulesGettingOnBoard: 'Entrare sul tabellone',
   rulesSpecialCards: 'Carte speciali',
   rulesClickToClose: 'Clicca ovunque per chiudere',
+  rulesMoving: 'Muoversi sul tabellone',
+  rulesStartBlocks:
+    "Una pedina sulla propria casella di partenza blocca la strada: nessuna pedina può superarla — nemmeno un'altra pedina dello stesso giocatore.",
+  rulesFinishNoPassing: 'Nel tuo arrivo non puoi scavalcare le tue pedine.',
+  rulesBounceBack:
+    'Se la tua pedina urta una casella di partenza bloccata o la fine del tuo arrivo, torna indietro dei passi rimanenti.',
+  rulesExactMoves:
+    'Questa partita richiede mosse esatte: una pedina non può tornare indietro davanti a una casella di partenza bloccata o alla fine del tuo arrivo — una mossa che lo richiederebbe non è consentita.',
   moveRejectedTitle: 'Non puoi fare questa mossa',
   moveRejectedGeneric: 'Questa mossa non è consentita.',
   moveRejectedNotYourTurn: 'Non è il tuo turno (oppure la mossa è già stata giocata).',

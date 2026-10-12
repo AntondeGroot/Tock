@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { GameStore } from '../../../game-store';
 import { Translations } from '../../../i18n/translations.service';
 import { TranslationKey } from '../../../i18n/translations';
 
 interface RulesRow {
-  card: string; // the chip label (A, K, 4, 7, J, Q)
-  red: boolean; // red chip vs black
+  card?: string; // the chip label (A, K, 4, 7, J, Q); a rule that isn't about a card has none
+  red?: boolean; // red chip vs black
   hint: TranslationKey;
 }
 interface RulesSection {
@@ -25,9 +26,21 @@ interface RulesSection {
 })
 export class GameRules {
   protected readonly i18n = inject(Translations);
+  private readonly store = inject(GameStore);
   protected readonly open = signal(false);
 
-  protected readonly sections: RulesSection[] = [
+  // First, because they decide where any card can take you. The last rule follows the game's
+  // exact-move option: by default a blocked pawn turns around, with the option the move is refused.
+  private readonly movingSection = computed<RulesSection>(() => ({
+    titleKey: 'rulesMoving',
+    rows: [
+      { hint: 'rulesStartBlocks' },
+      { hint: 'rulesFinishNoPassing' },
+      { hint: this.store.exactMoveRequired() ? 'rulesExactMoves' : 'rulesBounceBack' },
+    ],
+  }));
+
+  private readonly cardSections: RulesSection[] = [
     {
       titleKey: 'rulesGettingOnBoard',
       rows: [
@@ -45,4 +58,6 @@ export class GameRules {
       ],
     },
   ];
+
+  protected readonly sections = computed(() => [this.movingSection(), ...this.cardSections]);
 }

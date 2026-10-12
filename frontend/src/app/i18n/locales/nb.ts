@@ -27,6 +27,14 @@ export const nb: Dictionary = {
   rulesGettingOnBoard: 'Komme på brettet',
   rulesSpecialCards: 'Spesialkort',
   rulesClickToClose: 'Klikk hvor som helst for å lukke',
+  rulesMoving: 'Flytte på brettet',
+  rulesStartBlocks:
+    'En brikke på sin egen startrute sperrer veien: ingen brikke kan passere den — heller ikke en annen brikke fra samme spiller.',
+  rulesFinishNoPassing: 'I målet ditt kan du ikke hoppe over dine egne brikker.',
+  rulesBounceBack:
+    'Støter brikken din mot en sperret startrute eller enden av målet ditt, snur den og går de resterende stegene tilbake.',
+  rulesExactMoves:
+    'Dette spillet krever nøyaktige trekk: en brikke kan ikke snu ved en sperret startrute eller enden av målet ditt — et trekk som ville kreve det, er ikke tillatt.',
   moveRejectedTitle: 'Du kan ikke gjøre det trekket',
   moveRejectedGeneric: 'Det trekket er ikke tillatt.',
   moveRejectedNotYourTurn: 'Det er ikke din tur (eller trekket er allerede spilt).',

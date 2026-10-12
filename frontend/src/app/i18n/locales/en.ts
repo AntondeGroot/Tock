@@ -28,6 +28,14 @@ export const en: Dictionary = {
   rulesGettingOnBoard: 'Getting on the board',
   rulesSpecialCards: 'Special Cards',
   rulesClickToClose: 'Click anywhere to close',
+  rulesMoving: 'Moving on the board',
+  rulesStartBlocks:
+    'A pawn on its own start tile blocks the road: no pawn can pass it — not even another pawn of the same player.',
+  rulesFinishNoPassing: "In your finish you can't jump over your own pawns.",
+  rulesBounceBack:
+    'Run into a blocked start tile or the end of your finish, and your pawn turns around and walks its remaining steps back.',
+  rulesExactMoves:
+    'This game requires exact moves: a pawn may not turn around at a blocked start tile or the end of your finish — a move that would have to is not allowed.',
   moveRejectedTitle: "You can't make that move",
   moveRejectedGeneric: "That move isn't allowed.",
   moveRejectedNotYourTurn: "It's not your turn (or that move was already played).",
