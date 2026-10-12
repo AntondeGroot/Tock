@@ -6,7 +6,7 @@ import { createGame } from './support/seed';
 // (Leave), and the footer bar holds Rules + Language. Nothing may collide or run
 // off-screen in any language, and the Leave confirm dialog must fit on screen.
 
-const LANGS = ['en', 'nl', 'de', 'fr', 'nb'];
+const LANGS = ['en', 'nl', 'de', 'fr', 'nb', 'it'];
 
 test.describe('mobile header (Option D)', () => {
   let session = '';

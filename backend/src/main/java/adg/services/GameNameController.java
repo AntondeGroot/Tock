@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
  * game list without hard-coding a copy (single source of truth). The game is
  * "Keezenspel" in Dutch; each locale uses the local name of the Tock/Dog family.
  * English (Tock) is the fallback for any unknown locale.
- *
- * <p>Note: this carries more locales than the game's own UI i18n — the GameRoom
- * also supports Italian ("Toc"), which the Keezen client does not.
  */
 @RestController
 public class GameNameController {
