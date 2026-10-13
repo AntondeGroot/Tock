@@ -97,10 +97,17 @@
   pointer-events: none;
 }
 
-// A hand card masked while its swap flyer animates in (the trade). The flyer lands on the
-// real card's slot, then this clears and the card appears.
-.card.trade-hidden {
+// A hand card masked while a flyer stands in for it: one flying in (the trade swap) lands on the
+// real card's slot, then this clears and the card appears; one flying out takes it to the pile.
+// Not clickable either — an invisible card must not be selectable.
+.card.masked {
   opacity: 0;
+  pointer-events: none;
+}
+
+// A card its flyer has just landed on the pile: it is placed there, not flown a second time.
+.card.snap {
+  transition: none;
 }
 
 // Selected card: lifted with a gold ring + glow.

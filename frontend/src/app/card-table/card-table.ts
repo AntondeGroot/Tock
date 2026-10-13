@@ -48,9 +48,11 @@ export class CardTable {
   // Transient face-up cards mid-flight (an opponent's play, a trade swap, a forfeit discard).
   readonly flyers = signal<Flyer[]>([]);
 
-  // Hand cards masked while a flyer animates them in (the trade swap), so the real card doesn't pop
-  // into its slot until the flyer lands on it.
+  // Hand cards masked while a flyer stands in for them: one flying in (the trade swap), so the real
+  // card doesn't pop into its slot until the flyer lands on it, or one flying out to the pile.
   private readonly hiddenUuids = signal<Set<number>>(new Set());
+  // Cards just landed on the pile by their flyer, placed there for one frame without a transition.
+  private readonly snappedUuids = signal<Set<number>>(new Set());
   // Deal-in FLIP: `dealtIndex` maps each freshly dealt uuid to its stagger order; `atDeck` is true
   // for the first frame so those cards render stacked at the deck before fanning to their slots.
   private readonly dealtIndex = signal<Map<number, number>>(new Map());
@@ -71,6 +73,7 @@ export class CardTable {
   readonly cards = computed<CardVM[]>(() => {
     const pile = this.pile();
     const hidden = this.hiddenUuids();
+    const snapped = this.snappedUuids();
     const pileUuids = new Set(pile.map((c) => c.uuid));
     const handCards = this.hand().filter((c) => !pileUuids.has(c.uuid));
     const n = handCards.length;
@@ -109,6 +112,7 @@ export class CardTable {
           dealDelay,
           dealing,
           hidden: hidden.has(c.uuid),
+          snap: snapped.has(c.uuid),
         };
       });
   });
@@ -138,12 +142,19 @@ export class CardTable {
    * pile. The card is passed by identity (its uuid) and carries its own face + start position — a
    * captured hand card (own play/forfeit) or a faceless external card (an opponent's play/forfeit),
    * which has no uuid and is landed with a fresh synthetic id. Own plays pop; opponents flip in.
+   *
+   * The flyer is a copy, and the hand may go on showing the original — until the push drops it,
+   * or for the whole pause when the move ended the round. So a hand card is hidden while its flyer
+   * is up, keeping its slot so the rest of the fan stays put, and snaps onto the pile on landing:
+   * that same element sliding over from the hand would fly the card a second time.
    */
   flyToPile(
     card: { uuid?: number; suit: number; value: number; x: number; y: number; rot?: number },
     opts: { startScale?: number; flip?: 'in' | 'out'; pop?: boolean } = {},
   ): void {
     const id = ++this.flyerSeq;
+    const fromHand = card.uuid !== undefined;
+    if (fromHand) this.hide(card.uuid!);
     const landCard: CardFace = {
       uuid: card.uuid ?? this.syntheticUuid--,
       suit: card.suit,
@@ -172,6 +183,7 @@ export class CardTable {
     const land = () => {
       this.removeFlyer(id);
       this.pile.update((p) => [...p, landCard]);
+      if (fromHand) this.snapIntoPlace(landCard.uuid);
     };
 
     if (opts.pop) {
@@ -264,6 +276,21 @@ export class CardTable {
       next.delete(uuid);
       return next;
     });
+  }
+
+  /** Show a card that its flyer just landed, at its new place at once rather than transitioning. */
+  private snapIntoPlace(uuid: number): void {
+    this.reveal(uuid);
+    this.snappedUuids.update((s) => new Set(s).add(uuid));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        this.snappedUuids.update((s) => {
+          const next = new Set(s);
+          next.delete(uuid);
+          return next;
+        }),
+      ),
+    );
   }
 
   /** Empty the discard pile (a new round). */

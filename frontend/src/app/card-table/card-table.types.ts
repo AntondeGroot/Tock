@@ -47,6 +47,8 @@ export interface CardVM {
   dealDelay: number;
   dealing: boolean;
   hidden: boolean;
+  /** Placed without a transition this frame — a card whose flyer just landed it on the pile. */
+  snap: boolean;
 }
 
 /**

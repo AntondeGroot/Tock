@@ -99,6 +99,37 @@ describe('CardTable', () => {
       expect(table.pile()[0]).toMatchObject({ uuid: a.uuid, suit: 1, value: 9 });
     });
 
+    // The flyer is a copy of the hand card, and the hand can keep showing the original for a while:
+    // when a forfeit ends the round, the round's hand stays on screen until the next deal. Left
+    // visible, the original sat in the hand beside its own flyer and then — the moment its uuid
+    // reached the pile — slid there itself: two flights for one card.
+    it('flies a hand card to the pile once: hidden while its flyer is up, then in place', () => {
+      // GIVEN a hand of two, which stays on screen throughout
+      const a = card();
+      const b = card();
+      hand.set([a, b]);
+      const slotOfA = table.cards().find((c) => c.uuid === a.uuid)!;
+
+      // WHEN the first card is sent to the pile
+      table.flyToPile(slotOfA);
+
+      // THEN the original is hidden at its own slot — the fan does not close up behind it
+      const inFlight = table.cards().find((c) => c.uuid === a.uuid)!;
+      expect(inFlight.hidden, 'shown beside its own flyer').toBe(true);
+      expect(inFlight.x).toBe(slotOfA.x);
+
+      // WHEN the flyer lands (500ms flight + 100ms landing buffer)
+      vi.advanceTimersByTime(600);
+
+      // THEN the card shows on the pile at once, without transitioning there from the hand
+      const landed = table.cards().find((c) => c.uuid === a.uuid)!;
+      expect(landed).toMatchObject({ inPile: true, hidden: false, snap: true });
+
+      // and the next frame lets it transition normally again
+      vi.advanceTimersByTime(50);
+      expect(table.cards().find((c) => c.uuid === a.uuid)!.snap).toBe(false);
+    });
+
     it('assigns a synthetic (negative) uuid to a faceless opponent card', () => {
       table.flyToPile({ suit: 2, value: 3, x: 0, y: 0 });
       vi.advanceTimersByTime(650);
