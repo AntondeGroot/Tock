@@ -42,6 +42,8 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
 
 ## Folder contents
 
+The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
+
 | File                        | What it is                                                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `card-table.ts`             | The `CardTable` engine (signals + `cards` computed + animation methods) + `DEFAULT_CARD_TABLE_OPTIONS`. |
@@ -57,9 +59,7 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
 ## Quick start
 
 ```ts
-import { CardTable } from './card-table/card-table';
-import { DefaultCardPositioner } from './card-table/default-positioner';
-import { CardLayer } from './card-table/card-layer';
+import { CardLayer, CardTable, DefaultCardPositioner } from 'card-table';
 
 @Component({
   imports: [CardLayer /* … */],

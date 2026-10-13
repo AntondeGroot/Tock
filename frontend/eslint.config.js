@@ -28,7 +28,7 @@ module.exports = defineConfig([
   {
     // Application + unit-test sources: type-aware linting (projectService powers the
     // type-checked rules below — prefer-readonly, no-floating-promises, no-deprecated).
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'projects/*/src/**/*.ts'],
     extends: [
       eslint.configs.recommended,
       tseslint.configs.recommended,
@@ -92,7 +92,7 @@ module.exports = defineConfig([
   },
   {
     // Specs are legitimately long (fixtures, setup) — size caps do not apply.
-    files: ['src/**/*.spec.ts'],
+    files: ['src/**/*.spec.ts', 'projects/*/src/**/*.spec.ts'],
     rules: {
       'max-lines': 'off',
       'max-lines-per-function': 'off',

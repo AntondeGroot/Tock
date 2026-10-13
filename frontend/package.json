@@ -17,7 +17,7 @@
     "postinstall": "npm run generate:api",
     "prebuild": "npm run generate:api",
     "lint": "ng lint --max-warnings=0",
-    "lint:styles": "stylelint \"src/**/*.scss\"",
+    "lint:styles": "stylelint \"{src,projects}/**/*.scss\"",
     "lint:fix": "ng lint --fix",
     "prepare": "cd .. && husky frontend/.husky || true"
   },
@@ -46,6 +46,7 @@
     "eslint-plugin-sonarjs": "^4.1.0",
     "husky": "^9.1.7",
     "jsdom": "^30.0.0",
+    "ng-packagr": "^22.2.0",
     "postcss-scss": "^4.0.9",
     "prettier": "^3.8.1",
     "stylelint": "^17.14.1",

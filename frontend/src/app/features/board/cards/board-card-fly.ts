@@ -1,6 +1,5 @@
 import { Card as CardModel } from '../../../api';
-import { CardTable } from '../../../card-table/card-table';
-import { CardPositioner } from '../../../card-table/card-table.types';
+import { CardPositioner, CardTable } from 'card-table';
 import { BoardGeometry, fanCardBacks } from '../geometry/board-geometry';
 
 /** A hand card with its live table position — what a flight to the pile starts from. */
