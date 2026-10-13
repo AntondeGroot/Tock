@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card as CardModel } from '../../../api';
-import { CardTable } from '../../../card-table/card-table';
-import { DefaultCardPositioner } from '../../../card-table/default-positioner';
+import { CardTable, DefaultCardPositioner } from 'card-table';
 import { BoardCardFly } from './board-card-fly';
 import { buildBoard, fanCardBacks } from '../geometry/board-geometry';
 

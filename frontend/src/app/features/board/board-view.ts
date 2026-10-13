@@ -1,5 +1,5 @@
 import { Pawn as ApiPawn, Player } from '../../api';
-import { CardBackVM } from '../../card-table/card-table.types';
+import { CardBackVM } from 'card-table';
 import { seatColor } from '../../player-colors';
 import { BoardGeometry, fanCardBacks, Pt, Tile } from './geometry/board-geometry';
 import { PawnPos } from './pawn/pawn-animator';

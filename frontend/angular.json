@@ -99,6 +99,44 @@
           }
         }
       }
+    },
+    "card-table": {
+      "projectType": "library",
+      "root": "projects/card-table",
+      "sourceRoot": "projects/card-table/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/card-table/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/card-table/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/card-table/tsconfig.spec.json",
+            "coverageThresholds": {
+              "statements": 100,
+              "branches": 87,
+              "functions": 100,
+              "lines": 100
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["projects/card-table/**/*.ts", "projects/card-table/**/*.html"]
+          }
+        }
+      }
     }
   }
 }
