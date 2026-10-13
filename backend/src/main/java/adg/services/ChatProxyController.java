@@ -1,5 +1,6 @@
 package adg.services;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,13 +35,23 @@ public class ChatProxyController {
 
   private static final String CHAT_SERVER_BASE_URL = "http://localhost:4100";
   private final HttpClient httpClient = HttpClient.newHttpClient();
+  private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
+
+  /**
+   * Interrupts open proxy streams when the app is undeployed: inside the shared Tomcat the JVM
+   * outlives the app, and a thread still blocked on the chat server would pin the old classes.
+   */
+  @PreDestroy
+  void shutdown() {
+    streamExecutor.shutdownNow();
+  }
 
   @GetMapping(value = "/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter streamMessages(
       @PathVariable("sessionId") String sessionId, HttpServletResponse response) {
     response.setHeader("X-Accel-Buffering", "no");
     SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-    Executors.newVirtualThreadPerTaskExecutor().execute(() -> proxyStream(sessionId, emitter));
+    streamExecutor.execute(() -> proxyStream(sessionId, emitter));
     return emitter;
   }
 

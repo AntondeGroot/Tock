@@ -6,6 +6,7 @@ import adg.keezen.TradeRequest;
 import adg.processing.MoveAvailabilityChecker;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.Trade;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -117,6 +118,16 @@ public class SseEmitterService {
     } catch (RejectedExecutionException e) {
       // Sender already shut down (emitter is being cleaned up) — nothing to send.
     }
+  }
+
+  /**
+   * Stops every sender when the app is undeployed: inside the shared Tomcat the JVM outlives the
+   * app, so a lingering sender thread would keep the old version's classes in memory.
+   */
+  @PreDestroy
+  void shutdown() {
+    emittersBySession.values().forEach(list -> list.forEach(pe -> pe.sender().shutdownNow()));
+    emittersBySession.clear();
   }
 
   private void drop(CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe) {
