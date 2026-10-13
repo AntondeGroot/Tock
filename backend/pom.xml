@@ -12,7 +12,10 @@
   </parent>
 
   <artifactId>backend</artifactId>
-  <packaging>jar</packaging>
+  <!-- Deployed into the shared Tomcat on the Pi (provisioned by the GameRoom project) as keezen.war.
+       The 'exec' WAR below is what ships: Tomcat ignores its WEB-INF/lib-provided, and unlike the
+       plain WAR it leaves out devtools. It still runs with java -jar for local use and the E2E gate. -->
+  <packaging>war</packaging>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -29,12 +32,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
       <version>3.5.16</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.data</groupId>
-      <artifactId>spring-data-jpa</artifactId>
-      <version>4.1.1</version>
     </dependency>
 
     <dependency>
@@ -157,9 +154,8 @@
         <configuration>
           <mainClass>adg.Application</mainClass>
           <skip>false</skip>
-          <!-- Keep original JAR as the main artifact so the failsafe plugin
-               can load application classes during integration tests.
-               The runnable fat JAR is attached with the 'exec' classifier. -->
+          <!-- Keep the plain WAR as the main artifact; the runnable, deployable
+               WAR is attached with the 'exec' classifier. -->
           <classifier>exec</classifier>
         </configuration>
       </plugin>

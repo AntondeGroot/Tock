@@ -21,9 +21,8 @@ mvn -pl backend pitest:mutationCoverage
 # The Angular app is now what we deploy (see env-angular). ng build hashes asset
 # filenames, so the old GWT ?v= cache-stamping is no longer needed. Served under /keezen:
 # base-href=/keezen/ makes the browser request /keezen/* (bundles + the API/SSE/asset URLs
-# the app builds from <base href> via basePath()). nginx STRIPS the /keezen/ prefix
-# (proxy_pass http://localhost:4200/ with a trailing slash), so the backend itself serves
-# at the ROOT — no context-path (see override below).
+# the app builds from <base href> via basePath()). On the Pi the app is keezen.war in the
+# shared Tomcat, whose context path /keezen is that same prefix; nginx forwards it unchanged.
 echo "🅰️  Testing + building the Angular app..."
 # Angular unit/component tests (vitest) run headless; a failure aborts the deploy (set -e).
 # Then build. (Java/GWT tests already ran above via `mvn clean verify`.)
@@ -33,13 +32,13 @@ echo "📦 Packaging the server to serve the Angular app (env-angular; no GWT un
 mvn -pl backend -am -Penv-angular -DskipTests clean package
 
 # Angular E2E (Playwright) gate. Playwright serves the UI itself (ng serve on :4300) but
-# needs a backend with the API + /test seeding hooks on :4200 — so run the jar we just
+# needs a backend with the API + /test seeding hooks on :4200 — so run the WAR we just
 # built there, run the suite against it, then shut it down. A failure aborts the deploy
 # (set -e) before anything is uploaded. (`mvn clean verify` above already needs :4200 free,
 # so it is free here too.)
 echo "🎭 Running Angular E2E (Playwright)..."
-E2E_JAR=backend/target/tock-exec.jar
-java -jar "$E2E_JAR" --server.port=4200 --spring.profiles.active=test > /tmp/keezen-e2e-backend.log 2>&1 &
+E2E_WAR=backend/target/tock-exec.war
+java -jar "$E2E_WAR" --server.port=4200 --spring.profiles.active=test > /tmp/keezen-e2e-backend.log 2>&1 &
 E2E_BACKEND_PID=$!
 trap '[ -n "${E2E_BACKEND_PID:-}" ] && kill "$E2E_BACKEND_PID" 2>/dev/null' EXIT
 echo "   waiting for the E2E backend on :4200..."
@@ -49,44 +48,57 @@ curl -sf http://localhost:4200/game-options >/dev/null 2>&1 || {
 ( cd frontend && npx playwright install chromium >/dev/null 2>&1 && npm run e2e )
 kill "$E2E_BACKEND_PID" 2>/dev/null; E2E_BACKEND_PID=""; trap - EXIT
 
+# Tomcat itself is provisioned by the GameRoom project (setup-tomcat.sh); this script only drops
+# the WAR in. keezen.war is served at /keezen, the prefix the Angular app is built for.
+WEBAPPS=/var/lib/tomcat10/webapps
+TOMCAT_URL=http://127.0.0.1:8090
+LOG_FILE=/var/log/tomcat10/keezen.log
+
+if ! $SSH "test -d $WEBAPPS"; then
+  echo "❌ No Tomcat on $TARGET. Run ./setup-tomcat.sh in the GameRoom project first."
+  exit 1
+fi
+
+# Written every deploy. Tomcat's unit only lets the JVM write under /var/log/tomcat10, and a file
+# of its own keeps Keezen's log apart from the other apps sharing Tomcat's console.
+echo "⚙️  Writing application override config..."
+$SSH "sudo mkdir -p /opt/keezen && sudo tee /opt/keezen/application-override.yaml > /dev/null << 'EOF'
+logging:
+  file:
+    name: $LOG_FILE
+EOF"
+
 echo "📦 Uploading..."
-$SCP backend/target/tock-exec.jar $TARGET:/home/ubuntu/keezen.jar
+$SCP backend/target/tock-exec.war $TARGET:/home/ubuntu/keezen.war
 
-echo "📁 Installing..."
-$SSH "sudo mkdir -p /opt/keezen && sudo mv /home/ubuntu/keezen.jar /opt/keezen/keezen.jar"
+echo "🚀 Deploying to Tomcat..."
+# Copy under a name Tomcat ignores, then rename: a same-filesystem mv is atomic, so Tomcat never
+# picks up a half-written WAR. Its autodeployer notices the new file and redeploys the app.
+$SSH "sudo install -o tomcat -g tomcat -m 644 /home/ubuntu/keezen.war $WEBAPPS/.keezen.war.tmp \
+  && sudo mv $WEBAPPS/.keezen.war.tmp $WEBAPPS/keezen.war && rm /home/ubuntu/keezen.war"
 
-echo "⚙️ Ensuring systemd service exists..."
+# The exploded dir is recreated on redeploy, so 'newer than the WAR' rules out the old version
+# still answering; then wait until Spring has started and serves the API.
+$SSH "for i in \$(seq 1 90); do
+  if [ $WEBAPPS/keezen -nt $WEBAPPS/keezen.war ] && curl -sf -o /dev/null $TOMCAT_URL/keezen/game-options; then exit 0; fi
+  sleep 2
+done
+echo '❌ Keezen did not come up in Tomcat. See $LOG_FILE and journalctl -u tomcat10.'
+exit 1"
+
+echo "🧹 Retiring the standalone service..."
+# One-time migration. Only once nginx forwards /keezen/ to Tomcat (GameRoom's nginx.conf); stopping
+# it earlier would take the game offline.
 $SSH "
-if [ ! -f /etc/systemd/system/keezen.service ]; then
-  sudo tee /etc/systemd/system/keezen.service > /dev/null << 'EOF'
-[Unit]
-Description=Keezen game server
-After=network.target
-
-[Service]
-User=ubuntu
-ExecStart=/usr/bin/java -jar /opt/keezen/keezen.jar
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  sudo systemctl daemon-reload
-  sudo systemctl enable keezen
+if [ -f /etc/systemd/system/keezen.service ]; then
+  if grep -q '127.0.0.1:8090/keezen/' /etc/nginx/sites-enabled/gameroom; then
+    sudo systemctl disable --now keezen
+    sudo rm /etc/systemd/system/keezen.service /opt/keezen/keezen.jar
+    sudo systemctl daemon-reload
+  else
+    echo '⚠️  nginx still forwards /keezen/ to the standalone service; leaving it running.'
+    echo '   Deploy the GameRoom nginx.conf, then run this script again to retire it.'
+  fi
 fi"
-
-# nginx STRIPS the /keezen/ prefix (proxy_pass .../ with a trailing slash), so the backend
-# must serve at the ROOT — a context-path here would double the prefix and 404 every request.
-# The app is still built with base-href=/keezen/ so the browser requests /keezen/* (which
-# nginx strips back to /* before it reaches here). Written every deploy so any stale
-# context-path override is cleared. The backend keeps its default port 4200.
-echo "⚙️ Ensuring the backend serves at root (nginx strips /keezen)..."
-$SSH "sudo tee /opt/keezen/application-override.yaml > /dev/null << 'EOF'
-# Root serving — nginx strips the /keezen prefix before proxying here, so no context-path.
-EOF
-sudo chown ubuntu:ubuntu /opt/keezen/application-override.yaml"
-
-echo "🔄 Restarting..."
-$SSH "sudo systemctl restart keezen"
 
 echo "✅ Done."

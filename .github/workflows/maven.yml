@@ -181,3 +181,20 @@ jobs:
         with:
           name: pit-report
           path: backend/target/pit-reports/
+
+  # ── Required check ───────────────────────────────────────────────────
+  # The branch ruleset requires one check named `ci`; each job above reports under its own name,
+  # so without this the PR waits forever for a `ci` that never comes. This gathers them into that
+  # one check — add a new job to `needs` and it is required too, without touching the ruleset.
+  # `always()`: a required check that is SKIPPED counts as passing, so this must run (and fail)
+  # even when a job it needs has failed or been cancelled.
+  ci:
+    name: ci
+    if: always()
+    needs: [openapi-lint, angular, e2e, backend, mutation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI jobs passed
+        run: |
+          echo '${{ toJSON(needs) }}'
+          [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false" ]

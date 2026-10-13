@@ -102,28 +102,24 @@ API to the backend on 4200.
 
 ## Deploying to Raspberry Pi
 
-Run `./deploy.sh` to build the Angular app, package it into the server jar (`env-angular`),
-upload, and restart the service.
+Run `./deploy.sh` to build the Angular app, package it into the server WAR (`env-angular`),
+and deploy it as `keezen.war` into the shared Tomcat on the Pi. Tomcat is installed by the
+GameRoom project (`setup-tomcat.sh`); this repo only drops the WAR in.
 
-**The app is reached at `/keezen`, but nginx strips that prefix before the backend.** The
-Angular build sets `base-href=/keezen/`, and the app derives the prefix from `<base href>` at
-runtime (`basePath()` in `src/app/base-path.ts`) so the browser requests `/keezen/games`,
-`/keezen/gamestates/…/stream`, `/keezen/study-icon.svg`, etc. The nginx `location /keezen/`
-block **strips** `/keezen/` (trailing slash on `proxy_pass`) and forwards `/games`, `/main-*.js`,
-… to the backend:
+**The app is reached at `/keezen` end to end.** The Angular build sets `base-href=/keezen/`, and
+the app derives the prefix from `<base href>` at runtime (`basePath()` in `src/app/base-path.ts`)
+so the browser requests `/keezen/games`, `/keezen/gamestates/…/stream`, `/keezen/study-icon.svg`,
+etc. Tomcat serves `keezen.war` at context path `/keezen`, so nginx forwards the prefix unchanged:
 
 ```nginx
 location /keezen/ {
-  proxy_pass http://127.0.0.1:4200/;   # trailing slash → strips /keezen/
+  proxy_pass http://127.0.0.1:8090/keezen/;
   proxy_set_header Host $host;
-  # For the SSE streams (/gamestates, /chat) add if updates don't flow:
-  # proxy_http_version 1.1; proxy_buffering off; proxy_read_timeout 3600s;
 }
 ```
 
-So the backend must serve at the **root — no context-path** (`deploy.sh` writes an empty
-override). A context-path of `/keezen` here would double the prefix and 404 every request.
-Local dev/tests run at the root too (default base-href `/` → `basePath()` returns `''`).
+Locally (`java -jar`, `mvn spring-boot:run`) the backend still serves at the root on port 4200, and
+local dev/tests run at the root too (default base-href `/` → `basePath()` returns `''`).
 
 ## Built with
 - Angular (TypeScript) — the frontend UI

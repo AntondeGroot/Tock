@@ -8,16 +8,16 @@ import java.io.File;
 import java.util.Objects;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.stereotype.Component;
 
 @SpringBootApplication
 @ServletComponentScan
-public class ApplicationManualTest extends SpringBootServletInitializer {
+// Not a SpringBootServletInitializer: Tomcat starts every initializer in the WAR, and only
+// Application should run there.
+public class ApplicationManualTest {
 
   public static void main(String[] args) {
     int NrPlayers = 3;
@@ -42,10 +42,6 @@ public class ApplicationManualTest extends SpringBootServletInitializer {
     }
   }
 
-  @Override
-  protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-    return builder.sources(ApplicationManualTest.class);
-  }
 
   @Component
   public static class EmbeddedServletContainerConfig
