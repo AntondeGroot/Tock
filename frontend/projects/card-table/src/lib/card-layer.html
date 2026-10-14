@@ -38,6 +38,8 @@
       [class.dealing]="c.dealing"
       [class.masked]="c.hidden"
       [class.face-down]="c.faceDown"
+      [class.flip-in]="c.flip === 'in'"
+      [class.flip-out]="c.flip === 'out'"
       [class.snap]="c.snap"
       (click)="cardClick.emit(c.uuid)"
       (mouseenter)="cardHover.emit(c.value)"

@@ -284,6 +284,51 @@ describe('CardTable', () => {
       expect(table.cards().find((c) => c.uuid === hidden.uuid)).toMatchObject({ faceDown: true });
       expect(table.cards().find((c) => c.uuid === own.uuid)).toMatchObject({ faceDown: false });
     });
+
+    // When an opponent plays, the server says WHICH card only as it leaves their hand: until then
+    // the fan holds cards of no known face. The card turns over on its way to the pile — face known
+    // from that moment — and lies there face up once the move is done.
+    it('turns a card over as it moves from a face-down zone to a face-up one', () => {
+      // GIVEN an opponent's face-down fan holding a card whose face is not known
+      table.defineZone({ id: 'fan', faceDown: true, layout: (index) => ({ x: index, y: 0 }) });
+      const unknown = { uuid: 100, suit: 0, value: 0 };
+      table.place(unknown, 'fan');
+
+      // WHEN it is played onto the pile, now known to be the jack of suit 2
+      table.place({ uuid: 100, suit: 2, value: 11 }, 'pile');
+
+      // THEN it shows that face, turning over from its back while it moves
+      expect(table.cards().find((c) => c.uuid === 100)).toMatchObject({
+        suit: 2,
+        value: 11,
+        faceDown: false,
+        flip: 'in',
+      });
+
+      // and once the move is over it simply lies face up
+      vi.advanceTimersByTime(500);
+      expect(table.cards().find((c) => c.uuid === 100)).toMatchObject({ flip: null });
+    });
+
+    // The other way round: in a team trade the viewer gives a card from their own hand into the
+    // teammate's fan. It is the viewer's card, so it starts face up — and turns its back to them
+    // on the way, since a card in someone else's hand must not stay readable.
+    it('turns a card face down as it moves from the hand into a face-down zone', () => {
+      // GIVEN a card in the viewer's hand, and the teammate's face-down fan
+      const given = card(9, 1);
+      hand.set([given]);
+      table.defineZone({ id: 'fan', faceDown: true, layout: (index) => ({ x: index, y: 0 }) });
+
+      // WHEN the card is given into the fan
+      table.place(given, 'fan');
+
+      // THEN it lies face down there, turning its back while it moves
+      expect(table.cards().find((c) => c.uuid === given.uuid)).toMatchObject({
+        zoneId: 'fan',
+        faceDown: true,
+        flip: 'out',
+      });
+    });
   });
 
   describe('deal', () => {

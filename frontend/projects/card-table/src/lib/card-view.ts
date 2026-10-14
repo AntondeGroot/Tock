@@ -15,6 +15,7 @@ export interface TableFrame {
   atDeck: boolean;
   hidden: ReadonlySet<number>;
   snapped: ReadonlySet<number>;
+  turning: ReadonlyMap<number, 'in' | 'out'>;
   options: ResolvedCardTableOptions;
 }
 
@@ -46,5 +47,6 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
     dealing,
     hidden: frame.hidden.has(card.uuid),
     snap: frame.snapped.has(card.uuid),
+    flip: frame.turning.get(card.uuid) ?? null,
   };
 }

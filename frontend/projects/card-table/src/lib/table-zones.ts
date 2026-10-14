@@ -49,6 +49,12 @@ export class TableZones {
     return found;
   }
 
+  /** Whether the card lies in a face-down zone; a card the table does not hold is face up. */
+  isFaceDown(uuid: number): boolean {
+    const holder = this.owned().find((o) => o.cards().some((c) => c.uuid === uuid));
+    return holder?.zone.faceDown ?? false;
+  }
+
   /** Every zone with its cards, in the order they were defined. */
   contents(): ZoneContents[] {
     return this.owned().map(({ zone, cards }) => ({ zone, cards: cards() }));

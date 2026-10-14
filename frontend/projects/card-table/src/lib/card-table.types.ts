@@ -64,6 +64,8 @@ export interface CardVM {
   hidden: boolean;
   /** Placed without a transition this frame — a card whose flyer just landed it on the pile. */
   snap: boolean;
+  /** Turning over as it moves: `in` coming face up, `out` going face down. */
+  flip: 'in' | 'out' | null;
 }
 
 /**
