@@ -268,4 +268,58 @@ describe('CardTable', () => {
       expect(table.cards().find((c) => c.uuid === a.uuid)).toMatchObject({ zoneId: 'meld-1' });
     });
   });
+
+  describe('deal', () => {
+    // Drawing in Rummikub takes a tile out of the pool on the table. Unlike Keezen's cards, which
+    // appear from an unseen deck, the tile is already lying somewhere — so it must leave from its
+    // own place in the pool, not from wherever the deck happens to be.
+    it('deals a card from a zone the table holds, starting from its own slot there', () => {
+      // GIVEN a pool of three tiles and an empty rack, both zones of the table
+      const [a, b, c] = [card(), card(), card()];
+      table.defineZone({ id: 'pool', layout: (index) => ({ x: 5 + index * 2, y: 10 }) });
+      table.defineZone({ id: 'rack', layout: (index) => ({ x: 40 + index * 5, y: 90 }) });
+      [a, b, c].forEach((tile) => table.place(tile, 'pool'));
+
+      // WHEN the middle tile is dealt from the pool into the rack
+      table.deal([b], { from: 'pool', into: 'rack' });
+
+      // THEN it now belongs to the rack, but is first drawn at its slot in the pool
+      expect(table.cards().find((t) => t.uuid === b.uuid)).toMatchObject({
+        zoneId: 'rack',
+        dealing: true,
+        x: 7,
+        y: 10,
+      });
+
+      // and on the next frame it is released towards its slot in the rack
+      vi.advanceTimersByTime(50);
+      expect(table.cards().find((t) => t.uuid === b.uuid)).toMatchObject({ x: 40, y: 90 });
+    });
+
+    // The hand is the game's: the server says which cards the viewer holds, and the table only
+    // draws them. A deal into the hand must animate the cards in from the deck WITHOUT the table
+    // taking hold of them — or a card the game later takes out of the hand would linger on screen.
+    it('deals into the hand from the deck by default, leaving the cards to the game', () => {
+      // GIVEN the game reports two freshly dealt cards in the hand
+      const a = card();
+      const b = card();
+      hand.set([a, b]);
+
+      // WHEN they are dealt without saying from where or into what
+      table.deal([a, b]);
+
+      // THEN both start on the deck, deck-sized, as hand cards
+      const deck = positioner.pileCenter();
+      expect(table.cards()).toEqual([
+        expect.objectContaining({ uuid: a.uuid, zoneId: 'hand', x: deck.x, y: deck.y, scale: 0.3 }),
+        expect.objectContaining({ uuid: b.uuid, zoneId: 'hand', x: deck.x, y: deck.y, scale: 0.3 }),
+      ]);
+
+      // WHEN the game then takes one of them out of the hand
+      hand.set([b]);
+
+      // THEN it is gone from the table — the deal kept no hold on it
+      expect(table.cards().map((c) => c.uuid)).toEqual([b.uuid]);
+    });
+  });
 });

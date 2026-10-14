@@ -1,5 +1,5 @@
 import { signal, WritableSignal } from '@angular/core';
-import { CardFace, Zone } from './card-table.types';
+import { CardFace, Pos, Zone } from './card-table.types';
 import { ZoneContents } from './zone-layout';
 
 /** A zone the table holds cards in itself, with what it holds. */
@@ -25,12 +25,28 @@ export class TableZones {
 
   /** Put a card at the end of a zone, taking it out of whichever zone held it before. */
   place(card: CardFace, zoneId: string): void {
-    const target = this.owned().find((o) => o.zone.id === zoneId);
-    if (!target) throw new Error(`No zone '${zoneId}' on this table`);
+    const target = this.find(zoneId);
     for (const { cards } of this.owned()) {
       cards.update((held) => held.filter((c) => c.uuid !== card.uuid));
     }
     target.cards.update((held) => [...held, card]);
+  }
+
+  /**
+   * Where a card sits in a zone: its own slot, when the zone holds it — or else the zone's first
+   * slot, for a card that is only coming from there (dealt from a deck that holds nothing).
+   */
+  slotOf(uuid: number, zoneId: string): Pos {
+    const { zone, cards } = this.find(zoneId);
+    const held = cards();
+    const index = held.findIndex((c) => c.uuid === uuid);
+    return index >= 0 ? zone.layout(index, held.length) : zone.layout(0, 1);
+  }
+
+  private find(zoneId: string): OwnedZone {
+    const found = this.owned().find((o) => o.zone.id === zoneId);
+    if (!found) throw new Error(`No zone '${zoneId}' on this table`);
+    return found;
   }
 
   /** Every zone with its cards, in the order they were defined. */
