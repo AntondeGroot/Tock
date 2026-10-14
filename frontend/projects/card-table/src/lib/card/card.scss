@@ -63,9 +63,13 @@
   }
 }
 
-// A card in a face-down zone (an opponent's hand, a stock) shows its back, at rest.
+// A card in a face-down zone (an opponent's hand, a stock) shows its back, at rest — and keeps
+// showing it while it is dealt there: the deal's turn-over would end on a face no one may see.
 :host(.face-down) .flip {
   transform: rotateY(180deg);
+}
+:host(.face-down.dealing) .flip {
+  animation: none;
 }
 
 // Deal-in: hold the back toward the viewer, then turn to the front near the end of

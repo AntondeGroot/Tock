@@ -105,6 +105,12 @@
   pointer-events: none;
 }
 
+// A face-down card is someone else's — an opponent's fan, a stock: nothing to click, and nothing to
+// hover for a hint, since its value is not the viewer's to know.
+.card.face-down {
+  pointer-events: none;
+}
+
 // A card its flyer has just landed on the pile: it is placed there, not flown a second time.
 .card.snap {
   transition: none;

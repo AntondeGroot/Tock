@@ -31,4 +31,14 @@ export class CardLayer {
 
   readonly cardClick = output<number>();
   readonly cardHover = output<number | null>();
+
+  // A face-down card is someone else's: it reports nothing, so no click selects it and no hover
+  // gives its value away. The CSS only stops the pointer; this is what keeps the card silent.
+  protected click(card: CardVM): void {
+    if (!card.faceDown) this.cardClick.emit(card.uuid);
+  }
+
+  protected hover(card: CardVM, pointedAt: boolean): void {
+    if (!card.faceDown) this.cardHover.emit(pointedAt ? card.value : null);
+  }
 }
