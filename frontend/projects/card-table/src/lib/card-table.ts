@@ -7,7 +7,10 @@ import {
   Flyer,
   Pos,
   ResolvedCardTableOptions,
+  Zone,
 } from './card-table.types';
+import { TableFrame, toCardVM } from './card-view';
+import { HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
 /** The out-of-the-box timings + scales. A game overrides any subset via the constructor options. */
 export const DEFAULT_CARD_TABLE_OPTIONS: ResolvedCardTableOptions = {
@@ -69,52 +72,35 @@ export class CardTable {
     this.options = { ...DEFAULT_CARD_TABLE_OPTIONS, ...options };
   }
 
+  private readonly handZone: Zone = {
+    id: HAND_ZONE,
+    layout: (index, count) => this.positioner.handSlot(index, count),
+  };
+  private readonly pileZone: Zone = {
+    id: PILE_ZONE,
+    layout: (index) => this.positioner.pileSlot(index),
+  };
+
   /** One list of every card (hand + pile), each with a target position — the layer renders this. */
   readonly cards = computed<CardVM[]>(() => {
-    const pile = this.pile();
-    const hidden = this.hiddenUuids();
-    const snapped = this.snappedUuids();
-    const pileUuids = new Set(pile.map((c) => c.uuid));
-    const handCards = this.hand().filter((c) => !pileUuids.has(c.uuid));
-    const n = handCards.length;
-
-    // Per-uuid target: hand slot or pile slot. z follows PLAY ORDER (pile index) so the newest card
-    // is on top regardless of the DOM order (which is sorted by uuid for stable transitions).
-    const target = new Map<number, Pos>();
-    handCards.forEach((c, i) => target.set(c.uuid, this.positioner.handSlot(i, n)));
-    pile.forEach((c, i) => target.set(c.uuid, this.positioner.pileSlot(i)));
-    const deck = this.positioner.pileCenter();
-
-    const dealt = this.dealtIndex();
-    const atDeck = this.atDeck();
-    // Stable DOM order (by uuid) so playing a card never reorders the list — only its target
-    // changes, so the same element transitions cleanly every time.
-    return [...handCards, ...pile]
-      .sort((a, b) => a.uuid - b.uuid)
-      .map((c) => {
-        const t = target.get(c.uuid)!;
-        const dealOrder = dealt.get(c.uuid);
-        const dealing = dealOrder !== undefined;
-        const useDeck = dealing && atDeck; // first frame of a deal renders at the deck
-        const dealDelay = dealing ? (dealOrder ?? 0) * this.options.dealStaggerMs : 0;
-        return {
-          uuid: c.uuid,
-          suit: c.suit,
-          value: c.value,
-          inPile: pileUuids.has(c.uuid),
-          x: useDeck ? deck.x : t.x,
-          y: useDeck ? deck.y : t.y,
-          rot: t.rot ?? 0,
-          scale: useDeck ? this.options.deckScale : (t.scale ?? 1), // deck-sized then grows to hand
-          // While dealing, the sooner a card flies (lower delay) the higher it sits, so it's taken
-          // off the TOP of the deck stack.
-          z: dealing ? 400 - Math.round(dealDelay / 20) : t.z,
-          dealDelay,
-          dealing,
-          hidden: hidden.has(c.uuid),
-          snap: snapped.has(c.uuid),
-        };
-      });
+    // The pile is listed last, so a played card the hand still reports is laid out on the pile.
+    // Its z follows PLAY ORDER (pile index), so the newest card is on top regardless of the DOM
+    // order — which is sorted by uuid, so playing a card never reorders the list: only its target
+    // changes, and the same element transitions cleanly every time.
+    const placed = placeCards([
+      { zone: this.handZone, cards: this.hand() },
+      { zone: this.pileZone, cards: this.pile() },
+    ]);
+    const frame: TableFrame = {
+      dealt: this.dealtIndex(),
+      atDeck: this.atDeck(),
+      deck: this.positioner.pileCenter(),
+      hidden: this.hiddenUuids(),
+      snapped: this.snappedUuids(),
+      options: this.options,
+    };
+    placed.sort((a, b) => a.card.uuid - b.card.uuid);
+    return placed.map((p) => toCardVM(p, frame));
   });
 
   /** True while a deal-in is animating — a game can sync its own dealt visuals (e.g. opponents). */
