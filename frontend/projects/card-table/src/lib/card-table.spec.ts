@@ -440,6 +440,24 @@ describe('CardTable', () => {
     // is its own deal, so the round is built from deals that start a beat apart — a later seat's
     // whole deal shifted back. That shift has to hold to the end, or its last card would stop
     // counting as dealt while it is still on its way.
+    // Cards wait their turn on the deck before they fly. There they are part of a neat stack —
+    // the tilt of the slot a card is headed for belongs to the slot, not to the deck. Taking it
+    // early drew the waiting stack as a scatter of cards at every fan angle.
+    it('keeps a dealt card squared up on the deck, tilting only as it goes to its slot', () => {
+      // GIVEN a fan whose slots are tilted 30 degrees
+      table.defineZone({ id: 'fan', layout: () => ({ x: 80, y: 5, rot: 30 }) });
+      const a = card();
+
+      // WHEN a card is dealt into it
+      table.deal([a], { into: 'fan' });
+
+      // THEN it waits on the deck squared up, like the deck itself
+      expect(table.cards().find((c) => c.uuid === a.uuid)!.rot).toBe(0);
+      // and takes its slot's tilt once it is released towards the slot
+      vi.advanceTimersByTime(50);
+      expect(table.cards().find((c) => c.uuid === a.uuid)!.rot).toBe(30);
+    });
+
     it('shifts a whole deal later by its delay, ending later too', () => {
       // GIVEN a fan for the next seat round the table
       table.defineZone({ id: 'fan', layout: (index) => ({ x: 80 + index, y: 5 }) });

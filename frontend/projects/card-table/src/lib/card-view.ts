@@ -40,7 +40,7 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
     inPile: zoneId === PILE_ZONE,
     x: start ? start.x : pos.x,
     y: start ? start.y : pos.y,
-    rot: pos.rot ?? 0,
+    rot: (start ?? pos).rot ?? 0, // squared up on the deck; its slot's tilt once it goes
     scale: (start ?? pos).scale ?? 1, // deck-sized, then grows to its slot
     // While dealing, the sooner a card flies (lower delay) the higher it sits, so it's taken off
     // the TOP of the deck stack.
