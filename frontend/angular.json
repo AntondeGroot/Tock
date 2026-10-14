@@ -126,7 +126,7 @@
             "runnerConfig": "vitest-base.config.mts",
             "coverageThresholds": {
               "statements": 100,
-              "branches": 94,
+              "branches": 100,
               "functions": 100,
               "lines": 100
             }
