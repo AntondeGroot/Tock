@@ -3,9 +3,9 @@ import { CardMasks } from './card-masks';
 import {
   CardFace,
   CardTableConfig,
+  CardTableTiming,
   CardVM,
   Pos,
-  ResolvedCardTableOptions,
   TableLayout,
   Zone,
 } from './card-table.types';
@@ -13,7 +13,7 @@ import { DealtCard, TableFrame, toCardVM } from './card-view';
 import { DEFAULT_LAYOUT } from './default-layout';
 import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
-import { resolveOptions } from './timing';
+import { DEFAULT_TIMING } from './timing';
 import { DECK_ZONE, HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
 // The flyer lands (swaps to a pile element) this long AFTER its flight visually ends, so the card
@@ -53,8 +53,8 @@ function changeDealt(
  * `<app-card-layer>` renders {@link cards} + {@link flyers}.
  */
 export class CardTable {
-  /** The resolved timings (defaults merged with the constructor overrides), and the deck's size. */
-  readonly options: ResolvedCardTableOptions;
+  /** The timings it runs with: the defaults, with whatever the game retuned. */
+  readonly timing: Required<CardTableTiming>;
   // The zones the table holds cards in itself: the pile first, then whatever the game defines.
   private readonly zones = new TableZones();
   // The pile: own cards land with their real uuid, opponents' with a synthetic negative one.
@@ -81,7 +81,7 @@ export class CardTable {
   constructor({ hand, layout = DEFAULT_LAYOUT, timing }: CardTableConfig) {
     this.hand = hand;
     this.layout = layout;
-    this.options = resolveOptions(layout, timing);
+    this.timing = { ...DEFAULT_TIMING, ...timing };
     // Where cards are dealt from by default, laid out by the layout's deck. Keezen's holds nothing
     // — its cards appear from it — but a game may keep its stock there.
     this.zones.define({
@@ -110,7 +110,7 @@ export class CardTable {
       hidden: this.masks.hidden(),
       snapped: this.masks.snapped(),
       turning: this.masks.turning(),
-      options: this.options,
+      timing: this.timing,
     };
     placed.sort((a, b) => a.card.uuid - b.card.uuid);
     return placed.map((p) => toCardVM(p, frame));
@@ -143,7 +143,7 @@ export class CardTable {
     this.zones.place(card, zoneId);
     const isFaceDown = this.zones.isFaceDown(card.uuid);
     if (wasFaceDown !== isFaceDown) {
-      this.masks.turn(card.uuid, isFaceDown ? 'out' : 'in', this.options.flyMs);
+      this.masks.turn(card.uuid, isFaceDown ? 'out' : 'in', this.timing.flyMs);
     }
   }
 
@@ -192,7 +192,7 @@ export class CardTable {
     // Clear once the last card has finished (its delay + the transition).
     setTimeout(
       () => this.dealt.update((all) => changeDealt(all, uuids, () => undefined)),
-      delayMs + uuids.length * this.options.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
+      delayMs + uuids.length * this.timing.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
     );
   }
 
@@ -229,7 +229,7 @@ export class CardTable {
       glow: opts.pop,
     });
 
-    const { flyMs, popMs, popScale } = this.options;
+    const { flyMs, popMs, popScale } = this.timing;
     const flightMs = flyMs + LAND_BUFFER_MS; // land a beat after the flight visually completes
     // It flies to the middle of the table, where the deck stands, at the size it will lie on the
     // pile — then settles into its own pile slot as it lands.
@@ -276,7 +276,7 @@ export class CardTable {
     gave: { suit: number; value: number; from: Pos },
     got: { uuid: number; suit: number; value: number; to: Pos },
   ): void {
-    const { tradeRevealMs, flyMs } = this.options;
+    const { tradeRevealMs, flyMs } = this.timing;
     const landMs = flyMs + LAND_BUFFER_MS;
     const fanScale = partner.scale ?? 1; // a card's size in the partner's fan
     // Your card shrinks face-down into the partner's fan.

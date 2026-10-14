@@ -179,13 +179,11 @@ describe('CardTable', () => {
     });
   });
 
-  describe('options', () => {
-    it('exposes resolved defaults, merges overrides, and reads the deck size from the layout', () => {
-      const deck = () => ({ x: 52.5, y: 50, scale: 0.5 });
-      const custom = new CardTable({ hand, layout: { ...layout, deck }, timing: { flyMs: 200 } });
-      expect(custom.options.flyMs).toBe(200); // overridden
-      expect(custom.options.dealStaggerMs).toBe(700); // default kept
-      expect(custom.options.deckScale).toBe(0.5); // the deck's own size, for the layer
+  describe('timing', () => {
+    it('runs with the default timings, retuned where the game says', () => {
+      const custom = new CardTable({ hand, timing: { flyMs: 200 } });
+      expect(custom.timing.flyMs).toBe(200); // overridden
+      expect(custom.timing.dealStaggerMs).toBe(700); // default kept
     });
 
     // Sizes live in the layout, and a slot that gives none is a full-size card — so a game whose
@@ -204,9 +202,8 @@ describe('CardTable', () => {
       // WHEN a card is dealt from the deck
       plain.deal([a]);
 
-      // THEN it starts on the deck full size, and the deck counts as full size for the layer
+      // THEN it starts on the deck full size
       expect(plain.cards().find((c) => c.uuid === a.uuid)!.scale).toBe(1);
-      expect(plain.options.deckScale).toBe(1);
 
       // WHEN another card is played onto the pile
       plain.flyToPile({ suit: 0, value: 5, x: 0, y: 0 });
