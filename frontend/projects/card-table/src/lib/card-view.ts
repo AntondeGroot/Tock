@@ -5,6 +5,8 @@ import { PILE_ZONE, PlacedCard } from './zone-layout';
 export interface DealtCard {
   order: number;
   start: Pos;
+  /** How far its whole deal is shifted back — a later seat in a round-robin deal. */
+  delayMs: number;
   /** Its deal's first frame, while it is still drawn at its start — before it is released. */
   atStart: boolean;
 }
@@ -28,7 +30,7 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
   const dealing = dealt !== undefined;
   // First frame of a deal: drawn at its start, so it has somewhere to transition from.
   const start = dealing && dealt.atStart ? dealt.start : undefined;
-  const dealDelay = dealing ? dealt.order * frame.options.dealStaggerMs : 0;
+  const dealDelay = dealing ? dealt.order * frame.options.dealStaggerMs + dealt.delayMs : 0;
   return {
     uuid: card.uuid,
     suit: card.suit,
