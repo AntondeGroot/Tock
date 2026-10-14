@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card as CardModel } from '../../../api';
 import { CardTable, DefaultCardPositioner } from 'card-table';
 import { BoardCardFly } from './board-card-fly';
-import { buildBoard, fanCardBacks } from '../geometry/board-geometry';
+import { buildBoard } from '../geometry/board-geometry';
 
 // Real geometry (viewer = player 0) so the fan-slot maths matches the app.
 const geo = buildBoard(
@@ -14,9 +14,6 @@ const geo = buildBoard(
   '0',
 );
 const positioner = new DefaultCardPositioner();
-
-/** The viewer whose own hand is excluded from the public count diffing. */
-const VIEWER = 'me';
 
 describe('BoardCardFly', () => {
   let hand: CardModel[];
@@ -31,7 +28,6 @@ describe('BoardCardFly', () => {
       () => hand,
       table,
       positioner,
-      VIEWER,
     );
     vi.useFakeTimers();
   });
@@ -41,28 +37,26 @@ describe('BoardCardFly', () => {
     vi.useRealTimers();
   });
 
-  it("flies an opponent's played card from its outermost fan slot, parsing suit_value", () => {
+  // Forfeiting throws away the viewer's OWN hand. The table holds more than that now — every
+  // opponent's face-down fan lies on it too — and taking "every card not yet on the pile" for the
+  // hand threw the opponents' cards onto the pile as well, as copies, with every forfeit.
+  it("discards only the viewer's own hand on a forfeit, not the cards in other zones", () => {
+    // GIVEN the viewer holding two cards, and an opponent's face-down fan holding one
+    const own = [
+      { uuid: 1, suit: 0, value: 5 },
+      { uuid: 2, suit: 1, value: 9 },
+    ];
+    hand = own;
+    table.defineZone({ id: 'fan:1', faceDown: true, layout: () => ({ x: 10, y: 10 }) });
+    table.place({ uuid: -1_000_000, suit: 0, value: 0 }, 'fan:1');
     const spy = vi.spyOn(table, 'flyToPile');
-    fly.opponentPlayed('1', 3, ['2_13']);
 
-    const slot = fanCardBacks(geo.deckSegment('1')!, 3).at(-1)!;
-    expect(spy).toHaveBeenCalledWith(
-      { suit: 2, value: 13, x: slot.x / 6, y: slot.y / 6, rot: slot.rotDeg },
-      { startScale: 0.3, flip: 'in' },
-    );
-  });
+    // WHEN the viewer forfeits, and every discard has had its turn
+    fly.ownForfeit();
+    vi.advanceTimersByTime(1000);
 
-  it('flies each discarded card on a forfeit, staggered, parsing each', () => {
-    const spy = vi.spyOn(table, 'flyToPile');
-    fly.opponentForfeit('1', 4, 2, ['9_1', '9_2', '1_5', '2_7']); // last 2 are discarded
-
-    vi.advanceTimersByTime(0);
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy.mock.calls[0][0]).toMatchObject({ suit: 1, value: 5 });
-
-    vi.advanceTimersByTime(120);
-    expect(spy).toHaveBeenCalledTimes(2);
-    expect(spy.mock.calls[1][0]).toMatchObject({ suit: 2, value: 7 });
+    // THEN only their own two cards were thrown onto the pile
+    expect(spy.mock.calls.map(([card]) => card.uuid)).toEqual([1, 2]);
   });
 
   it('delegates a completed trade to the card table with the received/given slots', () => {
@@ -83,17 +77,15 @@ describe('BoardCardFly', () => {
     );
   });
 
-  it('is a no-op without geometry', () => {
+  it('animates no trade without geometry', () => {
     const noGeo = new BoardCardFly(
       () => undefined,
       () => [],
       table,
       positioner,
-      VIEWER,
     );
-    const spy = vi.spyOn(table, 'flyToPile');
-    noGeo.opponentPlayed('1', 3, ['2_13']);
-    noGeo.opponentForfeit('1', 3, 1, ['2_13']);
+    const spy = vi.spyOn(table, 'tradeSwap');
+    noGeo.tradeSwap('2', { uuid: 7, suit: 0, value: 13 }, { uuid: 3, suit: 1, value: 1 });
     expect(spy).not.toHaveBeenCalled();
   });
 });

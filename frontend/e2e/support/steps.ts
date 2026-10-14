@@ -74,7 +74,7 @@ export async function clickPawn(page: Page, id: string): Promise<void> {
 
 /** Hand cards currently in the viewer's hand (not flown to the pile). */
 export function handCards(page: Page) {
-  return page.locator('app-card.card:not(.played):not(.flyer)');
+  return page.locator('app-card.card:not(.played):not(.flyer):not(.face-down)');
 }
 
 /** Cards resting on the central pile (played / forfeited). */

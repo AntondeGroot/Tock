@@ -8,17 +8,6 @@
   [style.--ct-deal-flip-ms]="options().dealFlipMs + 'ms'"
   [style.--ct-deck-scale]="options().deckScale"
 >
-  @for (b of backs(); track b.key) {
-    <div
-      class="card-back"
-      [style.left.%]="b.x"
-      [style.top.%]="b.y"
-      [style.--rot.deg]="b.rot"
-      [style.z-index]="b.z"
-      [style.transition-delay.ms]="b.dealDelay"
-    ></div>
-  }
-
   @for (c of cards(); track c.uuid) {
     <app-card
       class="card"
@@ -33,7 +22,7 @@
       [style.transition-delay.ms]="c.dealDelay"
       [style.--deal-delay]="c.dealDelay"
       [class.selected]="selectedUuid() === c.uuid"
-      [class.special]="!c.inPile && isSpecial()(c.value)"
+      [class.special]="!c.inPile && !c.faceDown && isSpecial()(c.value)"
       [class.played]="c.inPile"
       [class.dealing]="c.dealing"
       [class.masked]="c.hidden"
@@ -41,9 +30,9 @@
       [class.flip-in]="c.flip === 'in'"
       [class.flip-out]="c.flip === 'out'"
       [class.snap]="c.snap"
-      (click)="cardClick.emit(c.uuid)"
-      (mouseenter)="cardHover.emit(c.value)"
-      (mouseleave)="cardHover.emit(null)"
+      (click)="click(c)"
+      (mouseenter)="hover(c, true)"
+      (mouseleave)="hover(c, false)"
     />
   }
 

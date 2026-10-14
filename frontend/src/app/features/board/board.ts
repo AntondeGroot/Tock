@@ -1,4 +1,13 @@
-import { Component, signal, inject, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  computed,
+  effect,
+  untracked,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import {
   GameStatePush,
   MovesService,
@@ -19,7 +28,8 @@ import { PlayerList } from '../player-list/player-list';
 import { TradePanel } from './trade/trade-panel/trade-panel';
 import { highlightForPawn1, highlightForPawn2, stepBoxColor } from './pawn/pawn-highlight';
 import { BoardCardFly } from './cards/board-card-fly';
-import { projectCardBacks, projectPawns, projectTiles } from './board-view';
+import { OpponentFans } from './cards/opponent-fans';
+import { projectPawns, projectTiles } from './board-view';
 import { TeamTradeController } from './trade/team-trade-controller';
 import { GameStateStream } from './game-state-stream';
 import { PawnAnimator } from './pawn/pawn-animator';
@@ -138,20 +148,6 @@ export class Board implements OnInit, OnDestroy {
   });
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
 
-  // Face-down card backs for every OTHER player, fanned by their public card count.
-  protected readonly cardBacks = computed(() => {
-    const g = this.geometry();
-    return g
-      ? projectCardBacks(
-          g,
-          this.roundCards.counts(),
-          this.viewerId,
-          this.cardTable.dealing(),
-          this.cardTable.stacked(),
-        )
-      : [];
-  });
-
   // The reusable card table: owns the pile, the flyer layer and the deal-in FLIP, and computes
   // each card's on-table position (hand fan / pile / deck). Keezen uses the default layout; the
   // board drives it (dealIn / flyToPile / clearPile) from its GameStatePush diffing below.
@@ -167,13 +163,18 @@ export class Board implements OnInit, OnDestroy {
   private readonly roundCards = new RoundCardsAnimator(this.cardTable, this.pawnAnimator);
   /** The hand as SHOWN — the animator's, which holds a new round back until the table settles. */
   protected readonly hand = this.roundCards.hand;
-  // Bridges Keezen board geometry to the card-table for opponents' plays/forfeits and team trades.
+  // Every other player's hand, as a face-down fan on the card table: dealt, played and forfeited.
+  private readonly opponentFans = new OpponentFans(
+    () => this.geometry(),
+    this.cardTable,
+    this.viewerId,
+  );
+  // Bridges Keezen board geometry to the card-table for the viewer's own plays and team trades.
   private readonly cardFly = new BoardCardFly(
     () => this.geometry(),
     () => this.hand(),
     this.cardTable,
     this.positioner,
-    this.viewerId,
   );
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;
@@ -199,11 +200,21 @@ export class Board implements OnInit, OnDestroy {
     // Reactions to each server push. Each effect dynamically tracks whatever signals its
     // method reads, so the split is purely for readability.
     effect(() => this.syncSelection());
-    effect(() =>
-      this.cardFly.reactToCounts(this.roundCards.counts(), this.state()?.playedCards ?? []),
-    );
+    effect(() => this.reactToOpponentCounts());
     effect(() => this.announceTeamHandoff());
     effect(() => this.teamTrade.reactToOutcome());
+  }
+
+  /**
+   * Show what the other players did with their cards, read from the counts the server shares —
+   * a deal, a play, a forfeit. Only the counts, the played cards and the geometry are tracked:
+   * moving cards on the table writes to it, and must not run this again.
+   */
+  private reactToOpponentCounts(): void {
+    const counts = this.roundCards.counts();
+    const played = this.state()?.playedCards ?? [];
+    this.geometry();
+    untracked(() => this.opponentFans.reactToCounts(counts, played));
   }
 
   /**

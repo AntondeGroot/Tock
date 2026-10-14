@@ -1,7 +1,7 @@
 # `card-table` — a reusable card animation module
 
 A self-contained, game-agnostic module for the visual half of a card game: **selecting, playing,
-dealing, and animating cards onto a discard pile**, plus other players' fanned card backs. It knows
+dealing, and animating cards onto a discard pile**, plus the zones a game adds — other players' face-down hands, a stock, melds. It knows
 nothing about rules, turns, scoring, boards, or pawns — a host game drives it imperatively and
 supplies its own geometry through one small seam.
 
@@ -16,7 +16,7 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
         your game component (rules, server state, board geometry)
                  │ drives                       ▲ events
                  ▼                              │
-        ┌─────────────────┐   cards()/flyers()/backs()   ┌──────────────────┐
+        ┌─────────────────┐   cards() / flyers()         ┌──────────────────┐
         │   CardTable      │ ───────────────────────────▶│  <app-card-layer> │
         │  (engine, signals)│                             │ (dumb component)  │
         └─────────────────┘                              └──────────────────┘
@@ -47,7 +47,7 @@ The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
 | File                        | What it is                                                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `card-table.ts`             | The `CardTable` engine (signals + `cards` computed + animation methods) + `DEFAULT_CARD_TABLE_OPTIONS`. |
-| `card-table.types.ts`       | `CardFace`, `Pos`, `CardPositioner`, `CardVM`, `CardBackVM`, `Flyer`, `CardTableOptions`.               |
+| `card-table.types.ts`       | `CardFace`, `Pos`, `Zone`, `CardPositioner`, `CardVM`, `Flyer`, `CardTableOptions`.                     |
 | `default-positioner.ts`     | `DefaultCardPositioner` — a ready-made hand-fan + spiral-pile layout.                                   |
 | `card-layer.ts/.html/.scss` | The `<app-card-layer>` presentational component.                                                        |
 | `card/card.ts/.html/.scss`  | The `<app-card>` sprite component.                                                                      |
@@ -68,7 +68,6 @@ import { CardLayer, CardTable, DefaultCardPositioner } from 'card-table';
       <app-card-layer
         [cards]="table.cards()"
         [flyers]="table.flyers()"
-        [backs]="opponentBacks()"
         [options]="table.options"
         [selectedUuid]="selectedUuid()"
         [isSpecial]="isSpecial"
@@ -130,15 +129,15 @@ from one source**.
 
 ## The seams (what a host game provides)
 
-| Seam                | How                                                     | Purpose                                                              |
-| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.            |
-| **Layout**          | a `CardPositioner`                                      | Where the hand fan, pile stack and pile/deck centre sit — see below. |
-| **Backs**           | `[backs]` input                                         | Other players' face-down fans (your board geometry positions them).  |
-| **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).        |
-| **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                       |
-| **Vertical offset** | `--hand-top` CSS var                                    | Where the layer's box starts (the layer is `display: contents`).     |
-| **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                               |
+| Seam                | How                                                     | Purpose                                                               |
+| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.             |
+| **Layout**          | a `CardPositioner`                                      | Where the hand fan, pile stack and pile/deck centre sit — see below.  |
+| **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds. |
+| **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).         |
+| **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                        |
+| **Vertical offset** | `--hand-top` CSS var                                    | Where the layer's box starts (the layer is `display: contents`).      |
+| **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                                |
 
 ### `CardPositioner`
 
@@ -184,9 +183,12 @@ under any `<base href>` — no app-level wiring needed.
 | `options`                                 | `ResolvedCardTableOptions` | The resolved timings + scales — bind to the layer's `[options]`.                                                                                                                                                                                                                                 |
 | `pile`                                    | `signal<CardFace[]>`       | Cards resting on the discard pile.                                                                                                                                                                                                                                                               |
 | `flyers`                                  | `signal<Flyer[]>`          | Cards mid-flight (transient).                                                                                                                                                                                                                                                                    |
-| `cards`                                   | `computed<CardVM[]>`       | Every card (hand ∪ pile) with a target position — feed to the layer.                                                                                                                                                                                                                             |
+| `cards`                                   | `computed<CardVM[]>`       | Every card (hand, pile and every zone) with a target position — feed to the layer.                                                                                                                                                                                                               |
 | `dealing`                                 | `computed<boolean>`        | True while a deal-in animates (sync your own dealt visuals).                                                                                                                                                                                                                                     |
 | `stacked`                                 | `computed<boolean>`        | True on the first frame of a deal (cards still at the deck).                                                                                                                                                                                                                                     |
+| `defineZone(zone)`                        | method                     | Add a zone the table holds cards in. A `faceDown` zone draws backs only; its cards ignore the mouse and are never marked special.                                                                                                                                                                |
+| `place(card, zoneId)`                     | method                     | Move a card into a zone (out of any other); it transitions there, turning over when it goes between face-down and face-up. The card carries its face, so a card leaving a face-down zone can reveal it.                                                                                          |
+| `deal(cards, { from?, into?, delayMs? })` | method                     | Deal cards one after another from a zone (default the built-in `deck`) into another (default the hand). Each starts at its own slot in `from`. Deals may overlap; `delayMs` shifts one back, for a round-robin.                                                                                  |
 | `dealIn(uuids)`                           | method                     | Kick off the deal-in FLIP for freshly dealt card uuids.                                                                                                                                                                                                                                          |
 | `flyToPile(card, opts?)`                  | method                     | Fly a card (own play `{pop:true}` / opponent `{flip:'in',startScale}`) to the pile. The card carries its id + face + start slot; a faceless card (no `uuid`) lands with a synthetic id. A hand card is masked while its flyer is up and snaps onto the pile on landing, so it never flies twice. |
 | `tradeSwap(partner, gave, got)`           | method                     | Two-way swap between the viewer's hand and a partner fan (masks the received card until its flyer lands).                                                                                                                                                                                        |
@@ -194,10 +196,12 @@ under any `<base href>` — no app-level wiring needed.
 
 ### `<app-card-layer>` (component)
 
-**Inputs:** `cards: CardVM[]`, `flyers: Flyer[]`, `backs: CardBackVM[]`,
+**Inputs:** `cards: CardVM[]`, `flyers: Flyer[]`,
 `selectedUuid: number | null`, `isSpecial: (value: number) => boolean`,
 `options: ResolvedCardTableOptions` (publishes the timing CSS vars).
-**Outputs:** `cardClick: number` (uuid), `cardHover: number | null` (value).
+**Outputs:** `cardClick: number` (uuid), `cardHover: number | null` (value) — never for a face-down card.
+
+The built-in zone ids are exported as `HAND_ZONE`, `PILE_ZONE` and `DECK_ZONE`.
 
 ---
 
@@ -214,9 +218,9 @@ pixel coordinates by 6 to reach `%`.
 
 - **Game rules** — legal moves, turn order, scoring, must-play, etc.
 - **Board / pawn** rendering and movement — a different concern; keep it in your game.
-- **Board geometry** — where each seat's fan sits on _your_ board. You compute fly-in origins and the
-  `backs` positions; the module just renders and animates them.
-- **Server/state wiring** — you diff your own game state and call the four engine methods.
+- **Board geometry** — where each seat's fan sits on _your_ board. You give each zone its `layout`
+  and compute fly-in origins; the module just renders and animates them.
+- **Server/state wiring** — you diff your own game state and call the engine's methods.
 
 ---
 
@@ -229,7 +233,8 @@ pixel coordinates by 6 to reach `%`.
    `value` = 1-based sprite column).
 4. Point `--card-sheet` / `--card-cols` / `--card-rows` at your deck (or reuse `card-deck.png`).
 5. Call `dealIn` on a deal, `flyToPile` when a card is played, `tradeSwap` for a swap, `clearPile`
-   on a new round. Feed `[backs]` for opponents' fans and `[isSpecial]`/`[selectedUuid]` for highlights.
+   on a new round. Give other players' hands a `faceDown` zone each and move their cards with
+   `deal`/`place`; feed `[isSpecial]`/`[selectedUuid]` for highlights.
 
 ---
 
@@ -241,7 +246,8 @@ pixel coordinates by 6 to reach `%`.
   a value in one place (the options) and both TS and CSS update. Only the internal `LAND_BUFFER_MS`
   (how long after the flight the flyer swaps to a pile element) and `DEAL_CLEAR_BUFFER_MS` are fixed.
 - **`deckScale` ↔ card back.** The card `.back` border widths are `calc(2px / var(--ct-deck-scale))`,
-  so the stacked back matches full-size opponent backs at any deck scale — no manual adjustment.
+  so a back stacked at the deck keeps a 2px border at any deck scale. Backs in a face-down fan are
+  drawn at `fanScale`; with both at their default 0.3 they match.
 - **Selector prefix.** Components use the app's `app-` selector prefix. If you publish this as a
   standalone library, give it a library-specific prefix instead.
 - **Writable `pile` signal.** `pile` is exposed writable for the rare no-animation land

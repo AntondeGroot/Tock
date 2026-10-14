@@ -69,20 +69,6 @@ export interface CardVM {
 }
 
 /**
- * A face-down card back — one card in another player's fanned hand. Only counts are ever known
- * (never values), so there is nothing to peek at. The game supplies the fanned positions (its own
- * board geometry); the layer just draws them.
- */
-export interface CardBackVM {
-  key: string;
-  x: number;
-  y: number;
-  rot: number;
-  z: number | undefined;
-  dealDelay: number;
-}
-
-/**
  * Tunable timings (ms) and scales for the table animations — the single source of truth shared by
  * the engine (its setTimeouts) and the layer (which publishes them as CSS vars so the transitions
  * and keyframes stay in sync). All optional; {@link import('./card-table').DEFAULT_CARD_TABLE_OPTIONS}

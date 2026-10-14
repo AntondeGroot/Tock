@@ -45,16 +45,20 @@ test.describe('board layout: cards vs. title / viewport / tiles', () => {
         ]);
         const page = await ctx.newPage();
         await page.goto(`/?sessionid=${sessions[n]}&playerid=player0`);
-        await page.waitForSelector('.card-back', { timeout: 30000 });
+        await page.waitForSelector('app-card.card.face-down', { timeout: 30000 });
         await page.waitForSelector('app-card.card:not(.flyer)', { timeout: 30000 });
 
         const g = await page.evaluate(() => {
           const rj = (el: Element) => el.getBoundingClientRect().toJSON();
           return {
             title: rj(document.querySelector('.title-bar, header')!),
-            backs: [...document.querySelectorAll('.card-back')].map(rj),
+            backs: [...document.querySelectorAll('app-card.card.face-down')].map(rj),
             tiles: [...document.querySelectorAll('.tile')].map(rj),
-            hand: [...document.querySelectorAll('app-card.card:not(.played):not(.flyer)')].map(rj),
+            hand: [
+              ...document.querySelectorAll(
+                'app-card.card:not(.played):not(.flyer):not(.face-down)',
+              ),
+            ].map(rj),
             vw: window.innerWidth,
             vh: window.innerHeight,
           };

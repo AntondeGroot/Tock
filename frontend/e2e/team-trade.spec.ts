@@ -111,7 +111,7 @@ test.describe('team card-trade window', () => {
     });
     await expect(asker.locator('app-card.card[data-testid="card-13"]')).toBeVisible();
     // …and one of the asker's three cards left their hand for the teammate.
-    await expect(asker.locator('app-card.card:not(.flyer)')).toHaveCount(3);
+    await expect(asker.locator('app-card.card:not(.flyer):not(.face-down)')).toHaveCount(3);
 
     await asker.context().close();
     await mate.context().close();
