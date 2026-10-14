@@ -1,15 +1,16 @@
 import { computed, signal, Signal } from '@angular/core';
+import { CardMasks } from './card-masks';
 import {
   CardFace,
   CardPositioner,
   CardTableOptions,
   CardVM,
-  Flyer,
   Pos,
   ResolvedCardTableOptions,
   Zone,
 } from './card-table.types';
 import { TableFrame, toCardVM } from './card-view';
+import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
 import { HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
@@ -54,19 +55,16 @@ export class CardTable {
     layout: (index) => this.positioner.pileSlot(index),
   });
   // Transient face-up cards mid-flight (an opponent's play, a trade swap, a forfeit discard).
-  readonly flyers = signal<Flyer[]>([]);
-
+  private readonly flyerLayer = new FlyerLayer();
+  readonly flyers = this.flyerLayer.flyers;
   // Hand cards masked while a flyer stands in for them: one flying in (the trade swap), so the real
   // card doesn't pop into its slot until the flyer lands on it, or one flying out to the pile.
-  private readonly hiddenUuids = signal<Set<number>>(new Set());
-  // Cards just landed on the pile by their flyer, placed there for one frame without a transition.
-  private readonly snappedUuids = signal<Set<number>>(new Set());
+  private readonly masks = new CardMasks();
   // Deal-in FLIP: `dealtIndex` maps each freshly dealt uuid to its stagger order; `atDeck` is true
   // for the first frame so those cards render stacked at the deck before fanning to their slots.
   private readonly dealtIndex = signal<Map<number, number>>(new Map());
   private readonly atDeck = signal(false);
 
-  private flyerSeq = 0;
   private syntheticUuid = -1;
 
   constructor(
@@ -96,8 +94,8 @@ export class CardTable {
       dealt: this.dealtIndex(),
       atDeck: this.atDeck(),
       deck: this.positioner.pileCenter(),
-      hidden: this.hiddenUuids(),
-      snapped: this.snappedUuids(),
+      hidden: this.masks.hidden(),
+      snapped: this.masks.snapped(),
       options: this.options,
     };
     placed.sort((a, b) => a.card.uuid - b.card.uuid);
@@ -152,44 +150,45 @@ export class CardTable {
     card: { uuid?: number; suit: number; value: number; x: number; y: number; rot?: number },
     opts: { startScale?: number; flip?: 'in' | 'out'; pop?: boolean } = {},
   ): void {
-    const id = ++this.flyerSeq;
     const fromHand = card.uuid !== undefined;
-    if (fromHand) this.hide(card.uuid!);
+    if (fromHand) this.masks.hide(card.uuid!);
     const landCard: CardFace = {
       uuid: card.uuid ?? this.syntheticUuid--,
       suit: card.suit,
       value: card.value,
     };
-    this.flyers.update((f) => [
-      ...f,
-      {
-        id,
-        x: card.x,
-        y: card.y,
-        rot: card.rot ?? 0,
-        scale: opts.startScale ?? 1,
-        suit: card.suit,
-        value: card.value,
-        flip: opts.flip,
-        glow: opts.pop,
-      },
-    ]);
+    const id = this.flyerLayer.launch({
+      x: card.x,
+      y: card.y,
+      rot: card.rot ?? 0,
+      scale: opts.startScale ?? 1,
+      suit: card.suit,
+      value: card.value,
+      flip: opts.flip,
+      glow: opts.pop,
+    });
 
     const { flyMs, popMs, popScale, pileScale } = this.options;
     const flightMs = flyMs + LAND_BUFFER_MS; // land a beat after the flight visually completes
     const center = this.positioner.pileCenter();
     const flyToPile = () =>
-      this.setFlyer(id, { x: center.x, y: center.y, rot: 0, scale: pileScale, glow: false });
+      this.flyerLayer.update(id, {
+        x: center.x,
+        y: center.y,
+        rot: 0,
+        scale: pileScale,
+        glow: false,
+      });
     const land = () => {
-      this.removeFlyer(id);
+      this.flyerLayer.remove(id);
       this.pile.update((p) => [...p, landCard]);
-      if (fromHand) this.snapIntoPlace(landCard.uuid);
+      if (fromHand) this.masks.snapIntoPlace(landCard.uuid);
     };
 
     if (opts.pop) {
       // Swell the card + glow (a "played!" beat), hold popMs, then fly to the pile.
       requestAnimationFrame(() =>
-        requestAnimationFrame(() => this.setFlyer(id, { scale: popScale })),
+        requestAnimationFrame(() => this.flyerLayer.update(id, { scale: popScale })),
       );
       setTimeout(flyToPile, popMs);
       setTimeout(land, popMs + flightMs);
@@ -212,85 +211,17 @@ export class CardTable {
     gave: { suit: number; value: number; from: Pos },
     got: { uuid: number; suit: number; value: number; to: Pos },
   ): void {
-    const { fanScale, tradeRevealMs } = this.options;
+    const { fanScale, tradeRevealMs, flyMs } = this.options;
+    const landMs = flyMs + LAND_BUFFER_MS;
     // Your card shrinks face-down into the partner's fan.
-    this.flyTransient(gave.from, partner, gave, { fromScale: 1, toScale: fanScale, flip: 'out' });
+    const out = { fromScale: 1, toScale: fanScale, flip: 'out' } as const;
+    this.flyerLayer.flyBetween(gave.from, partner, gave, out, landMs);
     // The received card grows face-up out of the partner's fan into your hand; keep the real card
     // hidden while it flies, revealing it a frame before the flyer lands (they overlap, no gap).
-    this.hide(got.uuid);
-    setTimeout(() => this.reveal(got.uuid), tradeRevealMs);
-    this.flyTransient(partner, got.to, got, { fromScale: fanScale, toScale: 1, flip: 'in' });
-  }
-
-  /** Fly a transient face-up card from one point to another (the moving parts of a trade swap). */
-  private flyTransient(
-    from: Pos,
-    to: Pos,
-    face: { suit: number; value: number },
-    opts: { fromScale?: number; toScale?: number; flip?: 'in' | 'out'; onLand?: () => void } = {},
-  ): void {
-    const id = ++this.flyerSeq;
-    this.flyers.update((f) => [
-      ...f,
-      {
-        id,
-        x: from.x,
-        y: from.y,
-        rot: 0,
-        scale: opts.fromScale ?? 1,
-        suit: face.suit,
-        value: face.value,
-        flip: opts.flip,
-      },
-    ]);
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        this.setFlyer(id, { x: to.x, y: to.y, scale: opts.toScale ?? 1 }),
-      ),
-    );
-    setTimeout(() => {
-      this.removeFlyer(id);
-      opts.onLand?.();
-    }, this.options.flyMs + LAND_BUFFER_MS);
-  }
-
-  /** Patch a single in-flight flyer by id (position/scale/glow during a transition). */
-  private setFlyer(id: number, patch: Partial<Flyer>): void {
-    this.flyers.update((f) => f.map((fl) => (fl.id === id ? { ...fl, ...patch } : fl)));
-  }
-
-  /** Drop a flyer once it has landed. */
-  private removeFlyer(id: number): void {
-    this.flyers.update((f) => f.filter((fl) => fl.id !== id));
-  }
-
-  /** Mask a hand card while a swap flyer animates it in. */
-  private hide(uuid: number): void {
-    this.hiddenUuids.update((s) => new Set(s).add(uuid));
-  }
-
-  /** Reveal a previously hidden hand card. */
-  private reveal(uuid: number): void {
-    this.hiddenUuids.update((s) => {
-      const next = new Set(s);
-      next.delete(uuid);
-      return next;
-    });
-  }
-
-  /** Show a card that its flyer just landed, at its new place at once rather than transitioning. */
-  private snapIntoPlace(uuid: number): void {
-    this.reveal(uuid);
-    this.snappedUuids.update((s) => new Set(s).add(uuid));
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        this.snappedUuids.update((s) => {
-          const next = new Set(s);
-          next.delete(uuid);
-          return next;
-        }),
-      ),
-    );
+    this.masks.hide(got.uuid);
+    setTimeout(() => this.masks.reveal(got.uuid), tradeRevealMs);
+    const into = { fromScale: fanScale, toScale: 1, flip: 'in' } as const;
+    this.flyerLayer.flyBetween(partner, got.to, got, into, landMs);
   }
 
   /** Empty the discard pile (a new round). */
