@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output, TemplateRef } from '@angular/core';
 import { Card } from './card/card';
-import { resolveOptions } from './card-table';
+import { resolveOptions } from './timing';
 import { DEFAULT_LAYOUT } from './default-layout';
 import { CardVM, FaceContext, Flyer, ResolvedCardTableOptions } from './card-table.types';
 

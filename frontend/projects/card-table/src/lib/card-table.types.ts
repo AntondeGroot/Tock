@@ -1,3 +1,5 @@
+import { Signal } from '@angular/core';
+
 /**
  * Shared types for the reusable card-table module. All coordinates are in the card-layer's own
  * percentage space (the layer is overlaid on the play area; x/y are `%` for `left`/`top`).
@@ -54,6 +56,16 @@ export interface TableLayout {
   deck: ZoneLayout;
 }
 
+/** What a game sets a table up with — only its hand is required. */
+export interface CardTableConfig {
+  /** The viewer's cards, as the game reports them: a signal or a getter. */
+  readonly hand: Signal<CardFace[]> | (() => CardFace[]);
+  /** Where the hand, pile and deck lie; {@link import('./default-layout').DEFAULT_LAYOUT} if left out. */
+  readonly layout?: TableLayout;
+  /** Timings to retune; {@link import('./timing').DEFAULT_TIMING} fills the rest. */
+  readonly timing?: CardTableTiming;
+}
+
 /** A rendered card in the layer: geometry only. The game overlays `selected`/`special` in the view. */
 export interface CardVM {
   uuid: number;
@@ -81,10 +93,10 @@ export interface CardVM {
 /**
  * Tunable timings (ms) and the pop beat for the table animations — the single source of truth shared by
  * the engine (its setTimeouts) and the layer (which publishes them as CSS vars so the transitions
- * and keyframes stay in sync). All optional; {@link import('./card-table').DEFAULT_CARD_TABLE_OPTIONS}
- * fills the rest.
+ * and keyframes stay in sync). All optional; {@link import('./timing').DEFAULT_TIMING} fills the
+ * rest.
  */
-export interface CardTableOptions {
+export interface CardTableTiming {
   /** How long a card flies to the pile — the CSS transition + flyer flight (ms). */
   flyMs?: number;
   /** How long the viewer's own card swells + glows before it flies (ms). */
@@ -103,7 +115,7 @@ export interface CardTableOptions {
  * The options with every field filled in — what {@link import('./card-table').CardTable} exposes —
  * plus the deck's card size, read from the layout, which the layer needs to draw backs.
  */
-export type ResolvedCardTableOptions = Required<CardTableOptions> & { readonly deckScale: number };
+export type ResolvedCardTableOptions = Required<CardTableTiming> & { readonly deckScale: number };
 
 /** A transient card flying across the table (an opponent's play, a trade swap, a forfeit discard). */
 export interface Flyer {

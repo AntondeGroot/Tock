@@ -20,7 +20,7 @@ describe('OpponentFans', () => {
   const inFan = (playerId: string) => table.cards().filter((c) => c.zoneId === `fan:${playerId}`);
 
   beforeEach(() => {
-    table = new CardTable(() => [], DEFAULT_LAYOUT);
+    table = new CardTable({ hand: () => [] });
     fans = new OpponentFans(() => geo, table, VIEWER);
     vi.useFakeTimers();
   });

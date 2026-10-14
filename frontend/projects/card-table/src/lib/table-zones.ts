@@ -43,6 +43,11 @@ export class TableZones {
     return index >= 0 ? zone.layout(index, held.length) : zone.layout(0, 1);
   }
 
+  /** The zone with this id; there must be one. */
+  zone(zoneId: string): Zone {
+    return this.find(zoneId).zone;
+  }
+
   private find(zoneId: string): OwnedZone {
     const found = this.owned().find((o) => o.zone.id === zoneId);
     if (!found) throw new Error(`No zone '${zoneId}' on this table`);
