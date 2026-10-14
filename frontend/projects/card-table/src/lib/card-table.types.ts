@@ -111,12 +111,6 @@ export interface CardTableTiming {
   popScale?: number;
 }
 
-/**
- * The options with every field filled in — what {@link import('./card-table').CardTable} exposes —
- * plus the deck's card size, read from the layout, which the layer needs to draw backs.
- */
-export type ResolvedCardTableOptions = Required<CardTableTiming> & { readonly deckScale: number };
-
 /** A transient card flying across the table (an opponent's play, a trade swap, a forfeit discard). */
 export interface Flyer {
   id: number;

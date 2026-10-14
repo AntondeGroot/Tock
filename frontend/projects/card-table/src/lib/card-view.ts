@@ -1,4 +1,4 @@
-import { CardVM, Pos, ResolvedCardTableOptions } from './card-table.types';
+import { CardTableTiming, CardVM, Pos } from './card-table.types';
 import { PILE_ZONE, PlacedCard } from './zone-layout';
 
 /** A card being dealt: its turn in the deal, and where it is dealt from. */
@@ -18,7 +18,7 @@ export interface TableFrame {
   hidden: ReadonlySet<number>;
   snapped: ReadonlySet<number>;
   turning: ReadonlyMap<number, 'in' | 'out'>;
-  options: ResolvedCardTableOptions;
+  timing: Required<CardTableTiming>;
 }
 
 /**
@@ -30,7 +30,7 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
   const dealing = dealt !== undefined;
   // First frame of a deal: drawn at its start, so it has somewhere to transition from.
   const start = dealing && dealt.atStart ? dealt.start : undefined;
-  const dealDelay = dealing ? dealt.order * frame.options.dealStaggerMs + dealt.delayMs : 0;
+  const dealDelay = dealing ? dealt.order * frame.timing.dealStaggerMs + dealt.delayMs : 0;
   return {
     uuid: card.uuid,
     suit: card.suit,

@@ -1,14 +1,15 @@
 <!-- Cards live in their own layer, overlaid on the play area so the pile lines up with the centre
      and the hand sits below. Same DOM element per uuid (stable track), so moving a card between
-     hand / pile / deck animates it (a FLIP). Flyers are transient cards mid-flight. -->
+     hand / pile / deck animates it (a FLIP). Flyers are transient cards mid-flight. The table's
+     timings are published as CSS vars, so the transitions and keyframes follow the engine. -->
 <div
   class="card-layer"
-  [style.--ct-fly-ms]="options().flyMs + 'ms'"
-  [style.--ct-pop-ms]="options().popMs + 'ms'"
-  [style.--ct-deal-flip-ms]="options().dealFlipMs + 'ms'"
-  [style.--ct-deck-scale]="options().deckScale"
+  [style.--ct-fly-ms]="table().timing.flyMs + 'ms'"
+  [style.--ct-pop-ms]="table().timing.popMs + 'ms'"
+  [style.--ct-deal-flip-ms]="table().timing.dealFlipMs + 'ms'"
+  [style.--ct-deck-scale]="deckScale()"
 >
-  @for (c of cards(); track c.uuid) {
+  @for (c of table().cards(); track c.uuid) {
     <app-card
       class="card"
       [attr.data-testid]="'card-' + c.value"
@@ -37,7 +38,7 @@
     />
   }
 
-  @for (f of flyers(); track f.id) {
+  @for (f of table().flyers(); track f.id) {
     <app-card
       class="card flyer"
       [class.flip-in]="f.flip === 'in'"

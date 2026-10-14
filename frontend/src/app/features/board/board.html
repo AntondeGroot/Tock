@@ -42,9 +42,7 @@
            the reserved space (.stage padding). Opponents' hands are here too, as
            face-down fans laid out from the board's own geometry (see opponent-fans.ts). -->
       <app-card-layer
-        [cards]="cardTable.cards()"
-        [flyers]="cardTable.flyers()"
-        [options]="cardTable.options"
+        [table]="cardTable"
         [selectedUuid]="selection.cardUuid() ?? null"
         [isSpecial]="isSpecial"
         (cardClick)="selection.selectCard($event)"
