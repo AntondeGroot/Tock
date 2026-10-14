@@ -134,7 +134,7 @@ from one source**.
 | **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds.   |
 | **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).           |
 | **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                          |
-| **Vertical offset** | `--hand-top` CSS var (required)                         | How far down your box the layer's square starts — see below.            |
+| **Vertical offset** | `--hand-top` CSS var (default `0`)                      | How far down your box the layer's square starts — see below.            |
 | **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                                  |
 | **Own faces**       | `[face]` input — an `<ng-template let-face>`            | Draw fronts yourself instead (tiles): given each card's `suit`/`value`. |
 | **Piece shape**     | `--card-width` / `--card-aspect` CSS vars               | Pieces that are not card-shaped — wider, squarer tiles.                 |
@@ -233,12 +233,12 @@ The built-in zone ids are exported as `HAND_ZONE`, `PILE_ZONE` and `DECK_ZONE`.
 ## Coordinate system
 
 The layer is `display: contents`: what it draws is a **square** that is positioned inside whatever
-box you place it in. Give that box `position: relative` (or absolute), and set `--hand-top` on it:
+box you place it in. Give that box `position: relative` (or absolute), and set `--hand-top` on it
+if the square should start lower down:
 
 - The square is as wide as your box, and as tall as it is wide (`aspect-ratio: 1`).
 - Its top edge sits `--hand-top` below the top of your box. Any CSS length works — `0`, `70%`,
-  `calc(0.12 * var(--board-w))`. The layer has no default, so always set it (use `0` when the
-  square should start at the top of the box).
+  `calc(0.12 * var(--board-w))`. Unset, it is `0`: the square starts at the top of your box.
 - All engine/layout `x`/`y` are percentages of that square, and a card's `x`/`y` is its centre.
   So `{ x: 50, y: 50 }` is the middle of the square, and `y` above 100 lies below it.
 - Cards are not clipped. A hand laid out below the square (Keezen's sits at `y: 116`) spills into
@@ -262,7 +262,8 @@ layout divides board pixel coordinates by 6 to reach `%`.
 
 ## Porting checklist
 
-1. Render `<app-card-layer [table]="table">` inside a positioned box that sets `--hand-top`.
+1. Render `<app-card-layer [table]="table">` inside a positioned box (setting `--hand-top` if the
+   square should start below its top).
 2. Construct `new CardTable({ hand: () => yourHandSignal() })`. That uses `DEFAULT_LAYOUT`; give
    your own `layout` if your table isn't a linear fan + central pile.
 3. Map your cards to `CardFace { uuid, suit, value }` (stable `uuid`; `suit` = sprite row,
