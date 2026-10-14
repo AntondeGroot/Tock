@@ -191,6 +191,9 @@ export function opponentsClockwise(
     .sort((a, b) => clockwise(a) - clockwise(b));
 }
 
+/** A card in another player's fan, as a share of a hand card's size — the size of its back. */
+export const FAN_SCALE = 0.3;
+
 /**
  * Fan `nrCards` card-back positions along a player's deck `segment`, ported from
  * the GWT drawCardsIcons: pivot a point out beyond the board, then spread the

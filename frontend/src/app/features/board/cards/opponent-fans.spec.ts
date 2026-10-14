@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CardTable, DefaultCardPositioner } from 'card-table';
+import { CardTable, DEFAULT_LAYOUT } from 'card-table';
 import { OpponentFans } from './opponent-fans';
 import { buildBoard, fanCardBacks } from '../geometry/board-geometry';
 
@@ -20,7 +20,7 @@ describe('OpponentFans', () => {
   const inFan = (playerId: string) => table.cards().filter((c) => c.zoneId === `fan:${playerId}`);
 
   beforeEach(() => {
-    table = new CardTable(() => [], new DefaultCardPositioner());
+    table = new CardTable(() => [], DEFAULT_LAYOUT);
     fans = new OpponentFans(() => geo, table, VIEWER);
     vi.useFakeTimers();
   });
@@ -65,7 +65,7 @@ describe('OpponentFans', () => {
     fans.reactToCounts({ '0': 2, '1': 2, '2': 2 }, []);
 
     // THEN each opponent's cards are dealt, starting on the deck
-    const deck = new DefaultCardPositioner().pileCenter();
+    const deck = DEFAULT_LAYOUT.deck(0, 1);
     for (const card of [...inFan('1'), ...inFan('2')]) {
       expect(card).toMatchObject({ dealing: true, x: deck.x, y: deck.y });
     }

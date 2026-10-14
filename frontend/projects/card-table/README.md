@@ -23,8 +23,8 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
                  │ asks "where does card N go?"                    │ renders
                  ▼                                                 ▼
         ┌─────────────────┐                              ┌──────────────────┐
-        │  CardPositioner  │ (the one game-specific seam) │   <app-card>      │
-        │ handSlot/pile…   │                              │ (sprite sheet)    │
+        │   TableLayout    │ (the one game-specific seam) │   <app-card>      │
+        │ hand/pile/deck   │                              │ (sprite sheet)    │
         └─────────────────┘                              └──────────────────┘
 ```
 
@@ -33,8 +33,8 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
   on-table position. Unit-testable like a plain state machine.
 - **`<app-card-layer>`** — a dumb, `OnPush` presentational component. It renders whatever the engine
   computes and raises click/hover events. No game logic.
-- **`CardPositioner`** — the seam. Your game decides _where_ cards live (hand fan, pile stack, deck
-  anchor). A `DefaultCardPositioner` ships a sensible linear-fan + spiral-pile layout.
+- **`TableLayout`** — the seam. Your game decides _where_ cards live: the hand fan, the pile stack and
+  the deck, each a zone layout. `DEFAULT_LAYOUT` ships a sensible linear-fan + spiral-pile layout.
 - **`<app-card>`** — one playing card, drawn from a sprite sheet (bundled `card-deck.png` by default,
   swappable per game).
 
@@ -47,8 +47,8 @@ The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
 | File                        | What it is                                                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `card-table.ts`             | The `CardTable` engine (signals + `cards` computed + animation methods) + `DEFAULT_CARD_TABLE_OPTIONS`. |
-| `card-table.types.ts`       | `CardFace`, `Pos`, `Zone`, `CardPositioner`, `CardVM`, `Flyer`, `CardTableOptions`.                     |
-| `default-positioner.ts`     | `DefaultCardPositioner` — a ready-made hand-fan + spiral-pile layout.                                   |
+| `card-table.types.ts`       | `CardFace`, `Pos`, `Zone`, `ZoneLayout`, `TableLayout`, `CardVM`, `Flyer`, `CardTableOptions`.          |
+| `default-layout.ts`         | `DEFAULT_LAYOUT` — a ready-made hand-fan + spiral-pile layout, with the deck on the pile.               |
 | `card-layer.ts/.html/.scss` | The `<app-card-layer>` presentational component.                                                        |
 | `card/card.ts/.html/.scss`  | The `<app-card>` sprite component.                                                                      |
 | `card/card-deck.png`        | The default sprite sheet (13 cols × 5 rows).                                                            |
@@ -59,7 +59,7 @@ The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
 ## Quick start
 
 ```ts
-import { CardLayer, CardTable, DefaultCardPositioner } from 'card-table';
+import { CardLayer, CardTable, DEFAULT_LAYOUT } from 'card-table';
 
 @Component({
   imports: [CardLayer /* … */],
@@ -79,8 +79,7 @@ import { CardLayer, CardTable, DefaultCardPositioner } from 'card-table';
 })
 export class MyGame {
   // 1. Give the engine your hand (a signal of CardFace[]) and a layout.
-  private readonly positioner = new DefaultCardPositioner();
-  protected readonly table = new CardTable(() => this.hand(), this.positioner);
+  protected readonly table = new CardTable(() => this.hand(), DEFAULT_LAYOUT);
 
   // 2. Which card values get the "special" highlight (your rules decide).
   protected readonly isSpecial = (value: number) => value === 1 || value === 13;
@@ -98,27 +97,27 @@ export class MyGame {
 }
 ```
 
-That's the whole contract: **feed it the hand + a positioner, render `<app-card-layer>`, and call
+That's the whole contract: **feed it the hand + a layout, render `<app-card-layer>`, and call
 the four methods when your game state changes.**
 
 ### Tuning the feel
 
-Pass `CardTableOptions` (all fields optional) as the third constructor argument to retune timings and
-scales; the rest fall back to `DEFAULT_CARD_TABLE_OPTIONS`:
+Pass `CardTableOptions` (all fields optional) as the third constructor argument to retune timings;
+the rest fall back to `DEFAULT_CARD_TABLE_OPTIONS`. Card _sizes_ are not options: they belong to the
+layout, as each slot's `scale` (a slot without one is a full-size card).
 
 ```ts
-new CardTable(() => this.hand(), positioner, { flyMs: 350, dealStaggerMs: 500, pileScale: 0.5 });
+new CardTable(() => this.hand(), DEFAULT_LAYOUT, { flyMs: 350, dealStaggerMs: 500 });
 ```
 
-| Option                                 | Default               | Meaning                                                                |
-| -------------------------------------- | --------------------- | ---------------------------------------------------------------------- |
-| `flyMs`                                | `500`                 | Fly-to-pile duration (drives the CSS transition + flip keyframes too). |
-| `popMs`                                | `180`                 | How long the own card swells + glows before it flies.                  |
-| `dealFlipMs`                           | `550`                 | Dealt-card turnover as it fans out.                                    |
-| `dealStaggerMs`                        | `700`                 | Stagger between dealt cards.                                           |
-| `tradeRevealMs`                        | `560`                 | When a traded-in card is unmasked (relative to its flyer launch).      |
-| `pileScale` / `deckScale` / `fanScale` | `0.6` / `0.3` / `0.3` | Card scale on the pile / at the deck / in a fan.                       |
-| `popScale`                             | `1.2`                 | Own-card swell during the pop beat.                                    |
+| Option          | Default | Meaning                                                                |
+| --------------- | ------- | ---------------------------------------------------------------------- |
+| `flyMs`         | `500`   | Fly-to-pile duration (drives the CSS transition + flip keyframes too). |
+| `popMs`         | `180`   | How long the own card swells + glows before it flies.                  |
+| `dealFlipMs`    | `550`   | Dealt-card turnover as it fans out.                                    |
+| `dealStaggerMs` | `700`   | Stagger between dealt cards.                                           |
+| `tradeRevealMs` | `560`   | When a traded-in card is unmasked (relative to its flyer launch).      |
+| `popScale`      | `1.2`   | Own-card swell during the pop beat.                                    |
 
 `CardTable` resolves these into `table.options`; bind `[options]="table.options"` on `<app-card-layer>`
 and it publishes the timing values as CSS vars (`--ct-fly-ms`, `--ct-pop-ms`, `--ct-deal-flip-ms`,
@@ -132,7 +131,7 @@ from one source**.
 | Seam                | How                                                     | Purpose                                                                 |
 | ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
-| **Layout**          | a `CardPositioner`                                      | Where the hand fan, pile stack and pile/deck centre sit — see below.    |
+| **Layout**          | a `TableLayout`                                         | Where the hand fan, pile stack and deck sit — see below.                |
 | **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds.   |
 | **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).           |
 | **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                          |
@@ -141,20 +140,23 @@ from one source**.
 | **Own faces**       | `[face]` input — an `<ng-template let-face>`            | Draw fronts yourself instead (tiles): given each card's `suit`/`value`. |
 | **Piece shape**     | `--card-width` / `--card-aspect` CSS vars               | Pieces that are not card-shaped — wider, squarer tiles.                 |
 
-### `CardPositioner`
+### `TableLayout`
 
 ```ts
-interface CardPositioner {
-  handSlot(index: number, count: number): Pos; // fanned hand
-  pileSlot(index: number): Pos; // stacked pile (incl. scale + z)
-  pileCenter(): Pos; // fly-to-pile landing + deal-from anchor
+type ZoneLayout = (index: number, count: number) => Pos; // where the index-th of count cards sits
+
+interface TableLayout {
+  hand: ZoneLayout; // fanned hand
+  pile: ZoneLayout; // stacked pile — its slots carry the pile size (scale) and stacking (z)
+  deck: ZoneLayout; // mid-table: cards are dealt from it at its size, and played back to it
 }
 ```
 
-All coordinates are in **the card-layer's own percentage space** (`x`/`y` are `%` for `left`/`top`
-of the layer box). Provide your own to match your board, or use `DefaultCardPositioner`. Fly-in
-_origins/targets_ (an opponent's fan, a trade partner) are **not** on the positioner — they're passed
-straight into the engine's animation methods, because they're your board geometry, not table layout.
+The built-in zones are laid out exactly like the zones a game adds with `defineZone`. All
+coordinates are in **the card-layer's own percentage space** (`x`/`y` are `%` for `left`/`top` of
+the layer box). Provide your own to match your board, or use `DEFAULT_LAYOUT`. Fly-in
+_origins/targets_ for a trade (a partner's fan) are passed straight into `tradeSwap`, with the size of
+a card there as their `scale`, because they're your board geometry, not table layout.
 
 ### The sprite sheet
 
@@ -200,7 +202,7 @@ set their size on the layer: `--card-width` (a share of the board, default `16.6
 
 | Member                                    | Type                       | Notes                                                                                                                                                                                                                                                                                            |
 | ----------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `constructor(hand, positioner, options?)` | —                          | `hand`: a `Signal<CardFace[]>` or getter; `positioner`: a `CardPositioner`; `options`: optional `CardTableOptions`.                                                                                                                                                                              |
+| `constructor(hand, layout, options?)`     | —                          | `hand`: a `Signal<CardFace[]>` or getter; `layout`: a `TableLayout`; `options`: optional `CardTableOptions`.                                                                                                                                                                                     |
 | `options`                                 | `ResolvedCardTableOptions` | The resolved timings + scales — bind to the layer's `[options]`.                                                                                                                                                                                                                                 |
 | `pile`                                    | `signal<CardFace[]>`       | Cards resting on the discard pile.                                                                                                                                                                                                                                                               |
 | `flyers`                                  | `signal<Flyer[]>`          | Cards mid-flight (transient).                                                                                                                                                                                                                                                                    |
@@ -229,8 +231,8 @@ The built-in zone ids are exported as `HAND_ZONE`, `PILE_ZONE` and `DECK_ZONE`.
 ## Coordinate system
 
 The layer is `display: contents`, so it positions inside whatever box you place it in. Give that box
-`position: relative` (or absolute) and a `--hand-top`. All engine/positioner `x`/`y` are percentages
-of that box. The Keezen host, for example, works in a 600px board space and its positioner divides
+`position: relative` (or absolute) and a `--hand-top`. All engine/layout `x`/`y` are percentages
+of that box. The Keezen host, for example, works in a 600px board space and its layout divides
 pixel coordinates by 6 to reach `%`.
 
 ---
@@ -248,8 +250,8 @@ pixel coordinates by 6 to reach `%`.
 ## Porting checklist
 
 1. Render `<app-card-layer>` inside a positioned box that sets `--hand-top`.
-2. Construct `CardTable(() => yourHandSignal(), positioner)`. Start with `DefaultCardPositioner`;
-   write your own `CardPositioner` if your table isn't a linear fan + central pile.
+2. Construct `CardTable(() => yourHandSignal(), layout)`. Start with `DEFAULT_LAYOUT`; give your
+   own `TableLayout` if your table isn't a linear fan + central pile.
 3. Map your cards to `CardFace { uuid, suit, value }` (stable `uuid`; `suit` = sprite row,
    `value` = 1-based sprite column).
 4. Point `--card-sheet` / `--card-cols` / `--card-rows` at your deck (or reuse `card-deck.png`).
@@ -266,9 +268,10 @@ pixel coordinates by 6 to reach `%`.
   transitions (`card-layer.scss`) and flip keyframes (`card/card.scss`) follow automatically. Change
   a value in one place (the options) and both TS and CSS update. Only the internal `LAND_BUFFER_MS`
   (how long after the flight the flyer swaps to a pile element) and `DEAL_CLEAR_BUFFER_MS` are fixed.
-- **`deckScale` ↔ card back.** The card `.back` border widths are `calc(2px / var(--ct-deck-scale))`,
-  so a back stacked at the deck keeps a 2px border at any deck scale. Backs in a face-down fan are
-  drawn at `fanScale`; with both at their default 0.3 they match.
+- **Deck size ↔ card back.** The card `.back` border widths are `calc(2px / var(--ct-deck-scale))`,
+  where `--ct-deck-scale` is the deck layout's `scale`, so a back stacked at the deck keeps a 2px
+  border at any deck size. Backs in a face-down fan are drawn at that zone's own scale; Keezen's fans
+  and deck are both 0.3, so they match.
 - **Selector prefix.** Components use the app's `app-` selector prefix. If you publish this as a
   standalone library, give it a library-specific prefix instead.
 - **Writable `pile` signal.** `pile` is exposed writable for the rare no-animation land

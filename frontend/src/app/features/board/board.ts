@@ -23,7 +23,7 @@ import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
 import { Pawn } from './pawn/pawn';
-import { CardLayer, CardTable, DefaultCardPositioner } from 'card-table';
+import { CardLayer, CardTable, DEFAULT_LAYOUT } from 'card-table';
 import { PlayerList } from '../player-list/player-list';
 import { TradePanel } from './trade/trade-panel/trade-panel';
 import { highlightForPawn1, highlightForPawn2, stepBoxColor } from './pawn/pawn-highlight';
@@ -154,10 +154,10 @@ export class Board implements OnInit, OnDestroy {
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
-  private readonly positioner = new DefaultCardPositioner();
+  private readonly layout = DEFAULT_LAYOUT;
   // Explicitly typed: the hand it reads now comes from roundCards, which takes the table back
   // as a constructor argument — without the annotation that cycle infers as `any`.
-  protected readonly cardTable: CardTable = new CardTable(() => this.hand(), this.positioner);
+  protected readonly cardTable: CardTable = new CardTable(() => this.hand(), this.layout);
   // Owns the hand and counts the board renders: it diffs each push into deal-in animations and
   // holds a new round back until the play or forfeit that ended the previous one has settled.
   private readonly roundCards = new RoundCardsAnimator(this.cardTable, this.pawnAnimator);
@@ -174,7 +174,7 @@ export class Board implements OnInit, OnDestroy {
     () => this.geometry(),
     () => this.hand(),
     this.cardTable,
-    this.positioner,
+    this.layout,
   );
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;

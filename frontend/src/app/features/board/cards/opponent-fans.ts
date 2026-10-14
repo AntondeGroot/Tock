@@ -1,5 +1,10 @@
 import { CardFace, CardTable, PILE_ZONE, Pos } from 'card-table';
-import { BoardGeometry, fanCardBacks, opponentsClockwise } from '../geometry/board-geometry';
+import {
+  BoardGeometry,
+  FAN_SCALE,
+  fanCardBacks,
+  opponentsClockwise,
+} from '../geometry/board-geometry';
 
 /** The card-table zone holding a player's hand, face down. */
 const fanZone = (playerId: string) => `fan:${playerId}`;
@@ -116,6 +121,6 @@ export class OpponentFans {
     const segment = this.geometry()?.deckSegment(playerId);
     const back = segment ? fanCardBacks(segment, count)[index] : undefined;
     if (!back) return { x: 0, y: 0 };
-    return { x: back.x / 6, y: back.y / 6, rot: back.rotDeg, scale: this.table.options.fanScale };
+    return { x: back.x / 6, y: back.y / 6, rot: back.rotDeg, scale: FAN_SCALE };
   }
 }
