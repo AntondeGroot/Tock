@@ -39,12 +39,11 @@
 
       <!-- Cards live in their own layer (not inside .board), overlaid on the same
            box so the pile lines up with the board centre. The hand sits below in
-           the reserved space (.stage padding). Opponents' fanned card backs render
-           here too (the board supplies their positions from its own geometry). -->
+           the reserved space (.stage padding). Opponents' hands are here too, as
+           face-down fans laid out from the board's own geometry (see opponent-fans.ts). -->
       <app-card-layer
         [cards]="cardTable.cards()"
         [flyers]="cardTable.flyers()"
-        [backs]="cardBacks()"
         [options]="cardTable.options"
         [selectedUuid]="selection.cardUuid() ?? null"
         [isSpecial]="isSpecial"

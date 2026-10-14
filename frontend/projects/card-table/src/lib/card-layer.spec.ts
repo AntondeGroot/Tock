@@ -106,31 +106,4 @@ describe('CardLayer', () => {
       { left: '60%', top: '70%', flipIn: false, flipOut: true, glowing: false },
     ]);
   });
-
-  // Goes in 5c-2, together with the `backs` input, once opponents' fans are face-down zones.
-  // Until then the opponents' hands are drawn as plain backs at the places the game gives them,
-  // dealt in on their own stagger — this pins that, so nothing changes before it is replaced.
-  it('draws the backs of the other players at the places the game gives them', () => {
-    // GIVEN two backs of an opponent's fan, the second dealt in 350ms later
-    const fixture = TestBed.createComponent(CardLayer);
-    fixture.componentRef.setInput('backs', [
-      { key: 'p1:0', x: 10, y: 20, rot: -8, z: undefined, dealDelay: 0 },
-      { key: 'p1:1', x: 12, y: 21, rot: 8, z: undefined, dealDelay: 350 },
-    ]);
-
-    // WHEN the layer draws them
-    fixture.detectChanges();
-
-    // THEN each is a back at its own place, leaving on its own turn
-    const backs = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.card-back')];
-    expect(
-      backs.map((b) => {
-        const style = (b as HTMLElement).style;
-        return [style.left, style.top, style.transitionDelay];
-      }),
-    ).toEqual([
-      ['10%', '20%', '0ms'],
-      ['12%', '21%', '350ms'],
-    ]);
-  });
 });

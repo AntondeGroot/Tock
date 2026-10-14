@@ -44,16 +44,17 @@
 
 .back {
   background: linear-gradient(145deg, #a52222, #7a1414);
-  border-radius: 8%; // match the opponents' .card-back (overrides .face's 5px)
+  border-radius: 8%; // a rounder back than face (overrides .face's 5px)
   transform: rotateY(180deg); // the reverse side
 
-  // The card is transform-scaled to --ct-deck-scale (~0.3) while stacked at the deck, so lines
-  // drawn here render at that scale. Divide the intended full-size widths (2px border, 1px frame)
-  // by the deck scale so a stacked back matches the opponents' full-size backs. --ct-deck-scale is
-  // published by <app-card-layer> from the engine's deckScale, so this tracks it automatically.
+  // A back is mostly seen small: stacked at the deck, or in a face-down fan — both scaled to ~0.3.
+  // Lines drawn here shrink with the card, so the intended widths (2px border, 1px frame) are
+  // divided by the deck scale to come out at that size there. --ct-deck-scale is published by
+  // <app-card-layer> from the engine's deckScale; a fan at another fanScale draws them thicker
+  // or thinner by that ratio (both are 0.3 by default).
   border: calc(2px / var(--ct-deck-scale, 0.3)) solid #fff;
 
-  // Inner frame — matches the opponents' .card-back pattern.
+  // Inner frame — decorative only.
   &::after {
     content: '';
     position: absolute;

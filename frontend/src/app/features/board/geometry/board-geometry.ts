@@ -170,6 +170,28 @@ export function buildBoard(
 }
 
 /**
+ * The other players who have a seat, clockwise round the table from the viewer — the order a
+ * round is dealt in, so the deal sweeps round the table. Seats are ordered by the angle of their
+ * deck round the board centre (in screen coords, clockwise is increasing atan2).
+ */
+export function opponentsClockwise(
+  g: BoardGeometry,
+  playerIds: string[],
+  viewerId: string | null | undefined,
+): string[] {
+  const mid = (seg: [Pt, Pt]) => ({ x: (seg[0].x + seg[1].x) / 2, y: (seg[0].y + seg[1].y) / 2 });
+  const angleOf = (p: Pt) => Math.atan2(p.y - CENTER.y, p.x - CENTER.x);
+  const viewerSeg = viewerId ? g.deckSegment(viewerId) : undefined;
+  // Without a seat of their own (a spectator), the viewer looks on from the bottom.
+  const viewerAngle = angleOf(viewerSeg ? mid(viewerSeg) : { x: CENTER.x, y: 2 * CENTER.y });
+  const clockwise = (pid: string) =>
+    (angleOf(mid(g.deckSegment(pid)!)) - viewerAngle + 2 * Math.PI) % (2 * Math.PI);
+  return playerIds
+    .filter((pid) => pid !== viewerId && g.deckSegment(pid))
+    .sort((a, b) => clockwise(a) - clockwise(b));
+}
+
+/**
  * Fan `nrCards` card-back positions along a player's deck `segment`, ported from
  * the GWT drawCardsIcons: pivot a point out beyond the board, then spread the
  * cards on an arc facing the centre. Returns each card's centre + rotation (deg).

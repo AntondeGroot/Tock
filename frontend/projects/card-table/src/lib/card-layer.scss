@@ -16,35 +16,6 @@
   pointer-events: none; // clicks fall through; cards re-enable below
 }
 
-// A face-down card in another player's fanned hand. Positioned in the layer's %-space (the game
-// supplies the fan geometry). Only counts are known, so there is no face to render.
-.card-back {
-  position: absolute;
-  width: 5%; // 30/600 of the board
-  aspect-ratio: 30 / 47;
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
-  box-sizing: border-box;
-  background: linear-gradient(145deg, #a52222, #7a1414);
-  border: 2px solid #fff;
-  border-radius: 8%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  // Smoothly fan out on a deal (and re-fan when a player plays).
-  transition:
-    left 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-
-  // Classic inner frame — decorative only.
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 14%;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-radius: 6%;
-  }
-}
-
 .card {
   position: absolute;
   width: 16.667%; // 100/600 of the board → scales with it (height from aspect-ratio)

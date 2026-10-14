@@ -79,7 +79,11 @@ interface BoardInternals {
   };
   playCard(): void;
   forfeit(): void;
-  cardTable: { flyers(): { suit: number; value: number }[] };
+  cardTable: {
+    flyers(): { suit: number; value: number }[];
+    cards(): { zoneId: string; suit: number; value: number; flip: string | null }[];
+    pile(): { suit: number; value: number }[];
+  };
 }
 
 describe('Board turn actions', () => {
@@ -197,15 +201,16 @@ describe('Board turn actions', () => {
   });
 
   // An opponent's hand is only ever known as a COUNT, so a play is inferred from that count
-  // dropping by exactly one: the outermost card of their fan flies to the pile, face-down, and
-  // turns over on the way. A bigger drop is a forfeit and gets its own staggered animation.
-  it('flies an opponent card to the pile when their count drops by one', async () => {
+  // dropping by exactly one: the outermost card of their face-down fan moves to the pile and turns
+  // over on the way. A bigger drop is a forfeit and gets its own staggered animation.
+  it("moves an opponent's card to the pile when their count drops by one", async () => {
     board.handleGameState(stateWithCounts(4, [])); // the baseline the next push is compared against
     await fixture.whenStable();
     board.handleGameState(stateWithCounts(3, [OPPONENT_PLAY]));
     await fixture.whenStable();
 
-    expect(board.cardTable.flyers()).toEqual([expect.objectContaining({ suit: 2, value: 11 })]);
+    const onPile = board.cardTable.cards().filter((c) => c.zoneId === 'pile');
+    expect(onPile).toEqual([expect.objectContaining({ suit: 2, value: 11, flip: 'in' })]);
   });
 
   // The same count diff, one card bigger, means something else entirely: a forfeit. Those cards
@@ -220,10 +225,13 @@ describe('Board turn actions', () => {
     fixture.detectChanges();
 
     // Nothing has left yet: unlike a single play, every forfeited card waits for its turn.
-    expect(board.cardTable.flyers()).toEqual([]);
+    const onPile = () => board.cardTable.cards().filter((c) => c.zoneId === 'pile');
+    expect(onPile()).toEqual([]);
     vi.advanceTimersByTime(0);
-    expect(board.cardTable.flyers()).toHaveLength(1);
+    expect(onPile()).toHaveLength(1);
     vi.advanceTimersByTime(240);
-    expect(board.cardTable.flyers()).toHaveLength(3);
+    expect(onPile()).toHaveLength(3);
+    // in the order the server discarded them — the pile's own order, as the cards stack on it
+    expect(board.cardTable.pile().map((c) => `${c.suit}_${c.value}`)).toEqual(OPPONENT_FORFEIT);
   });
 });

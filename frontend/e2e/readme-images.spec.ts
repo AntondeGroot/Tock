@@ -352,7 +352,7 @@ async function contentHeight(page: Page, device: Device): Promise<number> {
       selectors
         .flatMap((s) => [...document.querySelectorAll(s)])
         .reduce((lowest, el) => Math.max(lowest, el.getBoundingClientRect().bottom), 0),
-    ['.stage', '.controls', 'app-card.card:not(.flyer)'],
+    ['.stage', '.controls', 'app-card.card:not(.flyer):not(.face-down)'],
   );
   // On a phone the game can reach past the fold; clamping to the viewport keeps the shot looking
   // like an actual screen rather than a stretched page.
@@ -373,7 +373,7 @@ async function openBoard(browser: Browser, sessionId: string, device: Device): P
   await page.goto(`/?sessionid=${sessionId}&playerid=${VIEWER}`);
   await page.waitForSelector('app-card.card', { timeout: 30_000 });
   await page.waitForSelector('.tile', { timeout: 30_000 });
-  await page.waitForSelector('.card-back', { timeout: 30_000 });
+  await page.waitForSelector('app-card.card.face-down', { timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready);
   // The cards fan in and the pawns ease to their tiles on first render. Nothing signals "settled"
   // (the turn indicator pulses forever, so waiting on document.getAnimations() never resolves), and

@@ -8,17 +8,6 @@
   [style.--ct-deal-flip-ms]="options().dealFlipMs + 'ms'"
   [style.--ct-deck-scale]="options().deckScale"
 >
-  @for (b of backs(); track b.key) {
-    <div
-      class="card-back"
-      [style.left.%]="b.x"
-      [style.top.%]="b.y"
-      [style.--rot.deg]="b.rot"
-      [style.z-index]="b.z"
-      [style.transition-delay.ms]="b.dealDelay"
-    ></div>
-  }
-
   @for (c of cards(); track c.uuid) {
     <app-card
       class="card"

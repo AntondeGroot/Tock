@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Pawn as ApiPawn, Player } from '../../api';
 import { seatColor } from '../../player-colors';
 import { buildBoard } from './geometry/board-geometry';
-import { projectCardBacks, projectPawns, projectTiles } from './board-view';
+import { projectPawns, projectTiles } from './board-view';
 import { pawnKey } from './pawn/pawn-key';
 
 // A real geometry for a 3-player game (viewer = player 0), so the projections are exercised
@@ -87,24 +87,5 @@ describe('projectPawns', () => {
       nestTileId: { playerId: '0', tileNr: -1 },
     };
     expect(projectPawns(geo(), [ghost], PLAYERS, new Map())).toHaveLength(0);
-  });
-});
-
-describe('projectCardBacks', () => {
-  const counts = { '0': 5, '1': 3, '2': 4 };
-
-  it('fans a back per card for every opponent, never for the viewer', () => {
-    const backs = projectCardBacks(geo(), counts, '0', false, false);
-    expect(backs).toHaveLength(counts['1'] + counts['2']); // opponents only
-    expect(backs.some((b) => b.key.startsWith('0:'))).toBe(false); // never the viewer
-    // At rest: no deal stagger, no explicit stacking z.
-    expect(backs.every((b) => b.dealDelay === 0 && b.z === undefined)).toBe(true);
-  });
-
-  it('stacks the backs at the deck with a stagger while dealing', () => {
-    const backs = projectCardBacks(geo(), counts, '0', true, true);
-    expect(backs.every((b) => b.x === 315 / 6 && b.y === 300 / 6 && b.rot === 0)).toBe(true);
-    expect(backs.some((b) => b.dealDelay > 0)).toBe(true);
-    expect(backs.every((b) => typeof b.z === 'number')).toBe(true);
   });
 });
