@@ -10,6 +10,14 @@ export interface CardFace {
   value: number;
 }
 
+/**
+ * What a game's own face template is given to draw a card's front — `let-face` in an
+ * `<ng-template>` passed to `<app-card-layer [face]>`. Without one, fronts come from the sprite.
+ */
+export interface FaceContext {
+  $implicit: { suit: number; value: number };
+}
+
 /** A position on the table. rot (deg), scale and z are optional; the engine supplies defaults. */
 export interface Pos {
   x: number;

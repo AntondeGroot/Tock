@@ -18,7 +18,9 @@
 
 .card {
   position: absolute;
-  width: 16.667%; // 100/600 of the board → scales with it (height from aspect-ratio)
+  // 100/600 of the board → scales with it (height from aspect-ratio). A game whose pieces are not
+  // card-sized — Rummikub tiles — sets --card-width (and --card-aspect) on the layer.
+  width: var(--card-width, 16.667%);
   pointer-events: auto; // the .card-layer disables events; cards opt back in
   // left/top are the card's CENTRE; --rot rotates, --card-scale shrinks pile cards
   // (hand = 1, pile ≈ 0.6). The transition animates the fly: position + shrink.

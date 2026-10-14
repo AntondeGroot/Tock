@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'vitest';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CardLayer } from './card-layer';
-import { CardVM } from './card-table.types';
+import { CardVM, Flyer } from './card-table.types';
+
+/**
+ * A game that draws its own faces — a Rummikub tile: the number, in the colour of its suit. It
+ * hands the layer an <ng-template>, which gets each card to draw.
+ */
+@Component({
+  imports: [CardLayer],
+  template: `
+    <ng-template #tile let-face>
+      <span class="tile" [attr.data-suit]="face.suit">{{ face.value }}</span>
+    </ng-template>
+    <app-card-layer [cards]="cards()" [flyers]="flyers()" [face]="tile" />
+  `,
+})
+class TileGame {
+  readonly cards = signal<CardVM[]>([]);
+  readonly flyers = signal<Flyer[]>([]);
+}
 
 /** A card as the engine hands it to the layer, resting in the hand unless a test says otherwise. */
 const cardVM = (overrides: Partial<CardVM>): CardVM => ({
@@ -25,6 +44,53 @@ const cardVM = (overrides: Partial<CardVM>): CardVM => ({
 });
 
 describe('CardLayer', () => {
+  // Rummikub's tiles are not playing cards: no sprite sheet holds them, and a game draws them
+  // itself. The layer takes the game's own face for every card it draws face up, so the same
+  // table — the zones, the flights, the deals — carries tiles as well as cards.
+  it("draws each face-up card with the game's own face when it gives one", () => {
+    // GIVEN a game that draws its faces itself, with a red 7 and a blue 12 to show
+    const fixture = TestBed.createComponent(TileGame);
+    fixture.componentInstance.cards.set([
+      cardVM({ uuid: 1, suit: 0, value: 7 }),
+      cardVM({ uuid: 2, suit: 2, value: 12 }),
+    ]);
+
+    // WHEN the layer draws them
+    fixture.detectChanges();
+
+    // THEN each card's front is the game's face, given that card
+    const fronts = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-card .front')];
+    expect(
+      fronts.map((front) => {
+        const tile = front.querySelector('.tile');
+        return [tile?.textContent?.trim(), tile?.getAttribute('data-suit')];
+      }),
+    ).toEqual([
+      ['7', '0'],
+      ['12', '2'],
+    ]);
+  });
+
+  // A tile also travels: handed between teammates' racks, thrown onto the table. In flight it is
+  // a flyer — a stand-in drawn above the table — and a stand-in that showed a playing card where a
+  // tile left would give the flight away. Flyers wear the game's own face too.
+  it("draws a flyer with the game's own face as well", () => {
+    // GIVEN a game that draws its faces itself
+    const fixture = TestBed.createComponent(TileGame);
+
+    // WHEN a black 9 is in flight
+    fixture.componentInstance.flyers.set([
+      { id: 1, x: 40, y: 40, rot: 0, scale: 1, suit: 3, value: 9 },
+    ]);
+    fixture.detectChanges();
+
+    // THEN the flyer's front is the game's face, given that tile
+    const tile = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-card.flyer .front .tile',
+    );
+    expect([tile?.textContent?.trim(), tile?.getAttribute('data-suit')]).toEqual(['9', '3']);
+  });
+
   // The gold gleam tells the viewer "this card of yours does something special". An opponent's
   // face-down card has no face the viewer may know — the value it carries is a placeholder, or
   // worse, the real card — so lighting it up would announce what is in someone else's hand.
