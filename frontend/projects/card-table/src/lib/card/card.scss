@@ -63,6 +63,11 @@
   }
 }
 
+// A card in a face-down zone (an opponent's hand, a stock) shows its back, at rest.
+:host(.face-down) .flip {
+  transform: rotateY(180deg);
+}
+
 // Deal-in: hold the back toward the viewer, then turn to the front near the end of
 // the flight (timed to each card's stagger via --deal-delay).
 :host(.dealing) .flip {

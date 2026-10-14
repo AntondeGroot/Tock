@@ -15,6 +15,7 @@ export interface ZoneContents {
 export interface PlacedCard {
   card: CardFace;
   zoneId: string;
+  faceDown: boolean;
   pos: Pos;
 }
 
@@ -33,7 +34,12 @@ export function placeCards(contents: readonly ZoneContents[]): PlacedCard[] {
     const own = cards.filter((c) => !claimed.has(c.uuid));
     own.forEach((card, i) => {
       claimed.add(card.uuid);
-      placed.push({ card, zoneId: zone.id, pos: zone.layout(i, own.length) });
+      placed.push({
+        card,
+        zoneId: zone.id,
+        faceDown: zone.faceDown ?? false,
+        pos: zone.layout(i, own.length),
+      });
     });
   }
   return placed;

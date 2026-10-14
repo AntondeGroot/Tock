@@ -23,7 +23,7 @@ describe('placeCards', () => {
 
     // THEN that card is placed once, on the pile
     expect(placed.filter((p) => p.card.uuid === 2)).toEqual([
-      { card: card(2), zoneId: 'pile', pos: { x: 0, y: 9, z: 1 } },
+      { card: card(2), zoneId: 'pile', faceDown: false, pos: { x: 0, y: 9, z: 1 } },
     ]);
     // and the hand lays out as the two cards it still holds, side by side
     expect(placed.filter((p) => p.zoneId === 'hand').map((p) => [p.card.uuid, p.pos])).toEqual([

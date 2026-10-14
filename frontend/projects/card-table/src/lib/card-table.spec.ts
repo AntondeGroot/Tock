@@ -267,6 +267,23 @@ describe('CardTable', () => {
       // and the card stays where it was
       expect(table.cards().find((c) => c.uuid === a.uuid)).toMatchObject({ zoneId: 'meld-1' });
     });
+
+    // Some zones hold cards no one may see: an opponent's hand, the stock in Pesten. The table
+    // knows only that a card is there, so it must draw the back — whatever face it was given.
+    it('draws the cards of a face-down zone with their backs up', () => {
+      // GIVEN a face-down fan for an opponent, and a hand card of the viewer's own
+      const own = card();
+      const hidden = card();
+      hand.set([own]);
+      table.defineZone({ id: 'fan', faceDown: true, layout: (index) => ({ x: index, y: 0 }) });
+
+      // WHEN a card is placed in the fan
+      table.place(hidden, 'fan');
+
+      // THEN it is drawn face down, while the viewer's own card still shows its face
+      expect(table.cards().find((c) => c.uuid === hidden.uuid)).toMatchObject({ faceDown: true });
+      expect(table.cards().find((c) => c.uuid === own.uuid)).toMatchObject({ faceDown: false });
+    });
   });
 
   describe('deal', () => {
