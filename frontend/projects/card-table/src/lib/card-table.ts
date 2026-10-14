@@ -9,10 +9,10 @@ import {
   ResolvedCardTableOptions,
   Zone,
 } from './card-table.types';
-import { TableFrame, toCardVM } from './card-view';
+import { DealtCard, TableFrame, toCardVM } from './card-view';
 import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
-import { HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
+import { DECK_ZONE, HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
 /** The out-of-the-box timings + scales. A game overrides any subset via the constructor options. */
 export const DEFAULT_CARD_TABLE_OPTIONS: ResolvedCardTableOptions = {
@@ -60,9 +60,9 @@ export class CardTable {
   // Hand cards masked while a flyer stands in for them: one flying in (the trade swap), so the real
   // card doesn't pop into its slot until the flyer lands on it, or one flying out to the pile.
   private readonly masks = new CardMasks();
-  // Deal-in FLIP: `dealtIndex` maps each freshly dealt uuid to its stagger order; `atDeck` is true
-  // for the first frame so those cards render stacked at the deck before fanning to their slots.
-  private readonly dealtIndex = signal<Map<number, number>>(new Map());
+  // Deal-in FLIP: `dealt` holds each freshly dealt card's turn and start; `atDeck` is true for the
+  // first frame so those cards render where they are dealt from before fanning to their slots.
+  private readonly dealt = signal<Map<number, DealtCard>>(new Map());
   private readonly atDeck = signal(false);
 
   private syntheticUuid = -1;
@@ -79,6 +79,11 @@ export class CardTable {
     id: HAND_ZONE,
     layout: (index, count) => this.positioner.handSlot(index, count),
   };
+  // Where cards are dealt from: a stack at the pile's centre, cards shrunk to deck size.
+  private readonly deckZone: Zone = {
+    id: DECK_ZONE,
+    layout: () => ({ ...this.positioner.pileCenter(), scale: this.options.deckScale }),
+  };
 
   /** Every card on the table, each with a target position — the layer renders this. */
   readonly cards = computed<CardVM[]>(() => {
@@ -91,9 +96,8 @@ export class CardTable {
       ...this.zones.contents(),
     ]);
     const frame: TableFrame = {
-      dealt: this.dealtIndex(),
+      dealt: this.dealt(),
       atDeck: this.atDeck(),
-      deck: this.positioner.pileCenter(),
       hidden: this.masks.hidden(),
       snapped: this.masks.snapped(),
       options: this.options,
@@ -116,21 +120,20 @@ export class CardTable {
   }
 
   /** True while a deal-in is animating — a game can sync its own dealt visuals (e.g. opponents). */
-  readonly dealing = computed(() => this.dealtIndex().size > 0);
+  readonly dealing = computed(() => this.dealt().size > 0);
   /** True on the first frame of a deal, while dealt cards are still stacked at the deck. */
   readonly stacked = computed(() => this.atDeck());
 
   /** Kick off the deal-in FLIP for the given freshly-dealt card uuids. */
   dealIn(uuids: number[]): void {
-    const order = new Map<number, number>();
-    uuids.forEach((u, i) => order.set(u, i));
-    this.dealtIndex.set(order);
+    const start = this.deckZone.layout(0, 1);
+    this.dealt.set(new Map(uuids.map((uuid, order) => [uuid, { order, start }])));
     this.atDeck.set(true); // first frame: stacked at the deck
     // Release next frame so they transition out to their slots (staggered by delay).
     requestAnimationFrame(() => requestAnimationFrame(() => this.atDeck.set(false)));
     // Clear once the last card has finished (last round's delay + the transition).
     setTimeout(
-      () => this.dealtIndex.set(new Map()),
+      () => this.dealt.set(new Map()),
       uuids.length * this.options.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
     );
   }
