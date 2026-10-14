@@ -34,6 +34,25 @@ const LAND_BUFFER_MS = 100;
 const DEAL_CLEAR_BUFFER_MS = 2000;
 
 /**
+ * `all` with `change` applied to one deal's cards — each comes back changed, or leaves the deal
+ * when `change` returns undefined — and every other deal's cards left exactly as they were.
+ */
+function changeDealt(
+  all: ReadonlyMap<number, DealtCard>,
+  uuids: readonly number[],
+  change: (dealt: DealtCard) => DealtCard | undefined,
+): ReadonlyMap<number, DealtCard> {
+  const next = new Map(all);
+  for (const [uuid, dealt] of all) {
+    if (!uuids.includes(uuid)) continue;
+    const changed = change(dealt);
+    if (changed) next.set(uuid, changed);
+    else next.delete(uuid);
+  }
+  return next;
+}
+
+/**
  * The reusable card-table engine: it owns the zones cards sit in (the pile, and any the game
  * defines), the transient flyer layer and the deal-in state, and computes each card's position so
  * the same DOM element animates between zones (a FLIP). Framework-light — Angular signals, no
@@ -60,10 +79,10 @@ export class CardTable {
   // Hand cards masked while a flyer stands in for them: one flying in (the trade swap), so the real
   // card doesn't pop into its slot until the flyer lands on it, or one flying out to the pile.
   private readonly masks = new CardMasks();
-  // Deal-in FLIP: `dealt` holds each freshly dealt card's turn and start; `atDeck` is true for the
-  // first frame so those cards render where they are dealt from before fanning to their slots.
-  private readonly dealt = signal<Map<number, DealtCard>>(new Map());
-  private readonly atDeck = signal(false);
+  // Deal-in FLIP: each freshly dealt card's turn and start. On its deal's first frame it is drawn
+  // at its start, then released to fan out to its slot. Deals overlap — a round deals every seat —
+  // so each one only ever touches its own cards.
+  private readonly dealt = signal<ReadonlyMap<number, DealtCard>>(new Map());
 
   private syntheticUuid = -1;
 
@@ -98,7 +117,6 @@ export class CardTable {
     ]);
     const frame: TableFrame = {
       dealt: this.dealt(),
-      atDeck: this.atDeck(),
       hidden: this.masks.hidden(),
       snapped: this.masks.snapped(),
       turning: this.masks.turning(),
@@ -133,7 +151,7 @@ export class CardTable {
   /** True while a deal-in is animating — a game can sync its own dealt visuals (e.g. opponents). */
   readonly dealing = computed(() => this.dealt().size > 0);
   /** True on the first frame of a deal, while dealt cards are still stacked at the deck. */
-  readonly stacked = computed(() => this.atDeck());
+  readonly stacked = computed(() => [...this.dealt().values()].some((d) => d.atStart));
 
   /** Kick off the deal-in FLIP for the given freshly-dealt hand card uuids, from the deck. */
   dealIn(uuids: number[]): void {
@@ -156,15 +174,23 @@ export class CardTable {
   }
 
   private startDeal(uuids: number[], from: string): void {
-    this.dealt.set(
-      new Map(uuids.map((uuid, order) => [uuid, { order, start: this.zones.slotOf(uuid, from) }])),
-    );
-    this.atDeck.set(true); // first frame: drawn where they are dealt from
+    // First frame: drawn where they are dealt from, alongside any deal still under way.
+    this.dealt.update((all) => {
+      const next = new Map(all);
+      uuids.forEach((uuid, order) =>
+        next.set(uuid, { order, start: this.zones.slotOf(uuid, from), atStart: true }),
+      );
+      return next;
+    });
     // Release next frame so they transition out to their slots (staggered by delay).
-    requestAnimationFrame(() => requestAnimationFrame(() => this.atDeck.set(false)));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        this.dealt.update((all) => changeDealt(all, uuids, (d) => ({ ...d, atStart: false }))),
+      ),
+    );
     // Clear once the last card has finished (last round's delay + the transition).
     setTimeout(
-      () => this.dealt.set(new Map()),
+      () => this.dealt.update((all) => changeDealt(all, uuids, () => undefined)),
       uuids.length * this.options.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
     );
   }
