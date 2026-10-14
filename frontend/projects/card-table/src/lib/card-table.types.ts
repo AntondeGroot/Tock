@@ -20,6 +20,15 @@ export interface Pos {
 }
 
 /**
+ * A place on the table that holds cards in order: a hand, a pile — and in other games a meld, a
+ * stock or a rack. The zone decides where its `index`-th of `count` cards sits.
+ */
+export interface Zone {
+  readonly id: string;
+  layout(index: number, count: number): Pos;
+}
+
+/**
  * Where cards go — the one game-specific seam. A game provides the layout (hand fan, pile stack,
  * and the central deck/pile anchor); origins/targets for fly-ins (an opponent's fan, a trade
  * partner) are passed straight into the engine's flyer methods, so they don't live here.

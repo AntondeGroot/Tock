@@ -124,7 +124,7 @@
             "tsConfig": "projects/card-table/tsconfig.spec.json",
             "coverageThresholds": {
               "statements": 100,
-              "branches": 87,
+              "branches": 89,
               "functions": 100,
               "lines": 100
             }
