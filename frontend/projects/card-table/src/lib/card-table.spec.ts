@@ -435,5 +435,29 @@ describe('CardTable', () => {
       expect(theirs.map((c) => dealing(c.uuid))).toEqual([true, true, true]);
       expect(table.dealing(), 'the table still counts as dealing').toBe(true);
     });
+
+    // A round is dealt round-robin: every seat's first card, then every seat's second. Each seat
+    // is its own deal, so the round is built from deals that start a beat apart — a later seat's
+    // whole deal shifted back. That shift has to hold to the end, or its last card would stop
+    // counting as dealt while it is still on its way.
+    it('shifts a whole deal later by its delay, ending later too', () => {
+      // GIVEN a fan for the next seat round the table
+      table.defineZone({ id: 'fan', layout: (index) => ({ x: 80 + index, y: 5 }) });
+      const [a, b] = [card(), card()];
+
+      // WHEN two cards are dealt into it 350ms behind the round
+      table.deal([a, b], { into: 'fan', delayMs: 350 });
+
+      // THEN each leaves on its turn (700ms apart), 350ms later
+      const dealDelay = (uuid: number) => table.cards().find((c) => c.uuid === uuid)!.dealDelay;
+      expect([dealDelay(a.uuid), dealDelay(b.uuid)]).toEqual([350, 1050]);
+
+      // and the deal is still going after an undelayed one would be over (2 × 700ms + 2000ms)
+      vi.advanceTimersByTime(3400 + 100);
+      expect(table.dealing()).toBe(true);
+      // until its own end, 350ms later
+      vi.advanceTimersByTime(250);
+      expect(table.dealing()).toBe(false);
+    });
   });
 });

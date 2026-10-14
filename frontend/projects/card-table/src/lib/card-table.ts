@@ -162,23 +162,25 @@ export class CardTable {
    * Deal cards one after another into a zone. Each leaves from where it lies in `from` — its own
    * slot when the table holds it there (a Rummikub pool), else that zone's place (Keezen's deck,
    * which cards appear from) — and fans out to its slot in `into`. Cards dealt into the hand are
-   * left to the game, which reports them there itself.
+   * left to the game, which reports them there itself. `delayMs` shifts the whole deal back: a
+   * round dealt round-robin is one deal per seat, each a beat behind the one before.
    */
-  deal(cards: CardFace[], { from = DECK_ZONE, into = HAND_ZONE } = {}): void {
+  deal(cards: CardFace[], { from = DECK_ZONE, into = HAND_ZONE, delayMs = 0 } = {}): void {
     // Start first: placing the cards takes them out of `from`, and their slots there with them.
     this.startDeal(
       cards.map((c) => c.uuid),
       from,
+      delayMs,
     );
     if (into !== HAND_ZONE) cards.forEach((c) => this.zones.place(c, into));
   }
 
-  private startDeal(uuids: number[], from: string): void {
+  private startDeal(uuids: number[], from: string, delayMs = 0): void {
     // First frame: drawn where they are dealt from, alongside any deal still under way.
     this.dealt.update((all) => {
       const next = new Map(all);
       uuids.forEach((uuid, order) =>
-        next.set(uuid, { order, start: this.zones.slotOf(uuid, from), atStart: true }),
+        next.set(uuid, { order, delayMs, start: this.zones.slotOf(uuid, from), atStart: true }),
       );
       return next;
     });
@@ -188,10 +190,10 @@ export class CardTable {
         this.dealt.update((all) => changeDealt(all, uuids, (d) => ({ ...d, atStart: false }))),
       ),
     );
-    // Clear once the last card has finished (last round's delay + the transition).
+    // Clear once the last card has finished (its delay + the transition).
     setTimeout(
       () => this.dealt.update((all) => changeDealt(all, uuids, () => undefined)),
-      uuids.length * this.options.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
+      delayMs + uuids.length * this.options.dealStaggerMs + DEAL_CLEAR_BUFFER_MS,
     );
   }
 
