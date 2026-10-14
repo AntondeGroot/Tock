@@ -25,6 +25,8 @@ export interface Pos {
  */
 export interface Zone {
   readonly id: string;
+  /** Its cards lie face down — an opponent's hand, a stock: the table draws only their backs. */
+  readonly faceDown?: boolean;
   layout(index: number, count: number): Pos;
 }
 
@@ -49,6 +51,8 @@ export interface CardVM {
   value: number;
   /** The zone the card is in — `hand`, `pile`, or one the game defined. */
   zoneId: string;
+  /** Drawn with its back up, because its zone is face down. */
+  faceDown: boolean;
   inPile: boolean;
   x: number;
   y: number;

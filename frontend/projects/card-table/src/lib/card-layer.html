@@ -37,6 +37,7 @@
       [class.played]="c.inPile"
       [class.dealing]="c.dealing"
       [class.masked]="c.hidden"
+      [class.face-down]="c.faceDown"
       [class.snap]="c.snap"
       (click)="cardClick.emit(c.uuid)"
       (mouseenter)="cardHover.emit(c.value)"

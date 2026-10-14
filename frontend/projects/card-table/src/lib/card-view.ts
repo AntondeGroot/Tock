@@ -22,7 +22,7 @@ export interface TableFrame {
  * What the layer draws for a placed card: normally its slot, but a card being dealt starts where it
  * is dealt from — sized and stacked as part of the deck — and leaves on its turn in the deal.
  */
-export function toCardVM({ card, zoneId, pos }: PlacedCard, frame: TableFrame): CardVM {
+export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: TableFrame): CardVM {
   const dealt = frame.dealt.get(card.uuid);
   const dealing = dealt !== undefined;
   // First frame of a deal: drawn at its start, so it has somewhere to transition from.
@@ -33,6 +33,7 @@ export function toCardVM({ card, zoneId, pos }: PlacedCard, frame: TableFrame): 
     suit: card.suit,
     value: card.value,
     zoneId,
+    faceDown,
     inPile: zoneId === PILE_ZONE,
     x: start ? start.x : pos.x,
     y: start ? start.y : pos.y,
