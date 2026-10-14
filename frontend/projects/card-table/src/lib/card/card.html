@@ -1,6 +1,10 @@
 <!-- Two faces so a dealt card can turn over (see :host(.dealing) in card.scss).
      Non-dealing cards just show .front (the sprite), exactly as before. -->
 <div class="flip">
-  <div class="face front"></div>
+  <div class="face front" [class.own-face]="face">
+    @if (face) {
+      <ng-container *ngTemplateOutlet="face; context: faceContext" />
+    }
+  </div>
   <div class="face back"></div>
 </div>

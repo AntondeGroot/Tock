@@ -4,9 +4,10 @@
 // The card has a front (the sprite) and a back, so a dealt card can flip over as it arrives.
 :host {
   display: block;
-  // Width is set by the parent (.card in board.scss) as a fraction of the board,
-  // so the card scales with it; height follows from the sprite cell's aspect ratio.
-  aspect-ratio: 100 / 155.73;
+  // Width is set by the layer (.card in card-layer.scss) as a fraction of the board, so the card
+  // scales with it; height follows from the aspect ratio — a sprite cell's, unless the game sets
+  // --card-aspect for pieces of another shape (Rummikub tiles).
+  aspect-ratio: var(--card-aspect, 100 / 155.73);
   border-radius: 5px;
   box-shadow:
     4px 5px 14px rgba(0, 0, 0, 0.55),
@@ -40,6 +41,11 @@
   background-size: calc(var(--card-cols, 13) * 100%) calc(var(--card-rows, 5) * 100%);
   background-position: calc(var(--card-col, 0) * 100% / (var(--card-cols, 13) - 1))
     calc(var(--card-row, 0) * 100% / (var(--card-rows, 5) - 1));
+}
+
+// A game drawing its own fronts (tiles) replaces the sprite cell with what its template draws.
+.front.own-face {
+  background-image: none;
 }
 
 .back {

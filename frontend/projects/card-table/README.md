@@ -129,15 +129,17 @@ from one source**.
 
 ## The seams (what a host game provides)
 
-| Seam                | How                                                     | Purpose                                                               |
-| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- |
-| **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.             |
-| **Layout**          | a `CardPositioner`                                      | Where the hand fan, pile stack and pile/deck centre sit — see below.  |
-| **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds. |
-| **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).         |
-| **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                        |
-| **Vertical offset** | `--hand-top` CSS var                                    | Where the layer's box starts (the layer is `display: contents`).      |
-| **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                                |
+| Seam                | How                                                     | Purpose                                                                 |
+| ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
+| **Layout**          | a `CardPositioner`                                      | Where the hand fan, pile stack and pile/deck centre sit — see below.    |
+| **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds.   |
+| **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).           |
+| **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                          |
+| **Vertical offset** | `--hand-top` CSS var                                    | Where the layer's box starts (the layer is `display: contents`).        |
+| **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                                  |
+| **Own faces**       | `[face]` input — an `<ng-template let-face>`            | Draw fronts yourself instead (tiles): given each card's `suit`/`value`. |
+| **Piece shape**     | `--card-width` / `--card-aspect` CSS vars               | Pieces that are not card-shaped — wider, squarer tiles.                 |
 
 ### `CardPositioner`
 
@@ -171,6 +173,25 @@ ancestor:
 The default `card-deck.png` is a component-relative asset, so the bundler hashes it and it resolves
 under any `<base href>` — no app-level wiring needed.
 
+### Your own faces and shape
+
+A game whose pieces no sprite sheet holds — Rummikub's tiles — draws their fronts itself. Pass an
+`<ng-template>` as `[face]`; it is given each face-up card and flyer as `{ suit, value }` (typed
+`FaceContext`), and the sprite is not drawn. Backs stay the library's own. Pieces of another shape
+set their size on the layer: `--card-width` (a share of the board, default `16.667%`) and
+`--card-aspect` (default `100 / 155.73`, a sprite cell's).
+
+```html
+<ng-template #tile let-face>
+  <span class="tile" [class]="colours[face.suit]">{{ face.value }}</span>
+</ng-template>
+<app-card-layer
+  [cards]="table.cards()"
+  [face]="tile"
+  style="--card-width: 9%; --card-aspect: 3 / 4"
+/>
+```
+
 ---
 
 ## API reference
@@ -196,7 +217,7 @@ under any `<base href>` — no app-level wiring needed.
 
 ### `<app-card-layer>` (component)
 
-**Inputs:** `cards: CardVM[]`, `flyers: Flyer[]`,
+**Inputs:** `cards: CardVM[]`, `flyers: Flyer[]`, `face: TemplateRef<FaceContext> | null`,
 `selectedUuid: number | null`, `isSpecial: (value: number) => boolean`,
 `options: ResolvedCardTableOptions` (publishes the timing CSS vars).
 **Outputs:** `cardClick: number` (uuid), `cardHover: number | null` (value) — never for a face-down card.
