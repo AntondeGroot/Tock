@@ -47,6 +47,8 @@ export interface CardVM {
   uuid: number;
   suit: number;
   value: number;
+  /** The zone the card is in — `hand`, `pile`, or one the game defined. */
+  zoneId: string;
   inPile: boolean;
   x: number;
   y: number;

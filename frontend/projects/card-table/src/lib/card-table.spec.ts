@@ -199,4 +199,73 @@ describe('CardTable', () => {
       expect(custom.pile()).toHaveLength(1);
     });
   });
+
+  describe('zones', () => {
+    // A zone the game defines is somewhere a card can actually GO: a meld on a Rummikub table, the
+    // stock in Pesten. The same element moves there — so the hand must stop drawing it at once,
+    // even while the game still reports it in the hand, or the card shows in two places.
+    it('moves a hand card into a zone the game defined, out of the hand', () => {
+      // GIVEN a hand of two, and a meld zone laid out as a row in the middle of the table
+      const a = card();
+      const b = card();
+      hand.set([a, b]);
+      table.defineZone({ id: 'meld', layout: (index) => ({ x: 40 + index * 5, y: 50 }) });
+
+      // WHEN the first card is placed in the meld
+      table.place(a, 'meld');
+
+      // THEN it is drawn in the meld's first slot
+      expect(table.cards().find((c) => c.uuid === a.uuid)).toMatchObject({
+        zoneId: 'meld',
+        x: 40,
+        y: 50,
+      });
+      // and the hand closes up around the card it still holds
+      expect(table.cards().find((c) => c.uuid === b.uuid)).toMatchObject({
+        zoneId: 'hand',
+        x: positioner.handSlot(0, 1).x,
+      });
+    });
+
+    // On a Rummikub table tiles are rearranged all the time: one taken off a meld goes to another.
+    // It must leave the first meld — not be drawn in both — and that meld must close up behind it.
+    // The move goes to the EARLIER-defined zone on purpose: a card left behind in a later zone
+    // would win the layout there and still be drawn in the meld it was taken from.
+    it('moves a card from one zone to another, closing up the zone it left', () => {
+      // GIVEN two melds laid out as rows, the second holding three cards
+      const [a, b, c] = [card(), card(), card()];
+      table.defineZone({ id: 'meld-1', layout: (index) => ({ x: 10 + index * 5, y: 30 }) });
+      table.defineZone({ id: 'meld-2', layout: (index) => ({ x: 10 + index * 5, y: 60 }) });
+      [a, b, c].forEach((tile) => table.place(tile, 'meld-2'));
+
+      // WHEN its middle card is moved to the first meld
+      table.place(b, 'meld-1');
+
+      // THEN it is drawn once, in the first meld
+      expect(table.cards().filter((t) => t.uuid === b.uuid)).toEqual([
+        expect.objectContaining({ zoneId: 'meld-1', x: 10, y: 30 }),
+      ]);
+      // and the second meld closes up: its last card moves into the gap
+      expect(table.cards().find((t) => t.uuid === c.uuid)).toMatchObject({
+        zoneId: 'meld-2',
+        x: 15,
+      });
+    });
+
+    // A zone id is a plain string, so a typo ('meld1' for 'meld-1') is easy to make. Taken out of
+    // every zone and put in none, the card would just vanish from the table with nothing to say
+    // why — so the mistake has to surface where it is made.
+    it('refuses to place a card in a zone that was never defined', () => {
+      // GIVEN a table with a meld zone, and a card in it
+      const a = card();
+      table.defineZone({ id: 'meld-1', layout: (index) => ({ x: index, y: 0 }) });
+      table.place(a, 'meld-1');
+
+      // WHEN the card is placed in a zone id that does not exist
+      // THEN that fails, naming the zone
+      expect(() => table.place(a, 'meld1')).toThrow("No zone 'meld1' on this table");
+      // and the card stays where it was
+      expect(table.cards().find((c) => c.uuid === a.uuid)).toMatchObject({ zoneId: 'meld-1' });
+    });
+  });
 });

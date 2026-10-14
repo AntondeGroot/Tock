@@ -10,6 +10,7 @@ import {
   Zone,
 } from './card-table.types';
 import { TableFrame, toCardVM } from './card-view';
+import { TableZones } from './table-zones';
 import { HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
 /** The out-of-the-box timings + scales. A game overrides any subset via the constructor options. */
@@ -32,22 +33,26 @@ const LAND_BUFFER_MS = 100;
 const DEAL_CLEAR_BUFFER_MS = 2000;
 
 /**
- * The reusable card-table engine: it owns the discard pile, the transient flyer layer and the
- * deal-in state, and computes each card's on-table position (hand fan / pile / deck) so the same
- * DOM element animates between them (a FLIP). Framework-light — Angular signals, no template — so
- * it can be unit-tested like a plain state machine.
+ * The reusable card-table engine: it owns the zones cards sit in (the pile, and any the game
+ * defines), the transient flyer layer and the deal-in state, and computes each card's position so
+ * the same DOM element animates between zones (a FLIP). Framework-light — Angular signals, no
+ * template — so it can be unit-tested like a plain state machine.
  *
- * A game drives it imperatively: it supplies the current hand (a signal), a {@link CardPositioner}
- * and optional {@link CardTableOptions}, then calls {@link dealIn}/{@link flyToPile}/{@link
- * tradeSwap}/{@link clearPile} from its own state-change detection. A dumb `<app-card-layer>`
- * renders {@link cards} + {@link flyers} and publishes {@link options} as CSS timing vars.
+ * A game supplies the hand (a signal), a {@link CardPositioner} and optional
+ * {@link CardTableOptions}, then drives it from its own state changes: {@link place},
+ * {@link dealIn}, {@link flyToPile}, {@link tradeSwap}, {@link clearPile}. A dumb
+ * `<app-card-layer>` renders {@link cards} + {@link flyers}.
  */
 export class CardTable {
   /** The resolved timings + scales (defaults merged with the constructor overrides). */
   readonly options: ResolvedCardTableOptions;
-  // Cards played onto the pile, kept here so the same element can fly there and then persist. Own
-  // cards land with their real uuid; cards flown in from opponents get a synthetic negative uuid.
-  readonly pile = signal<CardFace[]>([]);
+  // The zones the table holds cards in itself: the pile first, then whatever the game defines.
+  private readonly zones = new TableZones();
+  // The pile: own cards land with their real uuid, opponents' with a synthetic negative one.
+  readonly pile = this.zones.define({
+    id: PILE_ZONE,
+    layout: (index) => this.positioner.pileSlot(index),
+  });
   // Transient face-up cards mid-flight (an opponent's play, a trade swap, a forfeit discard).
   readonly flyers = signal<Flyer[]>([]);
 
@@ -76,20 +81,16 @@ export class CardTable {
     id: HAND_ZONE,
     layout: (index, count) => this.positioner.handSlot(index, count),
   };
-  private readonly pileZone: Zone = {
-    id: PILE_ZONE,
-    layout: (index) => this.positioner.pileSlot(index),
-  };
 
-  /** One list of every card (hand + pile), each with a target position — the layer renders this. */
+  /** Every card on the table, each with a target position — the layer renders this. */
   readonly cards = computed<CardVM[]>(() => {
-    // The pile is listed last, so a played card the hand still reports is laid out on the pile.
-    // Its z follows PLAY ORDER (pile index), so the newest card is on top regardless of the DOM
-    // order — which is sorted by uuid, so playing a card never reorders the list: only its target
-    // changes, and the same element transitions cleanly every time.
+    // The table's own zones come after the hand, so a card the game still reports in the hand is
+    // laid out where the table put it. A pile card's z follows PLAY ORDER (pile index), so the
+    // newest is on top regardless of the DOM order — which is sorted by uuid, so moving a card never
+    // reorders the list: only its target changes, and the same element transitions cleanly.
     const placed = placeCards([
       { zone: this.handZone, cards: this.hand() },
-      { zone: this.pileZone, cards: this.pile() },
+      ...this.zones.contents(),
     ]);
     const frame: TableFrame = {
       dealt: this.dealtIndex(),
@@ -102,6 +103,19 @@ export class CardTable {
     placed.sort((a, b) => a.card.uuid - b.card.uuid);
     return placed.map((p) => toCardVM(p, frame));
   });
+
+  /**
+   * Add a zone the table keeps cards in — a meld, a stock. Cards get there by {@link place}; a
+   * card the game still reports in the hand is drawn in the zone instead.
+   */
+  defineZone(zone: Zone): void {
+    this.zones.define(zone);
+  }
+
+  /** Move a card into a zone, out of whichever zone held it; it transitions to its new slot. */
+  place(card: CardFace, zoneId: string): void {
+    this.zones.place(card, zoneId);
+  }
 
   /** True while a deal-in is animating — a game can sync its own dealt visuals (e.g. opponents). */
   readonly dealing = computed(() => this.dealtIndex().size > 0);
