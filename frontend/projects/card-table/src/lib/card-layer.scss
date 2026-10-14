@@ -6,10 +6,11 @@
 
 // Cards layer: overlaid on the play area (so % positions line up with the board), but the cards
 // themselves are not children of the board. Hand cards spill below into the reserved area
-// (overflow is visible). --hand-top is supplied by the host game (the vertical offset of the box).
+// (overflow is visible). --hand-top is supplied by the host game (the vertical offset of the box);
+// unset, the square starts at the top of the box rather than wherever the page flow would leave it.
 .card-layer {
   position: absolute;
-  top: var(--hand-top);
+  top: var(--hand-top, 0);
   left: 0;
   width: 100%;
   aspect-ratio: 1;
