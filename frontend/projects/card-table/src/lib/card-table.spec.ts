@@ -383,5 +383,57 @@ describe('CardTable', () => {
       // THEN it is gone from the table — the deal kept no hold on it
       expect(table.cards().map((c) => c.uuid)).toEqual([b.uuid]);
     });
+
+    // A round is dealt to every seat at once — the viewer's hand, and each opponent's fan — so deals
+    // overlap. A second deal must not touch the first: its cards are already on their way, and
+    // drawing them back at the deck would make them jump there and fly out all over again.
+    it('starts a second deal without sending the first one back to the deck', () => {
+      // GIVEN a card dealt into the hand that has already left the deck
+      const own = card();
+      hand.set([own]);
+      table.deal([own]);
+      vi.advanceTimersByTime(50);
+      const onItsWay = table.cards().find((c) => c.uuid === own.uuid)!;
+
+      // WHEN a second card is dealt, into an opponent's fan
+      table.defineZone({ id: 'fan', layout: (index) => ({ x: 80 + index, y: 5 }) });
+      const theirs = card();
+      table.deal([theirs], { into: 'fan' });
+
+      // THEN the first card carries on from where it was, still being dealt
+      expect(table.cards().find((c) => c.uuid === own.uuid)).toMatchObject({
+        x: onItsWay.x,
+        y: onItsWay.y,
+        dealing: true,
+      });
+      // while the new one starts at the deck
+      expect(table.cards().find((c) => c.uuid === theirs.uuid)).toMatchObject({
+        x: positioner.pileCenter().x,
+        y: positioner.pileCenter().y,
+      });
+    });
+
+    // Overlapping deals also END apart: a deal of one card is over well before a deal of three
+    // that began a moment later. Finishing the first must not end the second — its last cards
+    // would stop being dealt mid-flight, and the game would take the deal for done too soon.
+    it('ends each deal on its own time, not when another deal finishes', () => {
+      // GIVEN one card dealt into the hand, and 50ms later three dealt into a fan
+      const own = card();
+      hand.set([own]);
+      table.deal([own]);
+      vi.advanceTimersByTime(50);
+      table.defineZone({ id: 'fan', layout: (index) => ({ x: 80 + index, y: 5 }) });
+      const theirs = [card(), card(), card()];
+      table.deal(theirs, { into: 'fan' });
+
+      // WHEN the one-card deal is over (1 × 700ms stagger + 2000ms), 2700ms after it began
+      vi.advanceTimersByTime(2700 - 50);
+
+      // THEN its card is no longer being dealt, but the fan's cards still are
+      const dealing = (uuid: number) => table.cards().find((c) => c.uuid === uuid)!.dealing;
+      expect(dealing(own.uuid)).toBe(false);
+      expect(theirs.map((c) => dealing(c.uuid))).toEqual([true, true, true]);
+      expect(table.dealing(), 'the table still counts as dealing').toBe(true);
+    });
   });
 });

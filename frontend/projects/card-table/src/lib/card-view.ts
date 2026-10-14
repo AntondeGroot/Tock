@@ -5,14 +5,14 @@ import { PILE_ZONE, PlacedCard } from './zone-layout';
 export interface DealtCard {
   order: number;
   start: Pos;
+  /** Its deal's first frame, while it is still drawn at its start — before it is released. */
+  atStart: boolean;
 }
 
 /** What the engine knows about the table this frame, beyond where each card belongs. */
 export interface TableFrame {
   /** The freshly dealt cards, by uuid. */
   dealt: ReadonlyMap<number, DealtCard>;
-  /** The first frame of a deal, when the dealt cards still sit where they are dealt from. */
-  atDeck: boolean;
   hidden: ReadonlySet<number>;
   snapped: ReadonlySet<number>;
   turning: ReadonlyMap<number, 'in' | 'out'>;
@@ -27,7 +27,7 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
   const dealt = frame.dealt.get(card.uuid);
   const dealing = dealt !== undefined;
   // First frame of a deal: drawn at its start, so it has somewhere to transition from.
-  const start = dealing && frame.atDeck ? dealt.start : undefined;
+  const start = dealing && dealt.atStart ? dealt.start : undefined;
   const dealDelay = dealing ? dealt.order * frame.options.dealStaggerMs : 0;
   return {
     uuid: card.uuid,
