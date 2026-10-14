@@ -22,12 +22,11 @@ describe('BoardCardFly', () => {
 
   beforeEach(() => {
     hand = [];
-    table = new CardTable(() => hand, layout);
+    table = new CardTable({ hand: () => hand });
     fly = new BoardCardFly(
       () => geo,
       () => hand,
       table,
-      layout,
     );
     vi.useFakeTimers();
   });
@@ -83,7 +82,6 @@ describe('BoardCardFly', () => {
       () => undefined,
       () => [],
       table,
-      layout,
     );
     const spy = vi.spyOn(table, 'tradeSwap');
     noGeo.tradeSwap('2', { uuid: 7, suit: 0, value: 13 }, { uuid: 3, suit: 1, value: 1 });

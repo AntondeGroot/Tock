@@ -44,22 +44,23 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
 
 The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
 
-| File                        | What it is                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `card-table.ts`             | The `CardTable` engine (signals + `cards` computed + animation methods) + `DEFAULT_CARD_TABLE_OPTIONS`. |
-| `card-table.types.ts`       | `CardFace`, `Pos`, `Zone`, `ZoneLayout`, `TableLayout`, `CardVM`, `Flyer`, `CardTableOptions`.          |
-| `default-layout.ts`         | `DEFAULT_LAYOUT` — a ready-made hand-fan + spiral-pile layout, with the deck on the pile.               |
-| `card-layer.ts/.html/.scss` | The `<app-card-layer>` presentational component.                                                        |
-| `card/card.ts/.html/.scss`  | The `<app-card>` sprite component.                                                                      |
-| `card/card-deck.png`        | The default sprite sheet (13 cols × 5 rows).                                                            |
-| `card-table.spec.ts`        | Engine unit tests (deal / play / pile / trade lifecycle).                                               |
+| File                        | What it is                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `card-table.ts`             | The `CardTable` engine (signals + `cards` computed + animation methods).                                         |
+| `card-table.types.ts`       | `CardTableConfig`, `CardFace`, `Pos`, `Zone`, `ZoneLayout`, `TableLayout`, `CardVM`, `Flyer`, `CardTableTiming`. |
+| `timing.ts`                 | `DEFAULT_TIMING` — the out-of-the-box animation timings.                                                         |
+| `default-layout.ts`         | `DEFAULT_LAYOUT` — a ready-made hand-fan + spiral-pile layout, with the deck on the pile.                        |
+| `card-layer.ts/.html/.scss` | The `<app-card-layer>` presentational component.                                                                 |
+| `card/card.ts/.html/.scss`  | The `<app-card>` sprite component.                                                                               |
+| `card/card-deck.png`        | The default sprite sheet (13 cols × 5 rows).                                                                     |
+| `card-table.spec.ts`        | Engine unit tests (deal / play / pile / trade lifecycle).                                                        |
 
 ---
 
 ## Quick start
 
 ```ts
-import { CardLayer, CardTable, DEFAULT_LAYOUT } from 'card-table';
+import { CardLayer, CardTable } from 'card-table';
 
 @Component({
   imports: [CardLayer /* … */],
@@ -78,8 +79,8 @@ import { CardLayer, CardTable, DEFAULT_LAYOUT } from 'card-table';
   `,
 })
 export class MyGame {
-  // 1. Give the engine your hand (a signal of CardFace[]) and a layout.
-  protected readonly table = new CardTable(() => this.hand(), DEFAULT_LAYOUT);
+  // 1. Give the engine your hand (a signal of CardFace[]); the layout defaults to DEFAULT_LAYOUT.
+  protected readonly table = new CardTable({ hand: () => this.hand() });
 
   // 2. Which card values get the "special" highlight (your rules decide).
   protected readonly isSpecial = (value: number) => value === 1 || value === 13;
@@ -97,17 +98,17 @@ export class MyGame {
 }
 ```
 
-That's the whole contract: **feed it the hand + a layout, render `<app-card-layer>`, and call
+That's the whole contract: **feed it the hand (and, if you like, a layout), render `<app-card-layer>`, and call
 the four methods when your game state changes.**
 
 ### Tuning the feel
 
-Pass `CardTableOptions` (all fields optional) as the third constructor argument to retune timings;
-the rest fall back to `DEFAULT_CARD_TABLE_OPTIONS`. Card _sizes_ are not options: they belong to the
-layout, as each slot's `scale` (a slot without one is a full-size card).
+Give the config a `timing` (all fields optional) to retune the animations; the rest fall back to
+`DEFAULT_TIMING`. Card _sizes_ are not timings: they belong to the layout, as each slot's `scale` (a
+slot without one is a full-size card).
 
 ```ts
-new CardTable(() => this.hand(), DEFAULT_LAYOUT, { flyMs: 350, dealStaggerMs: 500 });
+new CardTable({ hand: () => this.hand(), timing: { flyMs: 350, dealStaggerMs: 500 } });
 ```
 
 | Option          | Default | Meaning                                                                |
@@ -130,8 +131,8 @@ from one source**.
 
 | Seam                | How                                                     | Purpose                                                                 |
 | ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Hand**            | `new CardTable(() => this.hand(), …)`                   | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
-| **Layout**          | a `TableLayout`                                         | Where the hand fan, pile stack and deck sit — see below.                |
+| **Hand**            | `new CardTable({ hand: () => this.hand() })`            | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
+| **Layout**          | the config's `layout`, a `TableLayout`                  | Where the hand fan, pile stack and deck sit — see below.                |
 | **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds.   |
 | **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).           |
 | **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                          |
@@ -154,7 +155,9 @@ interface TableLayout {
 
 The built-in zones are laid out exactly like the zones a game adds with `defineZone`. All
 coordinates are in **the card-layer's own percentage space** (`x`/`y` are `%` for `left`/`top` of
-the layer box). Provide your own to match your board, or use `DEFAULT_LAYOUT`. Fly-in
+the layer box). Give your own as the config's `layout` to match your board; without one the table
+uses `DEFAULT_LAYOUT`. To aim an animation of your own at a slot, ask the table — `table.slotOf(zoneId,
+index, count)` — rather than keeping a copy of the layout. Fly-in
 _origins/targets_ for a trade (a partner's fan) are passed straight into `tradeSwap`, with the size of
 a card there as their `scale`, because they're your board geometry, not table layout.
 
@@ -202,13 +205,14 @@ set their size on the layer: `--card-width` (a share of the board, default `16.6
 
 | Member                                    | Type                       | Notes                                                                                                                                                                                                                                                                                            |
 | ----------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `constructor(hand, layout, options?)`     | —                          | `hand`: a `Signal<CardFace[]>` or getter; `layout`: a `TableLayout`; `options`: optional `CardTableOptions`.                                                                                                                                                                                     |
-| `options`                                 | `ResolvedCardTableOptions` | The resolved timings + scales — bind to the layer's `[options]`.                                                                                                                                                                                                                                 |
+| `constructor({ hand, layout?, timing? })` | —                          | A `CardTableConfig`. `hand`: a `Signal<CardFace[]>` or getter; `layout`: a `TableLayout` (default `DEFAULT_LAYOUT`); `timing`: a `CardTableTiming` (default `DEFAULT_TIMING`).                                                                                                                   |
+| `options`                                 | `ResolvedCardTableOptions` | The resolved timings + the deck's size — bind to the layer's `[options]`.                                                                                                                                                                                                                        |
 | `pile`                                    | `signal<CardFace[]>`       | Cards resting on the discard pile.                                                                                                                                                                                                                                                               |
 | `flyers`                                  | `signal<Flyer[]>`          | Cards mid-flight (transient).                                                                                                                                                                                                                                                                    |
 | `cards`                                   | `computed<CardVM[]>`       | Every card (hand, pile and every zone) with a target position — feed to the layer.                                                                                                                                                                                                               |
 | `dealing`                                 | `computed<boolean>`        | True while a deal-in animates (sync your own dealt visuals).                                                                                                                                                                                                                                     |
 | `stacked`                                 | `computed<boolean>`        | True on the first frame of a deal (cards still at the deck).                                                                                                                                                                                                                                     |
+| `slotOf(zoneId, index, count)`            | method                     | Where a zone's `index`-th of `count` cards lies (`Pos`) — the hand's, the pile's, the deck's or one you defined. For aiming your own animations, e.g. `tradeSwap`'s slots.                                                                                                                       |
 | `defineZone(zone)`                        | method                     | Add a zone the table holds cards in. A `faceDown` zone draws backs only; its cards ignore the mouse and are never marked special.                                                                                                                                                                |
 | `place(card, zoneId)`                     | method                     | Move a card into a zone (out of any other); it transitions there, turning over when it goes between face-down and face-up. The card carries its face, so a card leaving a face-down zone can reveal it.                                                                                          |
 | `deal(cards, { from?, into?, delayMs? })` | method                     | Deal cards one after another from a zone (default the built-in `deck`) into another (default the hand). Each starts at its own slot in `from`. Deals may overlap; `delayMs` shifts one back, for a round-robin.                                                                                  |
@@ -250,8 +254,8 @@ pixel coordinates by 6 to reach `%`.
 ## Porting checklist
 
 1. Render `<app-card-layer>` inside a positioned box that sets `--hand-top`.
-2. Construct `CardTable(() => yourHandSignal(), layout)`. Start with `DEFAULT_LAYOUT`; give your
-   own `TableLayout` if your table isn't a linear fan + central pile.
+2. Construct `new CardTable({ hand: () => yourHandSignal() })`. That uses `DEFAULT_LAYOUT`; give
+   your own `layout` if your table isn't a linear fan + central pile.
 3. Map your cards to `CardFace { uuid, suit, value }` (stable `uuid`; `suit` = sprite row,
    `value` = 1-based sprite column).
 4. Point `--card-sheet` / `--card-cols` / `--card-rows` at your deck (or reuse `card-deck.png`).
@@ -263,10 +267,10 @@ pixel coordinates by 6 to reach `%`.
 
 ## Known couplings & tuning notes
 
-- **Timing is single-sourced.** All durations/scales live in `CardTableOptions`; the engine uses the
+- **Timing is single-sourced.** All durations live in the `timing` (`CardTableTiming`); the engine uses the
   numbers for its `setTimeout`s and `<app-card-layer>` publishes them as CSS vars, so the SCSS
   transitions (`card-layer.scss`) and flip keyframes (`card/card.scss`) follow automatically. Change
-  a value in one place (the options) and both TS and CSS update. Only the internal `LAND_BUFFER_MS`
+  a value in one place (the timing) and both TS and CSS update. Only the internal `LAND_BUFFER_MS`
   (how long after the flight the flyer swaps to a pile element) and `DEAL_CLEAR_BUFFER_MS` are fixed.
 - **Deck size ↔ card back.** The card `.back` border widths are `calc(2px / var(--ct-deck-scale))`,
   where `--ct-deck-scale` is the deck layout's `scale`, so a back stacked at the deck keeps a 2px

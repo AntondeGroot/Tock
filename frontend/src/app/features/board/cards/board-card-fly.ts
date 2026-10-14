@@ -1,5 +1,5 @@
 import { Card as CardModel } from '../../../api';
-import { CardTable, HAND_ZONE, TableLayout } from 'card-table';
+import { CardTable, DECK_ZONE, HAND_ZONE } from 'card-table';
 import { BoardGeometry, FAN_SCALE } from '../geometry/board-geometry';
 
 /** A hand card with its live table position — what a flight to the pile starts from. */
@@ -19,7 +19,6 @@ export class BoardCardFly {
     private readonly geometry: () => BoardGeometry | undefined,
     private readonly hand: () => CardModel[],
     private readonly cardTable: CardTable,
-    private readonly layout: TableLayout,
   ) {}
 
   /**
@@ -56,12 +55,12 @@ export class BoardCardFly {
     const seg = g.deckSegment(otherId);
     const fanMidpoint = seg
       ? { x: (seg[0].x + seg[1].x) / 12, y: (seg[0].y + seg[1].y) / 12 } // in board-% (/6)
-      : this.layout.deck(0, 1);
+      : this.cardTable.slotOf(DECK_ZONE, 0, 1);
     const partner = { x: fanMidpoint.x, y: fanMidpoint.y, scale: FAN_SCALE };
     const hand = this.hand();
     const i = hand.findIndex((c) => c.uuid === received.uuid);
-    const slot = this.layout.hand(i, hand.length);
-    const handAnchor = this.layout.hand(0, 1); // fan centre — where the given card starts
+    const slot = this.cardTable.slotOf(HAND_ZONE, i, hand.length);
+    const handAnchor = this.cardTable.slotOf(HAND_ZONE, 0, 1); // fan centre — where the given card starts
 
     this.cardTable.tradeSwap(
       partner,

@@ -1,8 +1,8 @@
-import { computed, signal, Signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { CardMasks } from './card-masks';
 import {
   CardFace,
-  CardTableOptions,
+  CardTableConfig,
   CardVM,
   Pos,
   ResolvedCardTableOptions,
@@ -10,27 +10,11 @@ import {
   Zone,
 } from './card-table.types';
 import { DealtCard, TableFrame, toCardVM } from './card-view';
+import { DEFAULT_LAYOUT } from './default-layout';
 import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
+import { resolveOptions } from './timing';
 import { DECK_ZONE, HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
-
-/** The out-of-the-box timings. A game overrides any subset via the constructor options. */
-export const DEFAULT_CARD_TABLE_OPTIONS: Required<CardTableOptions> = {
-  flyMs: 500, // fly-to-pile duration (also the CSS transition + flip keyframes)
-  popMs: 180, // own-card swell/glow hold before it flies
-  dealFlipMs: 550, // dealt-card turnover as it fans out
-  dealStaggerMs: 700, // round-robin stagger between dealt cards
-  tradeRevealMs: 560, // unmask a traded-in card a frame before its flyer lands
-  popScale: 1.2, // own-card swell during the pop beat
-};
-
-/** The options a table runs with: the defaults with the game's overrides, and its deck's size. */
-export function resolveOptions(
-  layout: TableLayout,
-  options: CardTableOptions = {},
-): ResolvedCardTableOptions {
-  return { ...DEFAULT_CARD_TABLE_OPTIONS, ...options, deckScale: layout.deck(0, 1).scale ?? 1 };
-}
 
 // The flyer lands (swaps to a pile element) this long AFTER its flight visually ends, so the card
 // is fully settled at the pile before the hand-off — avoids a one-frame jump. Not tunable.
@@ -63,8 +47,8 @@ function changeDealt(
  * the same DOM element animates between zones (a FLIP). Framework-light — Angular signals, no
  * template — so it can be unit-tested like a plain state machine.
  *
- * A game supplies the hand (a signal), a {@link TableLayout} and optional
- * {@link CardTableOptions}, then drives it from its own state changes: {@link place},
+ * A game sets it up with a {@link CardTableConfig} — its hand, and optionally a
+ * {@link TableLayout} and timings — then drives it from its own state changes: {@link place},
  * {@link dealIn}, {@link flyToPile}, {@link tradeSwap}, {@link clearPile}. A dumb
  * `<app-card-layer>` renders {@link cards} + {@link flyers}.
  */
@@ -91,12 +75,13 @@ export class CardTable {
 
   private syntheticUuid = -1;
 
-  constructor(
-    private readonly hand: Signal<CardFace[]> | (() => CardFace[]),
-    private readonly layout: TableLayout,
-    options: CardTableOptions = {},
-  ) {
-    this.options = resolveOptions(layout, options);
+  private readonly hand: CardTableConfig['hand'];
+  private readonly layout: TableLayout;
+
+  constructor({ hand, layout = DEFAULT_LAYOUT, timing }: CardTableConfig) {
+    this.hand = hand;
+    this.layout = layout;
+    this.options = resolveOptions(layout, timing);
     // Where cards are dealt from by default, laid out by the layout's deck. Keezen's holds nothing
     // — its cards appear from it — but a game may keep its stock there.
     this.zones.define({
@@ -130,6 +115,15 @@ export class CardTable {
     placed.sort((a, b) => a.card.uuid - b.card.uuid);
     return placed.map((p) => toCardVM(p, frame));
   });
+
+  /**
+   * Where a zone's `index`-th of `count` cards lies — the hand's, the pile's, the deck's or one
+   * the game defined — for a game aiming its own animation at a slot.
+   */
+  slotOf(zoneId: string, index: number, count: number): Pos {
+    const zone = zoneId === HAND_ZONE ? this.handZone : this.zones.zone(zoneId);
+    return zone.layout(index, count);
+  }
 
   /**
    * Add a zone the table keeps cards in — a meld, a stock. Cards get there by {@link place}; a
