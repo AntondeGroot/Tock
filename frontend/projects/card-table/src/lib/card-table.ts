@@ -73,16 +73,17 @@ export class CardTable {
     options: CardTableOptions = {},
   ) {
     this.options = { ...DEFAULT_CARD_TABLE_OPTIONS, ...options };
+    // Where cards are dealt from by default: a stack at the pile's centre, at deck size. Keezen's
+    // holds nothing — its cards appear from it — but a game may keep its stock there.
+    this.zones.define({
+      id: DECK_ZONE,
+      layout: () => ({ ...this.positioner.pileCenter(), scale: this.options.deckScale }),
+    });
   }
 
   private readonly handZone: Zone = {
     id: HAND_ZONE,
     layout: (index, count) => this.positioner.handSlot(index, count),
-  };
-  // Where cards are dealt from: a stack at the pile's centre, cards shrunk to deck size.
-  private readonly deckZone: Zone = {
-    id: DECK_ZONE,
-    layout: () => ({ ...this.positioner.pileCenter(), scale: this.options.deckScale }),
   };
 
   /** Every card on the table, each with a target position — the layer renders this. */
@@ -124,11 +125,31 @@ export class CardTable {
   /** True on the first frame of a deal, while dealt cards are still stacked at the deck. */
   readonly stacked = computed(() => this.atDeck());
 
-  /** Kick off the deal-in FLIP for the given freshly-dealt card uuids. */
+  /** Kick off the deal-in FLIP for the given freshly-dealt hand card uuids, from the deck. */
   dealIn(uuids: number[]): void {
-    const start = this.deckZone.layout(0, 1);
-    this.dealt.set(new Map(uuids.map((uuid, order) => [uuid, { order, start }])));
-    this.atDeck.set(true); // first frame: stacked at the deck
+    this.startDeal(uuids, DECK_ZONE);
+  }
+
+  /**
+   * Deal cards one after another into a zone. Each leaves from where it lies in `from` — its own
+   * slot when the table holds it there (a Rummikub pool), else that zone's place (Keezen's deck,
+   * which cards appear from) — and fans out to its slot in `into`. Cards dealt into the hand are
+   * left to the game, which reports them there itself.
+   */
+  deal(cards: CardFace[], { from = DECK_ZONE, into = HAND_ZONE } = {}): void {
+    // Start first: placing the cards takes them out of `from`, and their slots there with them.
+    this.startDeal(
+      cards.map((c) => c.uuid),
+      from,
+    );
+    if (into !== HAND_ZONE) cards.forEach((c) => this.zones.place(c, into));
+  }
+
+  private startDeal(uuids: number[], from: string): void {
+    this.dealt.set(
+      new Map(uuids.map((uuid, order) => [uuid, { order, start: this.zones.slotOf(uuid, from) }])),
+    );
+    this.atDeck.set(true); // first frame: drawn where they are dealt from
     // Release next frame so they transition out to their slots (staggered by delay).
     requestAnimationFrame(() => requestAnimationFrame(() => this.atDeck.set(false)));
     // Clear once the last card has finished (last round's delay + the transition).
