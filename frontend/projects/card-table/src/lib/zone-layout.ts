@@ -1,8 +1,9 @@
 import { CardFace, Pos, Zone } from './card-table.types';
 
-/** The zones every table has: the viewer's hand, and the pile cards are played onto. */
+/** The zones every table has: the viewer's hand, the pile cards are played onto, and the deck. */
 export const HAND_ZONE = 'hand';
 export const PILE_ZONE = 'pile';
+export const DECK_ZONE = 'deck';
 
 /** A zone and the cards it holds, in order. */
 export interface ZoneContents {
