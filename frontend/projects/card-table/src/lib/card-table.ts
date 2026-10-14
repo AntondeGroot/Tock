@@ -101,6 +101,7 @@ export class CardTable {
       atDeck: this.atDeck(),
       hidden: this.masks.hidden(),
       snapped: this.masks.snapped(),
+      turning: this.masks.turning(),
       options: this.options,
     };
     placed.sort((a, b) => a.card.uuid - b.card.uuid);
@@ -115,9 +116,18 @@ export class CardTable {
     this.zones.define(zone);
   }
 
-  /** Move a card into a zone, out of whichever zone held it; it transitions to its new slot. */
+  /**
+   * Move a card into a zone, out of whichever zone held it; it transitions to its new slot, turning
+   * over on the way when it goes between a face-down zone and a face-up one. The card carries its
+   * face, so one leaving a face-down zone can bring the face no one knew until now.
+   */
   place(card: CardFace, zoneId: string): void {
+    const wasFaceDown = this.zones.isFaceDown(card.uuid);
     this.zones.place(card, zoneId);
+    const isFaceDown = this.zones.isFaceDown(card.uuid);
+    if (wasFaceDown !== isFaceDown) {
+      this.masks.turn(card.uuid, isFaceDown ? 'out' : 'in', this.options.flyMs);
+    }
   }
 
   /** True while a deal-in is animating — a game can sync its own dealt visuals (e.g. opponents). */
