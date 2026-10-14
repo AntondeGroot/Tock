@@ -35,21 +35,23 @@ export interface Zone {
   readonly id: string;
   /** Its cards lie face down — an opponent's hand, a stock: the table draws only their backs. */
   readonly faceDown?: boolean;
-  layout(index: number, count: number): Pos;
+  layout: ZoneLayout;
 }
 
+/** Where a zone's `index`-th of `count` cards sits — its place, tilt, size and stacking. */
+export type ZoneLayout = (index: number, count: number) => Pos;
+
 /**
- * Where cards go — the one game-specific seam. A game provides the layout (hand fan, pile stack,
- * and the central deck/pile anchor); origins/targets for fly-ins (an opponent's fan, a trade
- * partner) are passed straight into the engine's flyer methods, so they don't live here.
+ * Where the zones every table has lie — the game-specific layout. The deck stands mid-table: cards
+ * are dealt from it, at its size, and played cards fly back to it before settling on the pile.
  */
-export interface CardPositioner {
-  /** Slot for the `index`-th of `count` cards in the viewer's hand. */
-  handSlot(index: number, count: number): Pos;
-  /** Slot for the `index`-th card on the discard pile (includes its scale + z). */
-  pileSlot(index: number): Pos;
-  /** The pile's centre — where flyers land and where dealt cards fly out from. */
-  pileCenter(): Pos;
+export interface TableLayout {
+  /** The viewer's hand. */
+  hand: ZoneLayout;
+  /** The pile cards are played onto; its slots carry the size of a card lying there. */
+  pile: ZoneLayout;
+  /** Where cards are dealt from; its slot carries the size of a card stacked there. */
+  deck: ZoneLayout;
 }
 
 /** A rendered card in the layer: geometry only. The game overlays `selected`/`special` in the view. */
@@ -77,7 +79,7 @@ export interface CardVM {
 }
 
 /**
- * Tunable timings (ms) and scales for the table animations — the single source of truth shared by
+ * Tunable timings (ms) and the pop beat for the table animations — the single source of truth shared by
  * the engine (its setTimeouts) and the layer (which publishes them as CSS vars so the transitions
  * and keyframes stay in sync). All optional; {@link import('./card-table').DEFAULT_CARD_TABLE_OPTIONS}
  * fills the rest.
@@ -93,18 +95,15 @@ export interface CardTableOptions {
   dealStaggerMs?: number;
   /** When a traded-in card is unmasked, relative to its flyer launch (ms). */
   tradeRevealMs?: number;
-  /** Card scale on the pile (1 = full hand size). */
-  pileScale?: number;
-  /** Card scale while stacked at the deck during a deal. */
-  deckScale?: number;
-  /** Card scale in another player's fan. */
-  fanScale?: number;
   /** How much the own-play card swells during the pop beat (scale). */
   popScale?: number;
 }
 
-/** The options with every field filled in — what {@link import('./card-table').CardTable} exposes. */
-export type ResolvedCardTableOptions = Required<CardTableOptions>;
+/**
+ * The options with every field filled in — what {@link import('./card-table').CardTable} exposes —
+ * plus the deck's card size, read from the layout, which the layer needs to draw backs.
+ */
+export type ResolvedCardTableOptions = Required<CardTableOptions> & { readonly deckScale: number };
 
 /** A transient card flying across the table (an opponent's play, a trade swap, a forfeit discard). */
 export interface Flyer {

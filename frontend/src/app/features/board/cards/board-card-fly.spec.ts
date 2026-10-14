@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card as CardModel } from '../../../api';
-import { CardTable, DefaultCardPositioner } from 'card-table';
+import { CardTable, DEFAULT_LAYOUT } from 'card-table';
 import { BoardCardFly } from './board-card-fly';
 import { buildBoard } from '../geometry/board-geometry';
 
@@ -13,7 +13,7 @@ const geo = buildBoard(
   ],
   '0',
 );
-const positioner = new DefaultCardPositioner();
+const layout = DEFAULT_LAYOUT;
 
 describe('BoardCardFly', () => {
   let hand: CardModel[];
@@ -22,12 +22,12 @@ describe('BoardCardFly', () => {
 
   beforeEach(() => {
     hand = [];
-    table = new CardTable(() => hand, positioner);
+    table = new CardTable(() => hand, layout);
     fly = new BoardCardFly(
       () => geo,
       () => hand,
       table,
-      positioner,
+      layout,
     );
     vi.useFakeTimers();
   });
@@ -69,11 +69,12 @@ describe('BoardCardFly', () => {
     fly.tradeSwap('2', received, given);
 
     const seg = geo.deckSegment('2')!;
-    const partner = { x: (seg[0].x + seg[1].x) / 12, y: (seg[0].y + seg[1].y) / 12 };
+    // the partner's fan midpoint, carrying the size of a card in their fan
+    const partner = { x: (seg[0].x + seg[1].x) / 12, y: (seg[0].y + seg[1].y) / 12, scale: 0.3 };
     expect(spy).toHaveBeenCalledWith(
       partner,
-      { suit: 1, value: 1, from: positioner.handSlot(0, 1) },
-      { uuid: 7, suit: 0, value: 13, to: positioner.handSlot(1, 2) },
+      { suit: 1, value: 1, from: layout.hand(0, 1) },
+      { uuid: 7, suit: 0, value: 13, to: layout.hand(1, 2) },
     );
   });
 
@@ -82,7 +83,7 @@ describe('BoardCardFly', () => {
       () => undefined,
       () => [],
       table,
-      positioner,
+      layout,
     );
     const spy = vi.spyOn(table, 'tradeSwap');
     noGeo.tradeSwap('2', { uuid: 7, suit: 0, value: 13 }, { uuid: 3, suit: 1, value: 1 });

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output, TemplateRef } from '@angular/core';
 import { Card } from './card/card';
-import { DEFAULT_CARD_TABLE_OPTIONS } from './card-table';
+import { resolveOptions } from './card-table';
+import { DEFAULT_LAYOUT } from './default-layout';
 import { CardVM, FaceContext, Flyer, ResolvedCardTableOptions } from './card-table.types';
 
 /**
@@ -25,9 +26,9 @@ export class CardLayer {
   readonly selectedUuid = input<number | null>(null);
   /** Which card values get the "special" highlight — the game decides (Keezen: Ace/4/7/J/Q/K). */
   readonly isSpecial = input<(value: number) => boolean>(() => false);
-  /** The engine's resolved timings + scales, published as CSS vars so the transitions/keyframes
-   *  (in card-layer.scss + card.scss) stay in sync with the engine's setTimeouts. */
-  readonly options = input<ResolvedCardTableOptions>(DEFAULT_CARD_TABLE_OPTIONS);
+  /** The engine's resolved timings and deck size, published as CSS vars so the transitions and
+   *  keyframes (in card-layer.scss + card.scss) stay in sync with the engine's setTimeouts. */
+  readonly options = input<ResolvedCardTableOptions>(resolveOptions(DEFAULT_LAYOUT));
 
   readonly cardClick = output<number>();
   readonly cardHover = output<number | null>();

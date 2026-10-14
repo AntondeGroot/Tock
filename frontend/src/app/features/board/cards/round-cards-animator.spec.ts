@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoundCardsAnimator } from './round-cards-animator';
-import { CardTable, DefaultCardPositioner } from 'card-table';
+import { CardTable, DEFAULT_LAYOUT } from 'card-table';
 import { Card as CardModel } from '../../../api';
 
 const card = (uuid: number, value = 5): CardModel => ({ uuid, suit: 0, value });
@@ -18,7 +18,7 @@ describe('RoundCardsAnimator', () => {
     vi.useFakeTimers();
     pawnsRemaining = 0;
     // Wired as the board does it: the table renders whatever the animator has released.
-    table = new CardTable(() => animator.hand(), new DefaultCardPositioner());
+    table = new CardTable(() => animator.hand(), DEFAULT_LAYOUT);
     animator = new RoundCardsAnimator(table, { remainingMs: () => pawnsRemaining });
   });
 

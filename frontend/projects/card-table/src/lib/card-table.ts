@@ -2,11 +2,11 @@ import { computed, signal, Signal } from '@angular/core';
 import { CardMasks } from './card-masks';
 import {
   CardFace,
-  CardPositioner,
   CardTableOptions,
   CardVM,
   Pos,
   ResolvedCardTableOptions,
+  TableLayout,
   Zone,
 } from './card-table.types';
 import { DealtCard, TableFrame, toCardVM } from './card-view';
@@ -14,18 +14,23 @@ import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
 import { DECK_ZONE, HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 
-/** The out-of-the-box timings + scales. A game overrides any subset via the constructor options. */
-export const DEFAULT_CARD_TABLE_OPTIONS: ResolvedCardTableOptions = {
+/** The out-of-the-box timings. A game overrides any subset via the constructor options. */
+export const DEFAULT_CARD_TABLE_OPTIONS: Required<CardTableOptions> = {
   flyMs: 500, // fly-to-pile duration (also the CSS transition + flip keyframes)
   popMs: 180, // own-card swell/glow hold before it flies
   dealFlipMs: 550, // dealt-card turnover as it fans out
   dealStaggerMs: 700, // round-robin stagger between dealt cards
   tradeRevealMs: 560, // unmask a traded-in card a frame before its flyer lands
-  pileScale: 0.6, // pile card size vs full hand size
-  deckScale: 0.3, // deck-stack size while dealing
-  fanScale: 0.3, // size in another player's fan
   popScale: 1.2, // own-card swell during the pop beat
 };
+
+/** The options a table runs with: the defaults with the game's overrides, and its deck's size. */
+export function resolveOptions(
+  layout: TableLayout,
+  options: CardTableOptions = {},
+): ResolvedCardTableOptions {
+  return { ...DEFAULT_CARD_TABLE_OPTIONS, ...options, deckScale: layout.deck(0, 1).scale ?? 1 };
+}
 
 // The flyer lands (swaps to a pile element) this long AFTER its flight visually ends, so the card
 // is fully settled at the pile before the hand-off — avoids a one-frame jump. Not tunable.
@@ -58,20 +63,20 @@ function changeDealt(
  * the same DOM element animates between zones (a FLIP). Framework-light — Angular signals, no
  * template — so it can be unit-tested like a plain state machine.
  *
- * A game supplies the hand (a signal), a {@link CardPositioner} and optional
+ * A game supplies the hand (a signal), a {@link TableLayout} and optional
  * {@link CardTableOptions}, then drives it from its own state changes: {@link place},
  * {@link dealIn}, {@link flyToPile}, {@link tradeSwap}, {@link clearPile}. A dumb
  * `<app-card-layer>` renders {@link cards} + {@link flyers}.
  */
 export class CardTable {
-  /** The resolved timings + scales (defaults merged with the constructor overrides). */
+  /** The resolved timings (defaults merged with the constructor overrides), and the deck's size. */
   readonly options: ResolvedCardTableOptions;
   // The zones the table holds cards in itself: the pile first, then whatever the game defines.
   private readonly zones = new TableZones();
   // The pile: own cards land with their real uuid, opponents' with a synthetic negative one.
   readonly pile = this.zones.define({
     id: PILE_ZONE,
-    layout: (index) => this.positioner.pileSlot(index),
+    layout: (index, count) => this.layout.pile(index, count),
   });
   // Transient face-up cards mid-flight (an opponent's play, a trade swap, a forfeit discard).
   private readonly flyerLayer = new FlyerLayer();
@@ -88,21 +93,21 @@ export class CardTable {
 
   constructor(
     private readonly hand: Signal<CardFace[]> | (() => CardFace[]),
-    private readonly positioner: CardPositioner,
+    private readonly layout: TableLayout,
     options: CardTableOptions = {},
   ) {
-    this.options = { ...DEFAULT_CARD_TABLE_OPTIONS, ...options };
-    // Where cards are dealt from by default: a stack at the pile's centre, at deck size. Keezen's
-    // holds nothing — its cards appear from it — but a game may keep its stock there.
+    this.options = resolveOptions(layout, options);
+    // Where cards are dealt from by default, laid out by the layout's deck. Keezen's holds nothing
+    // — its cards appear from it — but a game may keep its stock there.
     this.zones.define({
       id: DECK_ZONE,
-      layout: () => ({ ...this.positioner.pileCenter(), scale: this.options.deckScale }),
+      layout: (index, count) => this.layout.deck(index, count),
     });
   }
 
   private readonly handZone: Zone = {
     id: HAND_ZONE,
-    layout: (index, count) => this.positioner.handSlot(index, count),
+    layout: (index, count) => this.layout.hand(index, count),
   };
 
   /** Every card on the table, each with a target position — the layer renders this. */
@@ -230,9 +235,13 @@ export class CardTable {
       glow: opts.pop,
     });
 
-    const { flyMs, popMs, popScale, pileScale } = this.options;
+    const { flyMs, popMs, popScale } = this.options;
     const flightMs = flyMs + LAND_BUFFER_MS; // land a beat after the flight visually completes
-    const center = this.positioner.pileCenter();
+    // It flies to the middle of the table, where the deck stands, at the size it will lie on the
+    // pile — then settles into its own pile slot as it lands.
+    const center = this.layout.deck(0, 1);
+    const onPile = this.pile().length;
+    const pileScale = this.layout.pile(onPile, onPile + 1).scale ?? 1;
     const flyToPile = () =>
       this.flyerLayer.update(id, {
         x: center.x,
@@ -265,16 +274,17 @@ export class CardTable {
    * `gave` leaves your hand, turns face-down and shrinks into the partner fan; the card you
    * `got` flies out of that fan as a back, turns over and grows into your hand `slot`. The
    * received card is masked until its flyer lands so it never shows in two places at once. The
-   * game supplies only the three board positions (its geometry); the timing, scales, flips and
-   * masking live here.
+   * game supplies only the three board positions (its geometry) — the partner's with the size of a
+   * card in their fan; the timing, flips and masking live here.
    */
   tradeSwap(
     partner: Pos,
     gave: { suit: number; value: number; from: Pos },
     got: { uuid: number; suit: number; value: number; to: Pos },
   ): void {
-    const { fanScale, tradeRevealMs, flyMs } = this.options;
+    const { tradeRevealMs, flyMs } = this.options;
     const landMs = flyMs + LAND_BUFFER_MS;
+    const fanScale = partner.scale ?? 1; // a card's size in the partner's fan
     // Your card shrinks face-down into the partner's fan.
     const out = { fromScale: 1, toScale: fanScale, flip: 'out' } as const;
     this.flyerLayer.flyBetween(gave.from, partner, gave, out, landMs);

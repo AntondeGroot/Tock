@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardTable } from './card-table';
-import { DefaultCardPositioner } from './default-positioner';
+import { DEFAULT_LAYOUT } from './default-layout';
 import { CardFace } from './card-table.types';
 
 // Card identity is the uuid; suit/value are the sprite. Reuse a small factory.
@@ -9,14 +9,14 @@ let uuid = 0;
 const card = (value = 5, suit = 0): CardFace => ({ uuid: ++uuid, suit, value });
 
 describe('CardTable', () => {
-  const positioner = new DefaultCardPositioner();
+  const layout = DEFAULT_LAYOUT;
   let hand: ReturnType<typeof signal<CardFace[]>>;
   let table: CardTable;
 
   beforeEach(() => {
     uuid = 0;
     hand = signal<CardFace[]>([]);
-    table = new CardTable(hand, positioner);
+    table = new CardTable(hand, layout);
     vi.useFakeTimers();
   });
 
@@ -34,11 +34,8 @@ describe('CardTable', () => {
       const cards = table.cards();
       expect(cards).toHaveLength(2);
       expect(cards.every((c) => !c.inPile)).toBe(true);
-      // slots come from the positioner (fanned around x=50, y=116)
-      expect(cards.map((c) => c.x)).toEqual([
-        positioner.handSlot(0, 2).x,
-        positioner.handSlot(1, 2).x,
-      ]);
+      // slots come from the layout (fanned around x=50, y=116)
+      expect(cards.map((c) => c.x)).toEqual([layout.hand(0, 2).x, layout.hand(1, 2).x]);
       expect(cards[0].y).toBe(116);
     });
 
@@ -57,7 +54,7 @@ describe('CardTable', () => {
       const cards = table.cards();
       expect(cards).toHaveLength(1); // not double-counted (hand ∪ pile by uuid)
       expect(cards[0].inPile).toBe(true);
-      expect(cards[0].x).toBeCloseTo(positioner.pileSlot(0).x);
+      expect(cards[0].x).toBeCloseTo(layout.pile(0, 1).x);
     });
   });
 
@@ -71,14 +68,14 @@ describe('CardTable', () => {
       expect(table.dealing()).toBe(true);
       expect(table.stacked()).toBe(true);
       // first frame: at the deck centre, deck-sized
-      const deck = positioner.pileCenter();
+      const deck = layout.deck(0, 1);
       expect(table.cards()[0].x).toBeCloseTo(deck.x);
       expect(table.cards()[0].scale).toBeCloseTo(0.3);
 
       // after the double-rAF release they fan out to their real slots
       vi.advanceTimersByTime(50);
       expect(table.stacked()).toBe(false);
-      expect(table.cards()[0].x).toBeCloseTo(positioner.handSlot(0, 2).x);
+      expect(table.cards()[0].x).toBeCloseTo(layout.hand(0, 2).x);
 
       // and the deal state clears once the last card has landed
       vi.advanceTimersByTime(2 * 700 + 2000);
@@ -182,15 +179,44 @@ describe('CardTable', () => {
   });
 
   describe('options', () => {
-    it('exposes resolved defaults and merges overrides', () => {
-      const custom = new CardTable(hand, positioner, { flyMs: 200, deckScale: 0.5 });
+    it('exposes resolved defaults, merges overrides, and reads the deck size from the layout', () => {
+      const deck = () => ({ x: 52.5, y: 50, scale: 0.5 });
+      const custom = new CardTable(hand, { ...layout, deck }, { flyMs: 200 });
       expect(custom.options.flyMs).toBe(200); // overridden
-      expect(custom.options.deckScale).toBe(0.5); // overridden
       expect(custom.options.dealStaggerMs).toBe(700); // default kept
+      expect(custom.options.deckScale).toBe(0.5); // the deck's own size, for the layer
+    });
+
+    // Sizes live in the layout, and a slot that gives none is a full-size card — so a game whose
+    // layout never mentions sizes deals and plays its cards at the size they are drawn in the hand.
+    it('draws cards full size where the layout gives no size', () => {
+      // GIVEN a layout whose pile and deck say nothing about size
+      const unsized = {
+        hand: layout.hand,
+        pile: () => ({ x: 52, y: 50 }),
+        deck: () => ({ x: 50, y: 50 }),
+      };
+      const plain = new CardTable(hand, unsized);
+      const a = card();
+      hand.set([a]);
+
+      // WHEN a card is dealt from the deck
+      plain.deal([a]);
+
+      // THEN it starts on the deck full size, and the deck counts as full size for the layer
+      expect(plain.cards().find((c) => c.uuid === a.uuid)!.scale).toBe(1);
+      expect(plain.options.deckScale).toBe(1);
+
+      // WHEN another card is played onto the pile
+      plain.flyToPile({ suit: 0, value: 5, x: 0, y: 0 });
+      vi.advanceTimersByTime(50);
+
+      // THEN it flies toward the pile at full size
+      expect(plain.flyers()[0].scale).toBe(1);
     });
 
     it('lands a flown card sooner when flyMs is shortened', () => {
-      const custom = new CardTable(hand, positioner, { flyMs: 200 });
+      const custom = new CardTable(hand, layout, { flyMs: 200 });
       custom.flyToPile({ suit: 0, value: 5, x: 0, y: 0 });
       // Lands at flyMs(200) + the 100ms buffer = 300ms — well before the 600ms default.
       vi.advanceTimersByTime(200);
@@ -223,7 +249,7 @@ describe('CardTable', () => {
       // and the hand closes up around the card it still holds
       expect(table.cards().find((c) => c.uuid === b.uuid)).toMatchObject({
         zoneId: 'hand',
-        x: positioner.handSlot(0, 1).x,
+        x: layout.hand(0, 1).x,
       });
     });
 
@@ -371,7 +397,7 @@ describe('CardTable', () => {
       table.deal([a, b]);
 
       // THEN both start on the deck, deck-sized, as hand cards
-      const deck = positioner.pileCenter();
+      const deck = layout.deck(0, 1);
       expect(table.cards()).toEqual([
         expect.objectContaining({ uuid: a.uuid, zoneId: 'hand', x: deck.x, y: deck.y, scale: 0.3 }),
         expect.objectContaining({ uuid: b.uuid, zoneId: 'hand', x: deck.x, y: deck.y, scale: 0.3 }),
@@ -408,8 +434,8 @@ describe('CardTable', () => {
       });
       // while the new one starts at the deck
       expect(table.cards().find((c) => c.uuid === theirs.uuid)).toMatchObject({
-        x: positioner.pileCenter().x,
-        y: positioner.pileCenter().y,
+        x: layout.deck(0, 1).x,
+        y: layout.deck(0, 1).y,
       });
     });
 
