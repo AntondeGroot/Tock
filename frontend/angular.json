@@ -75,6 +75,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "runnerConfig": "vitest-base.config.mts",
             "setupFiles": ["src/test-setup.ts"],
             "coverageReporters": ["text-summary", "text", "html"],
             "coverageExclude": [
@@ -122,9 +123,10 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/card-table/tsconfig.spec.json",
+            "runnerConfig": "vitest-base.config.mts",
             "coverageThresholds": {
               "statements": 100,
-              "branches": 89,
+              "branches": 94,
               "functions": 100,
               "lines": 100
             }

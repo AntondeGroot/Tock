@@ -26,6 +26,7 @@ export function toCardVM({ card, zoneId, pos }: PlacedCard, frame: TableFrame): 
     uuid: card.uuid,
     suit: card.suit,
     value: card.value,
+    zoneId,
     inPile: zoneId === PILE_ZONE,
     x: useDeck ? frame.deck.x : pos.x,
     y: useDeck ? frame.deck.y : pos.y,
