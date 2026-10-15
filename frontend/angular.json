@@ -28,6 +28,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "card-deck.webp",
+                "input": "node_modules/ng-card-table/assets",
+                "output": "ng-card-table"
               }
             ],
             "styles": ["src/styles.scss"]
@@ -97,45 +102,6 @@
           "builder": "@angular-eslint/builder:lint",
           "options": {
             "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
-          }
-        }
-      }
-    },
-    "card-table": {
-      "projectType": "library",
-      "root": "projects/card-table",
-      "sourceRoot": "projects/card-table/src",
-      "prefix": "ct",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:ng-packagr",
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/card-table/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/card-table/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test",
-          "options": {
-            "tsConfig": "projects/card-table/tsconfig.spec.json",
-            "runnerConfig": "vitest-base.config.mts",
-            "coverageThresholds": {
-              "statements": 100,
-              "branches": 100,
-              "functions": 100,
-              "lines": 100
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": ["projects/card-table/**/*.ts", "projects/card-table/**/*.html"]
           }
         }
       }

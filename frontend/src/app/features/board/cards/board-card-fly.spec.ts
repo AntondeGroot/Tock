@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card as CardModel } from '../../../api';
-import { CardTable, DEFAULT_LAYOUT } from 'card-table';
+import { CardTable, DEFAULT_LAYOUT } from 'ng-card-table';
 import { BoardCardFly } from './board-card-fly';
 import { buildBoard } from '../geometry/board-geometry';
 

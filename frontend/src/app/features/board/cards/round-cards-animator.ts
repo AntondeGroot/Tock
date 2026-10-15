@@ -1,6 +1,6 @@
 import { computed, signal } from '@angular/core';
 import { Card as CardModel } from '../../../api';
-import { CardTable } from 'card-table';
+import { CardTable } from 'ng-card-table';
 
 /**
  * How long the play or forfeit that ENDS a round needs to reach the pile: a forfeit staggers its

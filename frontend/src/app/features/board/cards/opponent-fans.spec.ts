@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CardTable, DEFAULT_LAYOUT } from 'card-table';
+import { CardTable, DEFAULT_LAYOUT } from 'ng-card-table';
 import { OpponentFans } from './opponent-fans';
 import { buildBoard, fanCardBacks } from '../geometry/board-geometry';
 

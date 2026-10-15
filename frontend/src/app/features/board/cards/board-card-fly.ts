@@ -1,5 +1,5 @@
 import { Card as CardModel } from '../../../api';
-import { CardTable, DECK_ZONE, HAND_ZONE, Pos } from 'card-table';
+import { CardTable, DECK_ZONE, HAND_ZONE, Pos } from 'ng-card-table';
 import { BoardGeometry, FAN_SCALE } from '../geometry/board-geometry';
 
 /** A hand card with its live table position — what a flight to the pile starts from. */
@@ -10,9 +10,9 @@ const FORFEIT_STAGGER_MS = 120;
 
 /**
  * Bridges Keezen board geometry to the generic {@link CardTable} animations for the viewer's own
- * cards: a play, a forfeit, and a completed team trade become the card-table's flyToPile /
+ * cards: a play, a forfeit, and a completed team trade become the card table's flyToPile /
  * tradeSwap calls. The other players' cards live on the table as face-down fans instead (see
- * opponent-fans.ts). This is game-specific glue the reusable card-table module leaves to the host.
+ * opponent-fans.ts). This is game-specific glue the reusable ng-card-table library leaves to the host.
  */
 export class BoardCardFly {
   /** Where each of the viewer's cards lay before the latest push changed the hand. */

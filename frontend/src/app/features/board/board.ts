@@ -23,7 +23,7 @@ import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
 import { Pawn } from './pawn/pawn';
-import { CardLayer, CardTable } from 'card-table';
+import { CardLayer, CardTable } from 'ng-card-table';
 import { PlayerList } from '../player-list/player-list';
 import { TradePanel } from './trade/trade-panel/trade-panel';
 import { highlightForPawn1, highlightForPawn2, stepBoxColor } from './pawn/pawn-highlight';
@@ -153,7 +153,7 @@ export class Board implements OnInit, OnDestroy {
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
-  // The reusable card table (the card-table library): it holds the zones cards lie in — the pile,
+  // The reusable card table (the ng-card-table library): it holds the zones cards lie in — the pile,
   // the deck and each opponent's face-down fan — and works out where every card is drawn. It asks
   // for the viewer's hand rather than being given it, and lays it all out with the default layout.
   // The helpers below drive it: roundCards deals, cardFly plays and trades, opponentFans moves the
@@ -171,7 +171,7 @@ export class Board implements OnInit, OnDestroy {
     this.cardTable,
     this.viewerId,
   );
-  // Bridges Keezen board geometry to the card-table for the viewer's own plays and team trades.
+  // Bridges Keezen board geometry to the card table for the viewer's own plays and team trades.
   private readonly cardFly = new BoardCardFly(() => this.geometry(), this.cardTable);
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;

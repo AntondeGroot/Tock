@@ -1,4 +1,4 @@
-import { CardFace, CardTable, PILE_ZONE, Pos } from 'card-table';
+import { CardFace, CardTable, PILE_ZONE, Pos } from 'ng-card-table';
 import {
   BoardGeometry,
   FAN_SCALE,
@@ -6,7 +6,7 @@ import {
   opponentsClockwise,
 } from '../geometry/board-geometry';
 
-/** The card-table zone holding a player's hand, face down. */
+/** The card table's zone holding a player's hand, face down. */
 const fanZone = (playerId: string) => `fan:${playerId}`;
 
 /** What a stand-in shows until it is played: nothing, as it lies face down. */

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-// Shared by both test targets (angular.json `runnerConfig`).
+// The app's test runner config (angular.json `runnerConfig`).
 export default defineConfig({
   test: {
     // Vitest keeps transformed modules in node_modules/.vitest-cache and reuses them between runs.

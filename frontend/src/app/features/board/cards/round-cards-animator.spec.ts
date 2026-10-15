@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoundCardsAnimator } from './round-cards-animator';
-import { CardTable } from 'card-table';
+import { CardTable } from 'ng-card-table';
 import { Card as CardModel } from '../../../api';
 
 const card = (uuid: number, value = 5): CardModel => ({ uuid, suit: 0, value });
