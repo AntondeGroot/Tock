@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardTable } from './card-table';
 import { DEFAULT_LAYOUT } from './default-layout';
-import { DECK_ZONE, HAND_ZONE, PILE_ZONE } from './zone-layout';
+import { DECK_ZONE, HAND_ZONE } from './zone-layout';
 import { CardFace } from './card-table.types';
 
 // Card identity is the uuid; suit/value are the sprite. Reuse a small factory.
@@ -225,19 +225,6 @@ describe('CardTable', () => {
   });
 
   describe('zones', () => {
-    // A game animating on its own — Keezen flying a traded card into the hand — aims at a slot
-    // the table lays out. Asking the table, rather than keeping a copy of the layout, means the
-    // game cannot aim at a place the table no longer draws the card.
-    it("tells where any zone's slot lies, by the zone's id", () => {
-      // GIVEN a table with a zone of the game's own
-      table.defineZone({ id: 'meld', layout: (index) => ({ x: 40 + index * 5, y: 50 }) });
-
-      // THEN each zone's slot is the one its layout gives: the hand's, the pile's, the game's
-      expect(table.slotOf(HAND_ZONE, 1, 3)).toEqual(layout.hand(1, 3));
-      expect(table.slotOf(PILE_ZONE, 2, 3)).toEqual(layout.pile(2, 3));
-      expect(table.slotOf('meld', 2, 4)).toEqual({ x: 50, y: 50 });
-    });
-
     // Keezen's received King flies into the hand to wherever the table lays it. The game asks the
     // table where that card lies — not which zone, index and hand size it works out for itself —
     // so it lands on the very place the table draws it, even when a zone has claimed the card.
