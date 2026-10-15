@@ -100,7 +100,9 @@ export class Board implements OnInit, OnDestroy {
     this.prevMoveKey = moveKey;
 
     // Hand the card fields to the animator: it deals in anything new and decides what may be
-    // rendered yet — a fresh round waits for the last play/forfeit to finish first.
+    // rendered yet — a fresh round waits for the last play/forfeit to finish first. First note
+    // where the cards lie now: a card this push takes away (one given in a trade) flies from there.
+    this.cardFly.noteHand();
     this.roundCards.accept(next.playerCards ?? [], next.nrOfCardsPerPlayer ?? {});
     this.gameStore.players.set(next.players ?? []);
     // Before the winners: the banner reads it to wait for the move animated above.
