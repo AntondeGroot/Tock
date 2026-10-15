@@ -150,14 +150,15 @@ export class Board implements OnInit, OnDestroy {
   });
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
 
-  // The reusable card table: owns the pile, the flyer layer and the deal-in FLIP, and computes
-  // each card's on-table position (hand fan / pile / deck). Keezen uses the default layout; the
-  // board drives it (dealIn / flyToPile / clearPile) from its GameStatePush diffing below.
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
-  // Explicitly typed: the hand it reads now comes from roundCards, which takes the table back
-  // as a constructor argument — without the annotation that cycle infers as `any`.
+  // The reusable card table (the card-table library): it holds the zones cards lie in — the pile,
+  // the deck and each opponent's face-down fan — and works out where every card is drawn. It asks
+  // for the viewer's hand rather than being given it, and lays it all out with the default layout.
+  // The helpers below drive it: roundCards deals, cardFly plays and trades, opponentFans moves the
+  // other players' cards. Explicitly typed: the hand it reads comes from roundCards, which takes
+  // the table back as a constructor argument — without the annotation that cycle infers as `any`.
   protected readonly cardTable: CardTable = new CardTable({ hand: () => this.hand() });
   // Owns the hand and counts the board renders: it diffs each push into deal-in animations and
   // holds a new round back until the play or forfeit that ended the previous one has settled.
