@@ -151,11 +151,14 @@ interface TableLayout {
 }
 ```
 
-The built-in zones are laid out exactly like the zones a game adds with `defineZone`. All
+A zone's layout hands out its **slots**: the place (`Pos`) where each of its cards lies — where, how
+tilted, how big, and stacked how high. The built-in zones are laid out exactly like the zones a game
+adds with `defineZone`. All
 coordinates are in **the card-layer's own percentage space** (`x`/`y` are `%` for `left`/`top` of
 the layer box). Give your own as the config's `layout` to match your board; without one the table
-uses `DEFAULT_LAYOUT`. To aim an animation of your own at a slot, ask the table — `table.slotOf(zoneId,
-index, count)` — rather than keeping a copy of the layout. Fly-in
+uses `DEFAULT_LAYOUT`. To aim an animation of your own, ask the table rather than keeping a copy of
+the layout: `table.positionOf(uuid)` for where a card lies, `table.nextPositionIn(zoneId)` for where
+one added to a zone would land. Fly-in
 _origins/targets_ for a trade (a partner's fan) are passed straight into `tradeSwap`, with the size of
 a card there as their `scale`, because they're your board geometry, not table layout.
 
@@ -210,7 +213,8 @@ set their size on the layer: `--card-width` (a share of the board, default `16.6
 | `cards`                                   | `computed<CardVM[]>`        | Every card (hand, pile and every zone) with a target position — what the layer draws.                                                                                                                                                                                                            |
 | `dealing`                                 | `computed<boolean>`         | True while a deal-in animates (sync your own dealt visuals).                                                                                                                                                                                                                                     |
 | `stacked`                                 | `computed<boolean>`         | True on the first frame of a deal (cards still at the deck).                                                                                                                                                                                                                                     |
-| `slotOf(zoneId, index, count)`            | method                      | Where a zone's `index`-th of `count` cards lies (`Pos`) — the hand's, the pile's, the deck's or one you defined. For aiming your own animations, e.g. `tradeSwap`'s slots.                                                                                                                       |
+| `positionOf(uuid)`                        | method                      | Where a card lies at rest (`Pos`), in whichever zone holds it — `undefined` when it is not on the table. For aiming your own animations at a card, e.g. `tradeSwap`'s received card.                                                                                                             |
+| `nextPositionIn(zoneId)`                  | method                      | Where a card added to a zone would land (`Pos`): after its last card, or the zone's one place when it is empty (Keezen's deck).                                                                                                                                                                  |
 | `defineZone(zone)`                        | method                      | Add a zone the table holds cards in. A `faceDown` zone draws backs only; its cards ignore the mouse and are never marked special.                                                                                                                                                                |
 | `place(card, zoneId)`                     | method                      | Move a card into a zone (out of any other); it transitions there, turning over when it goes between face-down and face-up. The card carries its face, so a card leaving a face-down zone can reveal it.                                                                                          |
 | `deal(cards, { from?, into?, delayMs? })` | method                      | Deal cards one after another from a zone (default the built-in `deck`) into another (default the hand). Each starts at its own slot in `from`. Deals may overlap; `delayMs` shifts one back, for a round-robin.                                                                                  |

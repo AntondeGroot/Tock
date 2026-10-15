@@ -36,7 +36,7 @@ export class TableZones {
    * Where a card sits in a zone: its own slot, when the zone holds it — or else the zone's first
    * slot, for a card that is only coming from there (dealt from a deck that holds nothing).
    */
-  slotOf(uuid: number, zoneId: string): Pos {
+  positionOf(uuid: number, zoneId: string): Pos {
     const { zone, cards } = this.find(zoneId);
     const held = cards();
     const index = held.findIndex((c) => c.uuid === uuid);

@@ -23,11 +23,7 @@ describe('BoardCardFly', () => {
   beforeEach(() => {
     hand = [];
     table = new CardTable({ hand: () => hand });
-    fly = new BoardCardFly(
-      () => geo,
-      () => hand,
-      table,
-    );
+    fly = new BoardCardFly(() => geo, table);
     vi.useFakeTimers();
   });
 
@@ -78,11 +74,7 @@ describe('BoardCardFly', () => {
   });
 
   it('animates no trade without geometry', () => {
-    const noGeo = new BoardCardFly(
-      () => undefined,
-      () => [],
-      table,
-    );
+    const noGeo = new BoardCardFly(() => undefined, table);
     const spy = vi.spyOn(table, 'tradeSwap');
     noGeo.tradeSwap('2', { uuid: 7, suit: 0, value: 13 }, { uuid: 3, suit: 1, value: 1 });
     expect(spy).not.toHaveBeenCalled();

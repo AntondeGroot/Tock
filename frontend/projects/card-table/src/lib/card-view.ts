@@ -52,3 +52,22 @@ export function toCardVM({ card, zoneId, faceDown, pos }: PlacedCard, frame: Tab
     flip: frame.turning.get(card.uuid) ?? null,
   };
 }
+
+/**
+ * `all` with `change` applied to one deal's cards — each comes back changed, or leaves the deal
+ * when `change` returns undefined — and every other deal's cards left exactly as they were.
+ */
+export function changeDealt(
+  all: ReadonlyMap<number, DealtCard>,
+  uuids: readonly number[],
+  change: (dealt: DealtCard) => DealtCard | undefined,
+): ReadonlyMap<number, DealtCard> {
+  const next = new Map(all);
+  for (const [uuid, dealt] of all) {
+    if (!uuids.includes(uuid)) continue;
+    const changed = change(dealt);
+    if (changed) next.set(uuid, changed);
+    else next.delete(uuid);
+  }
+  return next;
+}

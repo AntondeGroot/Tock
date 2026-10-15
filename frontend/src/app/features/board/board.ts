@@ -169,11 +169,7 @@ export class Board implements OnInit, OnDestroy {
     this.viewerId,
   );
   // Bridges Keezen board geometry to the card-table for the viewer's own plays and team trades.
-  private readonly cardFly = new BoardCardFly(
-    () => this.geometry(),
-    () => this.hand(),
-    this.cardTable,
-  );
+  private readonly cardFly = new BoardCardFly(() => this.geometry(), this.cardTable);
   // Which card values get the gold "special" highlight (Ace/Four/Seven/Jack/Queen/King).
   protected readonly isSpecial = isSpecialCard;
 

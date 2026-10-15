@@ -17,7 +17,6 @@ const FORFEIT_STAGGER_MS = 120;
 export class BoardCardFly {
   constructor(
     private readonly geometry: () => BoardGeometry | undefined,
-    private readonly hand: () => CardModel[],
     private readonly cardTable: CardTable,
   ) {}
 
@@ -55,11 +54,11 @@ export class BoardCardFly {
     const seg = g.deckSegment(otherId);
     const fanMidpoint = seg
       ? { x: (seg[0].x + seg[1].x) / 12, y: (seg[0].y + seg[1].y) / 12 } // in board-% (/6)
-      : this.cardTable.slotOf(DECK_ZONE, 0, 1);
+      : this.cardTable.nextPositionIn(DECK_ZONE);
     const partner = { x: fanMidpoint.x, y: fanMidpoint.y, scale: FAN_SCALE };
-    const hand = this.hand();
-    const i = hand.findIndex((c) => c.uuid === received.uuid);
-    const slot = this.cardTable.slotOf(HAND_ZONE, i, hand.length);
+    // The push already put the received card in the hand: it flies to where it lies there.
+    const slot = this.cardTable.positionOf(received.uuid);
+    if (!slot) return;
     const handAnchor = this.cardTable.slotOf(HAND_ZONE, 0, 1); // fan centre — where the given card starts
 
     this.cardTable.tradeSwap(
