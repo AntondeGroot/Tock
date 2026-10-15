@@ -116,11 +116,6 @@ export class CardTable {
     return this.zoneById(zoneId).layout(count, count + 1);
   }
 
-  /** Where a zone's `index`-th of `count` cards lies. On its way out: use the two above. */
-  slotOf(zoneId: string, index: number, count: number): Pos {
-    return this.zoneById(zoneId).layout(index, count);
-  }
-
   private zoneById(zoneId: string): Zone {
     return zoneId === HAND_ZONE ? this.handZone : this.zones.zone(zoneId);
   }
