@@ -12,10 +12,14 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
 
 ## Design in one picture
 
-![Your game sets up and drives the CardTable engine and binds it to the card layer; the layer reads the table's cards, flyers and timing and draws each card; the table asks the layout where each zone's cards lie.](docs/architecture.svg)
+![A UML class diagram: your game component creates and drives a CardTable and binds a CardLayer, which holds that table and owns the Card components it draws. The CardTable uses a CardTableConfig, whose optional TableLayout gives a ZoneLayout for the hand, pile and deck, and it owns its Zones, each laid out by a ZoneLayout.](docs/architecture.svg)
 
-The picture is generated: change the data in `docs/architecture.mjs` and run `npm run diagrams`.
-CI fails when the SVG no longer matches it.
+How to read it (UML): a **dashed arrow** means "depends on", and its «label» says how; a **solid
+arrow** means "holds a reference to", with the name and how many (`1`, `0..1`, `*`) at its head; a
+**filled diamond** means "owns". Each box lists one member per line: attributes, then operations.
+
+The picture is generated: change `docs/architecture.data.mjs` and run `npm run diagrams`. CI fails
+when the SVG no longer matches it.
 
 - **`CardTable`** — the engine. A framework-light class (Angular signals, **no template**) that owns
   the zones (the pile, the deck and any the game adds), the in-flight "flyer" layer and the deal-in
