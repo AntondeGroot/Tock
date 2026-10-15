@@ -86,17 +86,17 @@ test.describe('playing a 7-split', () => {
 
     // The 7 is consumed: no longer a playable hand card, now resting on the pile.
     await expect(
-      page.locator('app-card.card:not(.played):not(.flyer)[data-testid="card-7"]'),
+      page.locator('ct-card.card:not(.played):not(.flyer)[data-testid="card-7"]'),
     ).toHaveCount(0);
     expect(
-      await page.locator('app-card.card.played[data-testid="card-7"]').count(),
+      await page.locator('ct-card.card.played[data-testid="card-7"]').count(),
       'the played 7 should be on the pile',
     ).toBeGreaterThan(0);
 
     // The bug: clicking a pawn must NOT auto-select the played 7 (it is on the pile, so
     // it is excluded from the selection hand) — nothing should end up selected.
     await clickPawn(page, 'player0:0');
-    await expect(page.locator('app-card.card.selected')).toHaveCount(0);
+    await expect(page.locator('ct-card.card.selected')).toHaveCount(0);
 
     await page.context().close();
   });

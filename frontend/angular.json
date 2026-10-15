@@ -105,7 +105,7 @@
       "projectType": "library",
       "root": "projects/card-table",
       "sourceRoot": "projects/card-table/src",
-      "prefix": "lib",
+      "prefix": "ct",
       "architect": {
         "build": {
           "builder": "@angular/build:ng-packagr",

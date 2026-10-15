@@ -118,10 +118,10 @@ test.describe('controls + roster placement', () => {
         ]);
         const page = await ctx.newPage();
         await page.goto(`/?sessionid=${sevenSession}&playerid=player0`);
-        await page.waitForSelector('app-card.card', { timeout: 30000 });
+        await page.waitForSelector('ct-card.card', { timeout: 30000 });
 
         // Select the 7, then click pawns until both are chosen and the split shows.
-        await page.click('app-card.card:not(.face-down)', { force: true });
+        await page.click('ct-card.card:not(.face-down)', { force: true });
         for (const pw of await page.$$('app-pawn.pawn')) {
           if (await page.$('.pawn-steps')) break;
           await pw.click({ force: true }).catch(() => {});

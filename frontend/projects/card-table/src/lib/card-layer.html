@@ -10,7 +10,7 @@
   [style.--ct-deck-scale]="deckScale()"
 >
   @for (c of table().cards(); track c.uuid) {
-    <app-card
+    <ct-card
       class="card"
       [attr.data-testid]="'card-' + c.value"
       [suit]="c.suit"
@@ -18,11 +18,11 @@
       [face]="face()"
       [style.left.%]="c.x"
       [style.top.%]="c.y"
-      [style.--rot.deg]="c.rot"
-      [style.--card-scale]="c.scale"
+      [style.--ct-rot.deg]="c.rot"
+      [style.--ct-card-scale]="c.scale"
       [style.z-index]="c.z"
       [style.transition-delay.ms]="c.dealDelay"
-      [style.--deal-delay]="c.dealDelay"
+      [style.--ct-deal-delay]="c.dealDelay"
       [class.selected]="selectedUuid() === c.uuid"
       [class.special]="!c.inPile && !c.faceDown && isSpecial()(c.value)"
       [class.played]="c.inPile"
@@ -39,7 +39,7 @@
   }
 
   @for (f of table().flyers(); track f.id) {
-    <app-card
+    <ct-card
       class="card flyer"
       [class.flip-in]="f.flip === 'in'"
       [class.flip-out]="f.flip === 'out'"
@@ -49,8 +49,8 @@
       [face]="face()"
       [style.left.%]="f.x"
       [style.top.%]="f.y"
-      [style.--rot.deg]="f.rot"
-      [style.--card-scale]="f.scale"
+      [style.--ct-rot.deg]="f.rot"
+      [style.--ct-card-scale]="f.scale"
     />
   }
 </div>

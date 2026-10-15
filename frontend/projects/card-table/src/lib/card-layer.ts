@@ -17,7 +17,7 @@ import { DECK_ZONE } from './zone-layout';
  * cards are highlighted (`selectedUuid`, `isSpecial`), and handles clicks/hovers.
  */
 @Component({
-  selector: 'app-card-layer',
+  selector: 'ct-card-layer',
   imports: [Card],
   templateUrl: './card-layer.html',
   styleUrl: './card-layer.scss',

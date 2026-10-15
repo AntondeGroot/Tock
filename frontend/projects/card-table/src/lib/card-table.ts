@@ -31,7 +31,7 @@ const DEAL_CLEAR_BUFFER_MS = 2000;
  * A game sets it up with a {@link CardTableConfig} — its hand, and optionally a
  * {@link TableLayout} and timings — then drives it from its own state changes: {@link place},
  * {@link dealIn}, {@link flyToPile}, {@link tradeSwap}, {@link clearPile}. A dumb
- * `<app-card-layer>` renders {@link cards} + {@link flyers}.
+ * `<ct-card-layer>` renders {@link cards} + {@link flyers}.
  */
 export class CardTable {
   /** The timings it runs with: the defaults, with whatever the game retuned. */

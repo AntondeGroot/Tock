@@ -21,7 +21,7 @@ test('seeded 2-player game renders the dealt hand and board over SSE', async ({ 
   await page.goto(`/?sessionid=${sessionId}&playerid=${playerIds[0]}`);
 
   // A standard deal gives player 0 five cards; a 2-player board has 24*2 tiles.
-  await expect(page.locator('app-card.card:not(.flyer):not(.face-down)')).toHaveCount(5);
+  await expect(page.locator('ct-card.card:not(.flyer):not(.face-down)')).toHaveCount(5);
   await expect(page.locator('.tile')).toHaveCount(24 * 2);
 
   await api.dispose();
