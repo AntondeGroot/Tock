@@ -61,6 +61,8 @@ jobs:
         run: npm run lint:styles
       - name: Format check (prettier)
         run: npm run format:check
+      - name: Diagrams up to date (regenerated from their data)
+        run: npm run diagrams:check
       - name: Unit tests + coverage
         run: npm run test:coverage
 

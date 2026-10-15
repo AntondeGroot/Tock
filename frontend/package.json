@@ -13,6 +13,8 @@
     "prettier": "prettier --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "diagrams": "node projects/card-table/docs/architecture.mjs",
+    "diagrams:check": "node projects/card-table/docs/architecture.mjs --check",
     "generate:api": "openapi-generator-cli generate -i ../keezenspel_openapi.yml -g typescript-angular -o src/app/api --additional-properties=ngVersion=22.0.0,fileNaming=kebab-case",
     "postinstall": "npm run generate:api",
     "prebuild": "npm run generate:api",

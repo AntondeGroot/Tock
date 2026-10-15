@@ -12,25 +12,14 @@ it into a future card game and reuse the whole "hand → play → fly → pile" 
 
 ## Design in one picture
 
-```
-        your game component (rules, server state, board geometry)
-                 │ drives                       ▲ events
-                 ▼                              │
-        ┌─────────────────┐   cards() / flyers()         ┌──────────────────┐
-        │   CardTable      │ ───────────────────────────▶│  <app-card-layer> │
-        │  (engine, signals)│                             │ (dumb component)  │
-        └─────────────────┘                              └──────────────────┘
-                 │ asks "where does card N go?"                    │ renders
-                 ▼                                                 ▼
-        ┌─────────────────┐                              ┌──────────────────┐
-        │   TableLayout    │ (the one game-specific seam) │   <app-card>      │
-        │ hand/pile/deck   │                              │ (sprite sheet)    │
-        └─────────────────┘                              └──────────────────┘
-```
+![Your game sets up and drives the CardTable engine and binds it to the card layer; the layer reads the table's cards, flyers and timing and draws each card; the table asks the layout where each zone's cards lie.](docs/architecture.svg)
+
+The picture is generated: change the data in `docs/architecture.mjs` and run `npm run diagrams`.
+CI fails when the SVG no longer matches it.
 
 - **`CardTable`** — the engine. A framework-light class (Angular signals, **no template**) that owns
-  the pile, the in-flight "flyer" layer and the deal-in animation state, and computes every card's
-  on-table position. Unit-testable like a plain state machine.
+  the zones (the pile, the deck and any the game adds), the in-flight "flyer" layer and the deal-in
+  animation state, and computes every card's on-table position. Unit-testable like a plain state machine.
 - **`<app-card-layer>`** — a dumb, `OnPush` presentational component. It renders whatever the engine
   computes and raises click/hover events. No game logic.
 - **`TableLayout`** — the seam. Your game decides _where_ cards live: the hand fan, the pile stack and
