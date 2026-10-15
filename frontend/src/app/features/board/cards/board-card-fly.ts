@@ -1,5 +1,5 @@
 import { Card as CardModel } from '../../../api';
-import { CardTable, DECK_ZONE, HAND_ZONE } from 'card-table';
+import { CardTable, DECK_ZONE, HAND_ZONE, Pos } from 'card-table';
 import { BoardGeometry, FAN_SCALE } from '../geometry/board-geometry';
 
 /** A hand card with its live table position — what a flight to the pile starts from. */
@@ -15,10 +15,26 @@ const FORFEIT_STAGGER_MS = 120;
  * opponent-fans.ts). This is game-specific glue the reusable card-table module leaves to the host.
  */
 export class BoardCardFly {
+  /** Where each of the viewer's cards lay before the latest push changed the hand. */
+  private handBefore = new Map<number, Pos>();
+
   constructor(
     private readonly geometry: () => BoardGeometry | undefined,
     private readonly cardTable: CardTable,
   ) {}
+
+  /**
+   * Note where each of the viewer's cards lies. Call it on every push, BEFORE the hand is updated:
+   * a card the push takes away — the one given in a trade — can only be found where it was now.
+   */
+  noteHand(): void {
+    this.handBefore = new Map(
+      this.cardTable
+        .cards()
+        .filter((c) => c.zoneId === HAND_ZONE)
+        .map((c) => [c.uuid, this.cardTable.positionOf(c.uuid)!]),
+    );
+  }
 
   /**
    * The viewer's own card as it currently sits in their hand. Snapshot it BEFORE the move is sent:
@@ -59,11 +75,12 @@ export class BoardCardFly {
     // The push already put the received card in the hand: it flies to where it lies there.
     const slot = this.cardTable.positionOf(received.uuid);
     if (!slot) return;
-    const handAnchor = this.cardTable.slotOf(HAND_ZONE, 0, 1); // fan centre — where the given card starts
+    // The given card has left the hand: it flies out from where it lay before.
+    const from = this.handBefore.get(given.uuid) ?? slot;
 
     this.cardTable.tradeSwap(
       partner,
-      { suit: given.suit, value: given.value, from: handAnchor },
+      { suit: given.suit, value: given.value, from },
       { uuid: received.uuid, suit: received.suit, value: received.value, to: slot },
     );
   }
