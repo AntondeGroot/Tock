@@ -44,7 +44,7 @@ describe('Card selection (Card_IT)', () => {
   let cards: HTMLElement[];
 
   const handCards = (): HTMLElement[] =>
-    Array.from(fixture.nativeElement.querySelectorAll('app-card.card:not(.flyer)'));
+    Array.from(fixture.nativeElement.querySelectorAll('ct-card.card:not(.flyer)'));
 
   const isSelected = (i: number): boolean => cards[i].classList.contains('selected');
 

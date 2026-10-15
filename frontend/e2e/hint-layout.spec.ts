@@ -85,10 +85,10 @@ test.describe('special-card hint layout', () => {
           ]);
           const page = await ctx.newPage();
           await page.goto(`/?sessionid=${sessions[value]}&playerid=player0`);
-          await page.waitForSelector('app-card.card:not(.flyer)', { timeout: 30000 });
+          await page.waitForSelector('ct-card.card:not(.flyer)', { timeout: 30000 });
 
           // Select the only card so its hint is shown.
-          await page.locator('app-card.card:not(.flyer):not(.face-down)').first().click();
+          await page.locator('ct-card.card:not(.flyer):not(.face-down)').first().click();
           await expect(page.locator('.card-hint')).not.toHaveText('', { timeout: 5000 });
 
           const geo = await page.evaluate(() => {
@@ -99,9 +99,9 @@ test.describe('special-card hint layout', () => {
             return {
               hint: rect('.card-hint')!,
               footer: rect('footer, .footer-bar'),
-              cards: [
-                ...document.querySelectorAll('app-card.card:not(.flyer):not(.face-down)'),
-              ].map((c) => c.getBoundingClientRect().toJSON() as DOMRect),
+              cards: [...document.querySelectorAll('ct-card.card:not(.flyer):not(.face-down)')].map(
+                (c) => c.getBoundingClientRect().toJSON() as DOMRect,
+              ),
               vw: window.innerWidth,
               vh: window.innerHeight,
             };

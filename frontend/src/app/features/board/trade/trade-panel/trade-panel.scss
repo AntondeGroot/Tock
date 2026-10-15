@@ -127,7 +127,7 @@
   }
 }
 
-// Hand of cards — a wrapping, centred row. Each app-card's width is set here; height follows
+// Hand of cards — a wrapping, centred row. Each ct-card's width is set here; height follows
 // from its aspect-ratio.
 .trade-hand {
   display: flex;
@@ -147,7 +147,7 @@
     transform 0.12s ease,
     border-color 0.12s ease;
 }
-.trade-card app-card {
+.trade-card ct-card {
   width: 46px;
 }
 

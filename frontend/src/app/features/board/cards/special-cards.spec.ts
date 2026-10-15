@@ -29,7 +29,7 @@ describe('Special cards: highlight + hint', () => {
   let i18n: Translations;
 
   const cards = (): HTMLElement[] =>
-    Array.from(fixture.nativeElement.querySelectorAll('app-card.card:not(.flyer)'));
+    Array.from(fixture.nativeElement.querySelectorAll('ct-card.card:not(.flyer)'));
   const hintText = (): string =>
     fixture.nativeElement.querySelector('.card-hint').textContent.trim();
   const fire = (el: HTMLElement, type: string): void => {

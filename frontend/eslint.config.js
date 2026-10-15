@@ -91,6 +91,22 @@ module.exports = defineConfig([
     },
   },
   {
+    // The card-table library's own prefix, so its components never collide with a game's `app-`
+    // ones — and a game's template shows at a glance what comes from the library. Its CSS
+    // variables share it (--ct-card-width, --ct-hand-top, …).
+    files: ['projects/card-table/src/**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        { type: 'attribute', prefix: 'ct', style: 'camelCase' },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        { type: 'element', prefix: 'ct', style: 'kebab-case' },
+      ],
+    },
+  },
+  {
     // Specs are legitimately long (fixtures, setup) — size caps do not apply.
     files: ['src/**/*.spec.ts', 'projects/*/src/**/*.spec.ts'],
     rules: {

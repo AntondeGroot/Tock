@@ -24,11 +24,11 @@ when the SVG no longer matches it.
 - **`CardTable`** — the engine. A framework-light class (Angular signals, **no template**) that owns
   the zones (the pile, the deck and any the game adds), the in-flight "flyer" layer and the deal-in
   animation state, and computes every card's on-table position. Unit-testable like a plain state machine.
-- **`<app-card-layer>`** — a dumb, `OnPush` presentational component. It renders whatever the engine
+- **`<ct-card-layer>`** — a dumb, `OnPush` presentational component. It renders whatever the engine
   computes and raises click/hover events. No game logic.
 - **`TableLayout`** — the seam. Your game decides _where_ cards live: the hand fan, the pile stack and
   the deck, each a zone layout. `DEFAULT_LAYOUT` ships a sensible linear-fan + spiral-pile layout.
-- **`<app-card>`** — one playing card, drawn from a sprite sheet (bundled `card-deck.png` by default,
+- **`<ct-card>`** — one playing card, drawn from a sprite sheet (bundled `card-deck.png` by default,
   swappable per game).
 
 ---
@@ -43,8 +43,8 @@ The sources live in `src/lib/`; `src/public-api.ts` is what a game can import.
 | `card-table.types.ts`       | `CardTableConfig`, `CardFace`, `Pos`, `Zone`, `ZoneLayout`, `TableLayout`, `CardVM`, `Flyer`, `CardTableTiming`. |
 | `timing.ts`                 | `DEFAULT_TIMING` — the out-of-the-box animation timings.                                                         |
 | `default-layout.ts`         | `DEFAULT_LAYOUT` — a ready-made hand-fan + spiral-pile layout, with the deck on the pile.                        |
-| `card-layer.ts/.html/.scss` | The `<app-card-layer>` presentational component.                                                                 |
-| `card/card.ts/.html/.scss`  | The `<app-card>` sprite component.                                                                               |
+| `card-layer.ts/.html/.scss` | The `<ct-card-layer>` presentational component.                                                                  |
+| `card/card.ts/.html/.scss`  | The `<ct-card>` sprite component.                                                                                |
 | `card/card-deck.png`        | The default sprite sheet (13 cols × 5 rows).                                                                     |
 | `card-table.spec.ts`        | Engine unit tests (deal / play / pile / trade lifecycle).                                                        |
 
@@ -58,8 +58,8 @@ import { CardLayer, CardTable } from 'card-table';
 @Component({
   imports: [CardLayer /* … */],
   template: `
-    <div class="play" style="--hand-top: 70%">
-      <app-card-layer
+    <div class="play" style="--ct-hand-top: 70%">
+      <ct-card-layer
         [table]="table"
         [selectedUuid]="selectedUuid()"
         [isSpecial]="isSpecial"
@@ -89,7 +89,7 @@ export class MyGame {
 }
 ```
 
-That's the whole contract: **feed it the hand (and, if you like, a layout), render `<app-card-layer>`, and call
+That's the whole contract: **feed it the hand (and, if you like, a layout), render `<ct-card-layer>`, and call
 the four methods when your game state changes.**
 
 ### Tuning the feel
@@ -111,7 +111,7 @@ new CardTable({ hand: () => this.hand(), timing: { flyMs: 350, dealStaggerMs: 50
 | `tradeRevealMs` | `560`   | When a traded-in card is unmasked (relative to its flyer launch).      |
 | `popScale`      | `1.2`   | Own-card swell during the pop beat.                                    |
 
-The table runs with these as `table.timing`. `<app-card-layer [table]>` publishes them as CSS vars
+The table runs with these as `table.timing`. `<ct-card-layer [table]>` publishes them as CSS vars
 (`--ct-fly-ms`, `--ct-pop-ms`, `--ct-deal-flip-ms`), with the size of a card on the deck as
 `--ct-deck-scale`, so the engine's `setTimeout`s and the SCSS transitions/keyframes **stay in sync
 from one source**.
@@ -120,17 +120,21 @@ from one source**.
 
 ## The seams (what a host game provides)
 
-| Seam                | How                                                     | Purpose                                                                 |
-| ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Hand**            | `new CardTable({ hand: () => this.hand() })`            | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
-| **Layout**          | the config's `layout`, a `TableLayout`                  | Where the hand fan, pile stack and deck sit — see below.                |
-| **Zones**           | `table.defineZone({ id, layout, faceDown? })`           | Where else cards lie: other players' face-down hands, a stock, melds.   |
-| **Highlight**       | `[isSpecial]` input                                     | Which card _values_ get the gold "special" ring (your rules).           |
-| **Selection**       | `[selectedUuid]` input                                  | The lifted/ringed card (your selection state).                          |
-| **Vertical offset** | `--hand-top` CSS var (default `0`)                      | How far down your box the layer's square starts — see below.            |
-| **Sprite sheet**    | `--card-sheet` / `--card-cols` / `--card-rows` CSS vars | Swap in a different deck image + grid.                                  |
-| **Own faces**       | `[face]` input — an `<ng-template let-face>`            | Draw fronts yourself instead (tiles): given each card's `suit`/`value`. |
-| **Piece shape**     | `--card-width` / `--card-aspect` CSS vars               | Pieces that are not card-shaped — wider, squarer tiles.                 |
+Everything from this library starts with **`ct-`**: its components (`<ct-card-layer>`,
+`<ct-card>`) and the CSS variables a game sets (`--ct-hand-top`, `--ct-card-width`, …). So a game's
+own `app-` components and variables never clash with it.
+
+| Seam                | How                                                              | Purpose                                                                 |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Hand**            | `new CardTable({ hand: () => this.hand() })`                     | A `Signal<CardFace[]>` (or getter) of the viewer's cards.               |
+| **Layout**          | the config's `layout`, a `TableLayout`                           | Where the hand fan, pile stack and deck sit — see below.                |
+| **Zones**           | `table.defineZone({ id, layout, faceDown? })`                    | Where else cards lie: other players' face-down hands, a stock, melds.   |
+| **Highlight**       | `[isSpecial]` input                                              | Which card _values_ get the gold "special" ring (your rules).           |
+| **Selection**       | `[selectedUuid]` input                                           | The lifted/ringed card (your selection state).                          |
+| **Vertical offset** | `--ct-hand-top` CSS var (default `0`)                            | How far down your box the layer's square starts — see below.            |
+| **Sprite sheet**    | `--ct-card-sheet` / `--ct-card-cols` / `--ct-card-rows` CSS vars | Swap in a different deck image + grid.                                  |
+| **Own faces**       | `[face]` input — an `<ng-template let-face>`                     | Draw fronts yourself instead (tiles): given each card's `suit`/`value`. |
+| **Piece shape**     | `--ct-card-width` / `--ct-card-aspect` CSS vars                  | Pieces that are not card-shaped — wider, squarer tiles.                 |
 
 ### `TableLayout`
 
@@ -157,15 +161,15 @@ a card there as their `scale`, because they're your board geometry, not table la
 
 ### The sprite sheet
 
-`<app-card>` draws one cell of a grid. `suit` selects the row, `value` selects the column
-(`--card-col` = `value - 1`, so `value` is 1-based: ace = 1). To use a different deck, set on any
+`<ct-card>` draws one cell of a grid. `suit` selects the row, `value` selects the column
+(`--ct-card-col` = `value - 1`, so `value` is 1-based: ace = 1). To use a different deck, set on any
 ancestor:
 
 ```css
 .my-game {
-  --card-sheet: url('/assets/my-deck.png');
-  --card-cols: 13; /* columns in the sheet */
-  --card-rows: 4; /* rows in the sheet    */
+  --ct-card-sheet: url('/assets/my-deck.png');
+  --ct-card-cols: 13; /* columns in the sheet */
+  --ct-card-rows: 4; /* rows in the sheet    */
 }
 ```
 
@@ -177,17 +181,17 @@ under any `<base href>` — no app-level wiring needed.
 A game whose pieces no sprite sheet holds — Rummikub's tiles — draws their fronts itself. Pass an
 `<ng-template>` as `[face]`; it is given each face-up card and flyer as `{ suit, value }` (typed
 `FaceContext`), and the sprite is not drawn. Backs stay the library's own. Pieces of another shape
-set their size on the layer: `--card-width` (a share of the board, default `16.667%`) and
-`--card-aspect` (default `100 / 155.73`, a sprite cell's).
+set their size on the layer: `--ct-card-width` (a share of the board, default `16.667%`) and
+`--ct-card-aspect` (default `100 / 155.73`, a sprite cell's).
 
 ```html
 <ng-template #tile let-face>
   <span class="tile" [class]="colours[face.suit]">{{ face.value }}</span>
 </ng-template>
-<app-card-layer
+<ct-card-layer
   [cards]="table.cards()"
   [face]="tile"
-  style="--card-width: 9%; --card-aspect: 3 / 4"
+  style="--ct-card-width: 9%; --ct-card-aspect: 3 / 4"
 />
 ```
 
@@ -216,7 +220,7 @@ set their size on the layer: `--card-width` (a share of the board, default `16.6
 | `tradeSwap(partner, gave, got)`           | method                      | Two-way swap between the viewer's hand and a partner fan (masks the received card until its flyer lands).                                                                                                                                                                                        |
 | `clearPile()`                             | method                      | Empty the pile (a new round).                                                                                                                                                                                                                                                                    |
 
-### `<app-card-layer>` (component)
+### `<ct-card-layer>` (component)
 
 **Inputs:** `table: CardTable` (required — the layer draws its cards and flyers and publishes its
 timing CSS vars), `face: TemplateRef<FaceContext> | null`, `selectedUuid: number | null`,
@@ -230,18 +234,18 @@ The built-in zone ids are exported as `HAND_ZONE`, `PILE_ZONE` and `DECK_ZONE`.
 ## Coordinate system
 
 The layer is `display: contents`: what it draws is a **square** that is positioned inside whatever
-box you place it in. Give that box `position: relative` (or absolute), and set `--hand-top` on it
+box you place it in. Give that box `position: relative` (or absolute), and set `--ct-hand-top` on it
 if the square should start lower down:
 
 - The square is as wide as your box, and as tall as it is wide (`aspect-ratio: 1`).
-- Its top edge sits `--hand-top` below the top of your box. Any CSS length works — `0`, `70%`,
+- Its top edge sits `--ct-hand-top` below the top of your box. Any CSS length works — `0`, `70%`,
   `calc(0.12 * var(--board-w))`. Unset, it is `0`: the square starts at the top of your box.
 - All engine/layout `x`/`y` are percentages of that square, and a card's `x`/`y` is its centre.
   So `{ x: 50, y: 50 }` is the middle of the square, and `y` above 100 lies below it.
 - Cards are not clipped. A hand laid out below the square (Keezen's sits at `y: 116`) spills into
   your box under it, so leave room there, e.g. with padding.
 
-Keezen, for example, overlays the square on its 600px board. It sets `--hand-top` to the height of
+Keezen, for example, overlays the square on its 600px board. It sets `--ct-hand-top` to the height of
 the strip above the board (the top opponent's fan), reserves the strip below for the hand, and its
 layout divides board pixel coordinates by 6 to reach `%`.
 
@@ -259,13 +263,13 @@ layout divides board pixel coordinates by 6 to reach `%`.
 
 ## Porting checklist
 
-1. Render `<app-card-layer [table]="table">` inside a positioned box (setting `--hand-top` if the
+1. Render `<ct-card-layer [table]="table">` inside a positioned box (setting `--ct-hand-top` if the
    square should start below its top).
 2. Construct `new CardTable({ hand: () => yourHandSignal() })`. That uses `DEFAULT_LAYOUT`; give
    your own `layout` if your table isn't a linear fan + central pile.
 3. Map your cards to `CardFace { uuid, suit, value }` (stable `uuid`; `suit` = sprite row,
    `value` = 1-based sprite column).
-4. Point `--card-sheet` / `--card-cols` / `--card-rows` at your deck (or reuse `card-deck.png`).
+4. Point `--ct-card-sheet` / `--ct-card-cols` / `--ct-card-rows` at your deck (or reuse `card-deck.png`).
 5. Call `dealIn` on a deal, `flyToPile` when a card is played, `tradeSwap` for a swap, `clearPile`
    on a new round. Give other players' hands a `faceDown` zone each and move their cards with
    `deal`/`place`; feed `[isSpecial]`/`[selectedUuid]` for highlights.
@@ -275,7 +279,7 @@ layout divides board pixel coordinates by 6 to reach `%`.
 ## Known couplings & tuning notes
 
 - **Timing is single-sourced.** All durations live in the `timing` (`CardTableTiming`); the engine uses the
-  numbers for its `setTimeout`s and `<app-card-layer>` publishes them as CSS vars, so the SCSS
+  numbers for its `setTimeout`s and `<ct-card-layer>` publishes them as CSS vars, so the SCSS
   transitions (`card-layer.scss`) and flip keyframes (`card/card.scss`) follow automatically. Change
   a value in one place (the timing) and both TS and CSS update. Only the internal `LAND_BUFFER_MS`
   (how long after the flight the flyer swaps to a pile element) and `DEAL_CLEAR_BUFFER_MS` are fixed.

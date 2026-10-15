@@ -16,7 +16,7 @@ import { DEFAULT_LAYOUT } from './default-layout';
     <ng-template #tile let-face>
       <span class="tile" [attr.data-suit]="face.suit">{{ face.value }}</span>
     </ng-template>
-    <app-card-layer [table]="table" [face]="tile" />
+    <ct-card-layer [table]="table" [face]="tile" />
   `,
 })
 class TileGame {
@@ -67,7 +67,7 @@ describe('CardLayer', () => {
     fixture.detectChanges();
 
     // THEN each card's front is the game's face, given that card
-    const fronts = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-card .front')];
+    const fronts = [...(fixture.nativeElement as HTMLElement).querySelectorAll('ct-card .front')];
     expect(
       fronts.map((front) => {
         const tile = front.querySelector('.tile');
@@ -91,9 +91,7 @@ describe('CardLayer', () => {
     fixture.detectChanges();
 
     // THEN the flyer's front is the game's face, given that tile
-    const tile = (fixture.nativeElement as HTMLElement).querySelector(
-      'app-card.flyer .front .tile',
-    );
+    const tile = (fixture.nativeElement as HTMLElement).querySelector('ct-card.flyer .front .tile');
     expect([tile?.textContent?.trim(), tile?.getAttribute('data-suit')]).toEqual(['9', '3']);
   });
 
@@ -110,7 +108,7 @@ describe('CardLayer', () => {
     fixture.detectChanges();
 
     // THEN only the face-up card gets the gleam
-    const cards = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-card.card')];
+    const cards = [...(fixture.nativeElement as HTMLElement).querySelectorAll('ct-card.card')];
     expect(cards.map((c) => c.classList.contains('special'))).toEqual([true, false]);
   });
 
@@ -129,7 +127,7 @@ describe('CardLayer', () => {
     fixture.componentInstance.cardClick.subscribe((uuid) => clicked.push(uuid));
     fixture.componentInstance.cardHover.subscribe((value) => hovered.push(value));
     const [faceUp, faceDown] = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('app-card.card'),
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('ct-card.card'),
     ];
 
     // WHEN each is pointed at, clicked, and left
@@ -181,7 +179,7 @@ describe('CardLayer', () => {
     fixture.detectChanges();
 
     // THEN each is a flyer card at its own place, with its own turn and glow
-    const flyers = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-card.flyer')];
+    const flyers = [...(fixture.nativeElement as HTMLElement).querySelectorAll('ct-card.flyer')];
     expect(
       flyers.map((f) => ({
         left: (f as HTMLElement).style.left,

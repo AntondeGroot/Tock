@@ -6,11 +6,11 @@
 
 // Cards layer: overlaid on the play area (so % positions line up with the board), but the cards
 // themselves are not children of the board. Hand cards spill below into the reserved area
-// (overflow is visible). --hand-top is supplied by the host game (the vertical offset of the box);
+// (overflow is visible). --ct-hand-top is supplied by the host game (the vertical offset of the box);
 // unset, the square starts at the top of the box rather than wherever the page flow would leave it.
 .card-layer {
   position: absolute;
-  top: var(--hand-top, 0);
+  top: var(--ct-hand-top, 0);
   left: 0;
   width: 100%;
   aspect-ratio: 1;
@@ -20,14 +20,14 @@
 .card {
   position: absolute;
   // 100/600 of the board → scales with it (height from aspect-ratio). A game whose pieces are not
-  // card-sized — Rummikub tiles — sets --card-width (and --card-aspect) on the layer.
-  width: var(--card-width, 16.667%);
+  // card-sized — Rummikub tiles — sets --ct-card-width (and --ct-card-aspect) on the layer.
+  width: var(--ct-card-width, 16.667%);
   pointer-events: auto; // the .card-layer disables events; cards opt back in
-  // left/top are the card's CENTRE; --rot rotates, --card-scale shrinks pile cards
+  // left/top are the card's CENTRE; --ct-rot rotates, --ct-card-scale shrinks pile cards
   // (hand = 1, pile ≈ 0.6). The transition animates the fly: position + shrink.
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--card-scale, 1));
+  transform: translate(-50%, -50%) rotate(var(--ct-rot, 0deg)) scale(var(--ct-card-scale, 1));
   // ease-out so the card decelerates into the pile (a "thrown" feel). Duration = the engine's
-  // flyMs, published as --ct-fly-ms by <app-card-layer>, so TS and CSS stay in sync.
+  // flyMs, published as --ct-fly-ms by <ct-card-layer>, so TS and CSS stay in sync.
   transition:
     left var(--ct-fly-ms, 500ms) cubic-bezier(0.22, 1, 0.36, 1),
     top var(--ct-fly-ms, 500ms) cubic-bezier(0.22, 1, 0.36, 1),
@@ -54,7 +54,7 @@
 // instead of dropping back to its resting position.
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
-    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-8px) scale(1.03);
+    transform: translate(-50%, -50%) rotate(var(--ct-rot, 0deg)) translateY(-8px) scale(1.03);
   }
 }
 
@@ -92,7 +92,7 @@
 
 // Selected card: lifted with a gold ring + glow.
 .card.selected {
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-20px) scale(1.05);
+  transform: translate(-50%, -50%) rotate(var(--ct-rot, 0deg)) translateY(-20px) scale(1.05);
   box-shadow:
     0 10px 20px rgba(0, 0, 0, 0.5),
     0 0 0 3px #f4d03f,

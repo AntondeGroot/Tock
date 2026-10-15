@@ -14,7 +14,7 @@ export interface CardFace {
 
 /**
  * What a game's own face template is given to draw a card's front — `let-face` in an
- * `<ng-template>` passed to `<app-card-layer [face]>`. Without one, fronts come from the sprite.
+ * `<ng-template>` passed to `<ct-card-layer [face]>`. Without one, fronts come from the sprite.
  */
 export interface FaceContext {
   $implicit: { suit: number; value: number };

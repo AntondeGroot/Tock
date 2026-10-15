@@ -26,7 +26,7 @@ async function openGame(browser: Browser): Promise<Page> {
   await ctx.addCookies([{ name: 'playerid', value: 'player0', url: UI }]);
   const page = await ctx.newPage();
   await page.goto(`/?sessionid=${sessionId}&playerid=player0`);
-  await page.waitForSelector('app-card.card', { timeout: 30000 });
+  await page.waitForSelector('ct-card.card', { timeout: 30000 });
   return page;
 }
 

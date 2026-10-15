@@ -41,7 +41,7 @@ export const CLASSES = {
     y: 190,
     stereotype: 'component',
     name: 'CardLayer',
-    selector: '<app-card-layer>',
+    selector: '<ct-card-layer>',
     attributes: [
       '«input» table: CardTable',
       '«input» face: TemplateRef<FaceContext> | null',
@@ -56,7 +56,7 @@ export const CLASSES = {
     y: 470,
     stereotype: 'component',
     name: 'Card',
-    selector: '<app-card>',
+    selector: '<ct-card>',
     attributes: [
       '«input» suit: number',
       '«input» value: number',

@@ -94,7 +94,7 @@ describe('Pawn highlight rendering (PawnHighlightColors_IT)', () => {
     const el = fixture.nativeElement as HTMLElement;
     const [pawnA, pawnB] = el.querySelectorAll('app-pawn.pawn');
 
-    (el.querySelector('app-card.card:not(.flyer)') as HTMLElement).click(); // select the 7
+    (el.querySelector('ct-card.card:not(.flyer)') as HTMLElement).click(); // select the 7
     fixture.detectChanges();
     (pawnA as HTMLElement).click(); // pawn1
     (pawnB as HTMLElement).click(); // pawn2

@@ -71,7 +71,7 @@ describe('Board rendering (Board_IT / MobileLocale_IT)', () => {
   });
 
   it('verifyNumberOfCardsForPlayer1', () => {
-    expect(q('app-card.card:not(.flyer)')).toBe(5);
+    expect(q('ct-card.card:not(.flyer)')).toBe(5);
   });
 
   it('playButtonIsVisibleWithEnglishText', () => {

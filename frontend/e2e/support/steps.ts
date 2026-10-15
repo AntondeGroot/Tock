@@ -20,7 +20,7 @@ export async function viewAs(
   await ctx.addCookies([{ name: 'playerid', value: playerId, url: UI }]);
   const page = await ctx.newPage();
   await page.goto(`/?sessionid=${sessionId}&playerid=${playerId}`);
-  await page.waitForSelector('app-card.card', { timeout: 30000 });
+  await page.waitForSelector('ct-card.card', { timeout: 30000 });
   return page;
 }
 
@@ -74,12 +74,12 @@ export async function clickPawn(page: Page, id: string): Promise<void> {
 
 /** Hand cards currently in the viewer's hand (not flown to the pile). */
 export function handCards(page: Page) {
-  return page.locator('app-card.card:not(.played):not(.flyer):not(.face-down)');
+  return page.locator('ct-card.card:not(.played):not(.flyer):not(.face-down)');
 }
 
 /** Cards resting on the central pile (played / forfeited). */
 export function pileCards(page: Page) {
-  return page.locator('app-card.card.played');
+  return page.locator('ct-card.card.played');
 }
 
 /** Forfeit the viewer's hand (click the Forfeit button). */

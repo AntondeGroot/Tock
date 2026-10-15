@@ -26,7 +26,7 @@
   // Height budget uses dvh (the *visible* viewport) so the board fits between the mobile
   // browser's top/bottom chrome instead of being sized to the full screen.
   --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 230px) / 1.42));
-  --hand-top: calc(0.12 * var(--board-w));
+  --ct-hand-top: calc(0.12 * var(--board-w));
 }
 
 .stage {
@@ -41,7 +41,7 @@
   // to blow the stage up — so tie both to --board-w instead. Top strip = the top
   // opponent's card backs (the card-layer is offset by the same amount so cards
   // stay aligned with the tiles); bottom strip = the viewer's hand (reaches ~129%).
-  padding-top: var(--hand-top);
+  padding-top: var(--ct-hand-top);
   padding-bottom: calc(0.3 * var(--board-w));
 }
 

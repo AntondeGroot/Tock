@@ -1,13 +1,13 @@
 // One card cell from a sprite sheet. Defaults to the bundled card-deck.png (13 cols x 5 rows,
-// 1920x1150). Override the sheet + its grid per game with CSS vars: --card-sheet (an image
-// url()), --card-cols and --card-rows. --card-col (value-1) and --card-row (suit) pick the cell.
+// 1920x1150). Override the sheet + its grid per game with CSS vars: --ct-card-sheet (an image
+// url()), --ct-card-cols and --ct-card-rows. --ct-card-col (value-1) and --ct-card-row (suit) pick the cell.
 // The card has a front (the sprite) and a back, so a dealt card can flip over as it arrives.
 :host {
   display: block;
   // Width is set by the layer (.card in card-layer.scss) as a fraction of the board, so the card
   // scales with it; height follows from the aspect ratio — a sprite cell's, unless the game sets
-  // --card-aspect for pieces of another shape (Rummikub tiles).
-  aspect-ratio: var(--card-aspect, 100 / 155.73);
+  // --ct-card-aspect for pieces of another shape (Rummikub tiles).
+  aspect-ratio: var(--ct-card-aspect, 100 / 155.73);
   border-radius: 5px;
   box-shadow:
     4px 5px 14px rgba(0, 0, 0, 0.55),
@@ -33,14 +33,14 @@
 
 .front {
   // Component-relative default so the bundler hashes it and it resolves under any base-href;
-  // a host game can swap decks by setting --card-sheet to its own url().
-  background-image: var(--card-sheet, url('./card-deck.png'));
+  // a host game can swap decks by setting --ct-card-sheet to its own url().
+  background-image: var(--ct-card-sheet, url('./card-deck.png'));
   background-repeat: no-repeat;
-  // Percent background-size/position pick one cell out of a --card-cols x --card-rows grid
+  // Percent background-size/position pick one cell out of a --ct-card-cols x --ct-card-rows grid
   // (via col/(cols-1) and row/(rows-1)), so it scales with the card.
-  background-size: calc(var(--card-cols, 13) * 100%) calc(var(--card-rows, 5) * 100%);
-  background-position: calc(var(--card-col, 0) * 100% / (var(--card-cols, 13) - 1))
-    calc(var(--card-row, 0) * 100% / (var(--card-rows, 5) - 1));
+  background-size: calc(var(--ct-card-cols, 13) * 100%) calc(var(--ct-card-rows, 5) * 100%);
+  background-position: calc(var(--ct-card-col, 0) * 100% / (var(--ct-card-cols, 13) - 1))
+    calc(var(--ct-card-row, 0) * 100% / (var(--ct-card-rows, 5) - 1));
 }
 
 // A game drawing its own fronts (tiles) replaces the sprite cell with what its template draws.
@@ -56,7 +56,7 @@
   // A back is mostly seen small: stacked at the deck, or in a face-down fan — both scaled to ~0.3.
   // Lines drawn here shrink with the card, so the intended widths (2px border, 1px frame) are
   // divided by the deck scale to come out at that size there. --ct-deck-scale is published by
-  // <app-card-layer> from the size of the table's deck slot; a fan at another size draws them
+  // <ct-card-layer> from the size of the table's deck slot; a fan at another size draws them
   // thicker or thinner by that ratio (Keezen's are both 0.3).
   border: calc(2px / var(--ct-deck-scale, 0.3)) solid #fff;
 
@@ -80,10 +80,10 @@
 }
 
 // Deal-in: hold the back toward the viewer, then turn to the front near the end of
-// the flight (timed to each card's stagger via --deal-delay).
+// the flight (timed to each card's stagger via --ct-deal-delay).
 :host(.dealing) .flip {
   animation: dealFlip var(--ct-deal-flip-ms, 550ms) ease both;
-  animation-delay: calc(var(--deal-delay, 0) * 1ms);
+  animation-delay: calc(var(--ct-deal-delay, 0) * 1ms);
 }
 
 @keyframes dealFlip {

@@ -40,7 +40,7 @@ describe('Auto-select card (AutoSelectCardBorder_IT)', () => {
 
   const pawn = (): HTMLElement => fixture.nativeElement.querySelector('app-pawn.pawn');
   const kingSelected = (): boolean =>
-    fixture.nativeElement.querySelector('app-card.card:not(.flyer)').classList.contains('selected');
+    fixture.nativeElement.querySelector('ct-card.card:not(.flyer)').classList.contains('selected');
   const clickPawn = (): void => {
     pawn().click();
     fixture.detectChanges();

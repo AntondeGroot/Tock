@@ -34,7 +34,7 @@
               [style.--card-index]="i"
               (click)="give(c)"
             >
-              <app-card [suit]="c.suit" [value]="c.value" />
+              <ct-card [suit]="c.suit" [value]="c.value" />
             </button>
           }
         </div>
@@ -67,7 +67,7 @@
               [class.dim]="!selectable(c)"
               (click)="pick(c)"
             >
-              <app-card [suit]="c.suit" [value]="c.value" />
+              <ct-card [suit]="c.suit" [value]="c.value" />
             </button>
           }
         </div>

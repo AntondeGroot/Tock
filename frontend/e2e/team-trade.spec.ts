@@ -63,7 +63,7 @@ test.describe('team card-trade window', () => {
     await expect(give).toHaveCount(0);
     await expect(mate.locator('.trade-sub')).toContainText('Waiting for player0');
     await expect(
-      asker.locator('app-card.card[data-testid="card-13"]'),
+      asker.locator('ct-card.card[data-testid="card-13"]'),
       'not swapped yet',
     ).toHaveCount(0);
 
@@ -74,8 +74,8 @@ test.describe('team card-trade window', () => {
     // Both sides settle: the trade closes and the asker is holding the King.
     await expect(asker.locator('.trade-dialog')).toHaveCount(0);
     await expect(mate.locator('.trade-dialog')).toHaveCount(0);
-    await expect(asker.locator('app-card.card[data-testid="card-13"]')).toBeVisible();
-    await expect(mate.locator('app-card.card[data-testid="card-4"]')).toBeVisible();
+    await expect(asker.locator('ct-card.card[data-testid="card-13"]')).toBeVisible();
+    await expect(mate.locator('ct-card.card[data-testid="card-4"]')).toBeVisible();
 
     await asker.context().close();
     await mate.context().close();
@@ -109,9 +109,9 @@ test.describe('team card-trade window', () => {
     await expect(asker.locator('.trade-dialog'), 'the trade settles itself').toHaveCount(0, {
       timeout: 20_000,
     });
-    await expect(asker.locator('app-card.card[data-testid="card-13"]')).toBeVisible();
+    await expect(asker.locator('ct-card.card[data-testid="card-13"]')).toBeVisible();
     // …and one of the asker's three cards left their hand for the teammate.
-    await expect(asker.locator('app-card.card:not(.flyer):not(.face-down)')).toHaveCount(3);
+    await expect(asker.locator('ct-card.card:not(.flyer):not(.face-down)')).toHaveCount(3);
 
     await asker.context().close();
     await mate.context().close();
