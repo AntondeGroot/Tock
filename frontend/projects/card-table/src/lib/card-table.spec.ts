@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardTable } from './card-table';
 import { DEFAULT_LAYOUT } from './default-layout';
-import { HAND_ZONE, PILE_ZONE } from './zone-layout';
+import { DECK_ZONE, HAND_ZONE, PILE_ZONE } from './zone-layout';
 import { CardFace } from './card-table.types';
 
 // Card identity is the uuid; suit/value are the sprite. Reuse a small factory.
@@ -236,6 +236,39 @@ describe('CardTable', () => {
       expect(table.slotOf(HAND_ZONE, 1, 3)).toEqual(layout.hand(1, 3));
       expect(table.slotOf(PILE_ZONE, 2, 3)).toEqual(layout.pile(2, 3));
       expect(table.slotOf('meld', 2, 4)).toEqual({ x: 50, y: 50 });
+    });
+
+    // Keezen's received King flies into the hand to wherever the table lays it. The game asks the
+    // table where that card lies — not which zone, index and hand size it works out for itself —
+    // so it lands on the very place the table draws it, even when a zone has claimed the card.
+    it('tells where a card lies, in whichever zone holds it', () => {
+      // GIVEN a hand of two, the second of which the game also put in a meld of its own
+      const a = card();
+      const b = card();
+      hand.set([a, b]);
+      table.defineZone({ id: 'meld', layout: (index) => ({ x: 40 + index * 5, y: 50 }) });
+      table.place(b, 'meld');
+
+      // THEN the first lies in the hand, now a hand of one; the second lies in the meld
+      expect(table.positionOf(a.uuid)).toEqual(layout.hand(0, 1));
+      expect(table.positionOf(b.uuid)).toEqual({ x: 40, y: 50 });
+      // and a card that is nowhere on the table lies nowhere
+      expect(table.positionOf(999)).toBeUndefined();
+    });
+
+    // A Rummikub tile dragged onto a row is aimed at where it will join it: after the row's last
+    // tile. There is no tile there yet to ask about, so the table answers for the zone — and for an
+    // empty one, like Keezen's deck, which holds nothing, that is the zone's one place.
+    it('tells where a card added to a zone would land: after its last card', () => {
+      // GIVEN a hand of two, a meld holding one card, and the deck holding none
+      hand.set([card(), card()]);
+      table.defineZone({ id: 'meld', layout: (index) => ({ x: 40 + index * 5, y: 50 }) });
+      table.place(card(), 'meld');
+
+      // THEN a card added to each would land after the cards it holds
+      expect(table.nextPositionIn(HAND_ZONE)).toEqual(layout.hand(2, 3));
+      expect(table.nextPositionIn('meld')).toEqual({ x: 45, y: 50 });
+      expect(table.nextPositionIn(DECK_ZONE)).toEqual(layout.deck(0, 1));
     });
 
     // A zone the game defines is somewhere a card can actually GO: a meld on a Rummikub table, the

@@ -9,7 +9,7 @@ import {
   TableLayout,
   Zone,
 } from './card-table.types';
-import { DealtCard, TableFrame, toCardVM } from './card-view';
+import { changeDealt, DealtCard, TableFrame, toCardVM } from './card-view';
 import { DEFAULT_LAYOUT } from './default-layout';
 import { FlyerLayer } from './flyer-layer';
 import { TableZones } from './table-zones';
@@ -21,25 +21,6 @@ import { DECK_ZONE, HAND_ZONE, PILE_ZONE, placeCards } from './zone-layout';
 const LAND_BUFFER_MS = 100;
 // Extra slack after the last dealt card's flight before the deal-in state is cleared.
 const DEAL_CLEAR_BUFFER_MS = 2000;
-
-/**
- * `all` with `change` applied to one deal's cards — each comes back changed, or leaves the deal
- * when `change` returns undefined — and every other deal's cards left exactly as they were.
- */
-function changeDealt(
-  all: ReadonlyMap<number, DealtCard>,
-  uuids: readonly number[],
-  change: (dealt: DealtCard) => DealtCard | undefined,
-): ReadonlyMap<number, DealtCard> {
-  const next = new Map(all);
-  for (const [uuid, dealt] of all) {
-    if (!uuids.includes(uuid)) continue;
-    const changed = change(dealt);
-    if (changed) next.set(uuid, changed);
-    else next.delete(uuid);
-  }
-  return next;
-}
 
 /**
  * The reusable card-table engine: it owns the zones cards sit in (the pile, and any the game
@@ -95,16 +76,18 @@ export class CardTable {
     layout: (index, count) => this.layout.hand(index, count),
   };
 
+  // Every card in its zone, at its slot there. The table's own zones come after the hand, so a card
+  // the game still reports in the hand is laid out where the table put it.
+  private readonly placed = computed(() =>
+    placeCards([{ zone: this.handZone, cards: this.hand() }, ...this.zones.contents()]),
+  );
+
   /** Every card on the table, each with a target position — the layer renders this. */
   readonly cards = computed<CardVM[]>(() => {
-    // The table's own zones come after the hand, so a card the game still reports in the hand is
-    // laid out where the table put it. A pile card's z follows PLAY ORDER (pile index), so the
-    // newest is on top regardless of the DOM order — which is sorted by uuid, so moving a card never
-    // reorders the list: only its target changes, and the same element transitions cleanly.
-    const placed = placeCards([
-      { zone: this.handZone, cards: this.hand() },
-      ...this.zones.contents(),
-    ]);
+    // A pile card's z follows PLAY ORDER (pile index), so the newest is on top regardless of the
+    // DOM order — which is sorted by uuid, so moving a card never reorders the list: only its
+    // target changes, and the same element transitions cleanly.
+    const placed = [...this.placed()];
     const frame: TableFrame = {
       dealt: this.dealt(),
       hidden: this.masks.hidden(),
@@ -117,12 +100,29 @@ export class CardTable {
   });
 
   /**
-   * Where a zone's `index`-th of `count` cards lies — the hand's, the pile's, the deck's or one
-   * the game defined — for a game aiming its own animation at a slot.
+   * Where a card lies, in whichever zone holds it — its place at rest, not mid-deal or mid-flight;
+   * undefined for a card not on the table. For a game aiming its own animation at a card.
    */
+  positionOf(uuid: number): Pos | undefined {
+    return this.placed().find((p) => p.card.uuid === uuid)?.pos;
+  }
+
+  /**
+   * Where a card added to a zone would land: the place after its last card — or, in an empty zone,
+   * the zone's only place, as Keezen's deck, which holds nothing.
+   */
+  nextPositionIn(zoneId: string): Pos {
+    const count = this.placed().filter((p) => p.zoneId === zoneId).length;
+    return this.zoneById(zoneId).layout(count, count + 1);
+  }
+
+  /** Where a zone's `index`-th of `count` cards lies. On its way out: use the two above. */
   slotOf(zoneId: string, index: number, count: number): Pos {
-    const zone = zoneId === HAND_ZONE ? this.handZone : this.zones.zone(zoneId);
-    return zone.layout(index, count);
+    return this.zoneById(zoneId).layout(index, count);
+  }
+
+  private zoneById(zoneId: string): Zone {
+    return zoneId === HAND_ZONE ? this.handZone : this.zones.zone(zoneId);
   }
 
   /**
@@ -179,7 +179,7 @@ export class CardTable {
     this.dealt.update((all) => {
       const next = new Map(all);
       uuids.forEach((uuid, order) =>
-        next.set(uuid, { order, delayMs, start: this.zones.slotOf(uuid, from), atStart: true }),
+        next.set(uuid, { order, delayMs, start: this.zones.positionOf(uuid, from), atStart: true }),
       );
       return next;
     });
