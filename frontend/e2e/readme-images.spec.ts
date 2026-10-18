@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { API_URL } from '../playwright.config';
 import { createGame, getHand, setHand, setPawn, teamTrade } from './support/seed';
+import { handCard } from './support/steps';
 
 /**
  * Docs generator (not a test): seeds a game per player-count, screenshots the real Angular board
@@ -234,7 +235,7 @@ async function openTrade(
  * server state can express a selection — it lives in the client.
  */
 async function selectSplitOfSeven(page: Page): Promise<void> {
-  await page.click('[data-testid="card-7"]');
+  await handCard(page, 7).click();
   await page.click(`[data-testid="pawn-${VIEWER}:0"]`);
   await page.click(`[data-testid="pawn-${VIEWER}:1"]`);
   await page.waitForSelector('app-split-steps');

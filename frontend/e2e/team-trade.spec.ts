@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setHand, setOnlyCard, setPawn } from './support/seed';
-import { openBoard, playCard, viewAs, waitPawnSettled } from './support/steps';
+import { handCard, handCards, openBoard, playCard, viewAs, waitPawnSettled } from './support/steps';
 
 // The team card-trade ("ask your teammate for a King/Ace") is only offerable until you play your
 // first card of the round; a new deal reopens it. The rule lives in the backend (canRequestTrade)
@@ -62,10 +62,7 @@ test.describe('team card-trade window', () => {
     // Their half is held: the give is done, and now THEY are the ones waiting.
     await expect(give).toHaveCount(0);
     await expect(mate.locator('.trade-sub')).toContainText('Waiting for player0');
-    await expect(
-      asker.locator('ct-card.card[data-testid="card-13"]'),
-      'not swapped yet',
-    ).toHaveCount(0);
+    await expect(handCard(asker, 13), 'not swapped yet').toHaveCount(0);
 
     // Picking a card sends it — no confirm button anywhere in the picker — and completes the swap.
     await expect(asker.locator('.trade-btn.primary')).toHaveCount(0);
@@ -74,8 +71,8 @@ test.describe('team card-trade window', () => {
     // Both sides settle: the trade closes and the asker is holding the King.
     await expect(asker.locator('.trade-dialog')).toHaveCount(0);
     await expect(mate.locator('.trade-dialog')).toHaveCount(0);
-    await expect(asker.locator('ct-card.card[data-testid="card-13"]')).toBeVisible();
-    await expect(mate.locator('ct-card.card[data-testid="card-4"]')).toBeVisible();
+    await expect(handCard(asker, 13)).toBeVisible();
+    await expect(handCard(mate, 4)).toBeVisible();
 
     await asker.context().close();
     await mate.context().close();
@@ -109,9 +106,9 @@ test.describe('team card-trade window', () => {
     await expect(asker.locator('.trade-dialog'), 'the trade settles itself').toHaveCount(0, {
       timeout: 20_000,
     });
-    await expect(asker.locator('ct-card.card[data-testid="card-13"]')).toBeVisible();
+    await expect(handCard(asker, 13)).toBeVisible();
     // …and one of the asker's three cards left their hand for the teammate.
-    await expect(asker.locator('ct-card.card:not(.flyer):not(.face-down)')).toHaveCount(3);
+    await expect(handCards(asker)).toHaveCount(3);
 
     await asker.context().close();
     await mate.context().close();

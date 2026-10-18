@@ -77,6 +77,14 @@ export function handCards(page: Page) {
   return page.locator('ct-card.card:not(.played):not(.flyer):not(.face-down)');
 }
 
+/**
+ * The viewer's hand card of `value`. Scoped to the hand: a card of the same value can lie on the
+ * pile too — seeding a hand forfeits the dealt one, and a refresh lays that out as the pile.
+ */
+export function handCard(page: Page, value: number) {
+  return handCards(page).and(page.getByTestId(`card-${value}`));
+}
+
 /** Cards resting on the central pile (played / forfeited). */
 export function pileCards(page: Page) {
   return page.locator('ct-card.card.played');
@@ -137,7 +145,7 @@ export async function playCard(
   page: Page,
   opts: { value: number; pawns: string[] },
 ): Promise<void> {
-  await page.getByTestId(`card-${opts.value}`).dispatchEvent('click');
+  await handCard(page, opts.value).dispatchEvent('click');
   for (const id of opts.pawns) {
     await page.getByTestId(`pawn-${id}`).dispatchEvent('click');
   }

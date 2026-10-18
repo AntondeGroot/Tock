@@ -3,6 +3,7 @@ import { API_URL } from '../playwright.config';
 import { createGame, setOnlyCard } from './support/seed';
 import {
   clickPawn,
+  handCard,
   isPawnSelected,
   viewAs,
   forfeit,
@@ -49,7 +50,7 @@ test.describe('pawn selection (Pawn_IT)', () => {
     await api.dispose();
     const page = await viewAs(browser, sessionId, 'player0');
 
-    await page.getByTestId('card-1').dispatchEvent('click');
+    await handCard(page, 1).dispatchEvent('click');
     await clickPawn(page, 'player0:0');
     await expect.poll(() => isPawnSelected(page, 'player0:0')).toBe(true);
 
