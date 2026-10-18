@@ -5,18 +5,13 @@ import {
   fanCardBacks,
   opponentsClockwise,
 } from '../geometry/board-geometry';
+import { parseCard } from './played-card';
 
 /** The card table's zone holding a player's hand, face down. */
 const fanZone = (playerId: string) => `fan:${playerId}`;
 
 /** What a stand-in shows until it is played: nothing, as it lies face down. */
 const NO_FACE = { suit: 0, value: 0 };
-
-/** A played card as the server lists it publicly, "suit_value", parsed into its face. */
-function parseCard(played: string): { suit: number; value: number } {
-  const [suit, value] = played.split('_').map(Number);
-  return { suit, value };
-}
 
 /** A round is dealt round-robin: each seat's cards leave this long after the seat before's. */
 const SEAT_DEAL_MS = 350;

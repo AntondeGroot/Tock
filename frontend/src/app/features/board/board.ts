@@ -48,6 +48,7 @@ import { localRejectionKey, rejectionMessageKey } from './feedback/rejection-mes
 import { allPawnsHome, teammateOf } from './selection/team-control';
 import { TransitionSounds } from './feedback/transition-sounds';
 import { RoundCardsAnimator } from './cards/round-cards-animator';
+import { parseCard } from './cards/played-card';
 
 @Component({
   selector: 'app-board',
@@ -64,12 +65,12 @@ export class Board implements OnInit, OnDestroy {
       this.streamUrl,
       (push) => this.handleGameState(push),
       // Each (re)connect gets a fresh baseline snapshot — clear the animation baselines so it
-      // isn't mistaken for a new move/deal, and drop the locally-accumulated discard pile: after a
-      // drop it's stale, and the fresh snapshot is authoritative, so the reconnect starts clean.
+      // isn't mistaken for a new move/deal, and rebuild the locally-accumulated discard pile from
+      // that snapshot: after a refresh or drop it's empty or stale, and the snapshot is authoritative.
       () => {
         this.prevMoveKey = undefined;
         this.roundCards.reset();
-        this.cardTable.clearPile();
+        this.pileStale = true;
       },
     );
     this.stream.start();
@@ -104,6 +105,11 @@ export class Board implements OnInit, OnDestroy {
     // where the cards lie now: a card this push takes away (one given in a trade) flies from there.
     this.cardFly.noteHand();
     this.roundCards.accept(next.playerCards ?? [], next.nrOfCardsPerPlayer ?? {});
+    // After accept: with its baseline reset, the first push reads as a round deal and clears the pile.
+    if (this.pileStale) {
+      this.cardTable.restorePile((next.playedCards ?? []).map(parseCard));
+      this.pileStale = false;
+    }
     this.gameStore.players.set(next.players ?? []);
     // Before the winners: the banner reads it to wait for the move animated above.
     this.gameStore.pawnsSettleMs.set(this.pawnAnimator.remainingMs());
@@ -186,6 +192,8 @@ export class Board implements OnInit, OnDestroy {
   protected readonly isPhone = signal(this.phoneLayout.matches);
   private readonly onLayoutChange = (e: MediaQueryListEvent) => this.isPhone.set(e.matches);
   private prevMoveKey: string | undefined;
+  /** Set on each (re)connect: the next push's played cards are laid out as the pile. */
+  private pileStale = true;
 
   // The move being composed: card, pawn(s), the 7-split and the server-side landing preview.
   // See selection/move-selection.ts — the template drives it directly.
