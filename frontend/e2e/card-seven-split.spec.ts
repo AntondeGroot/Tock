@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setOnlyCard, setPawn } from './support/seed';
-import { openBoard, clickPawn, pawnCentre, waitPawnSettled, dist } from './support/steps';
+import { openBoard, clickPawn, handCard, pawnCentre, waitPawnSettled, dist } from './support/steps';
 
 // Rewrite of CardSevenSplit_IT: the step-box/model desync regression. After the
 // user edits the split steps, re-selecting the 7 must snap the boxes back to the
@@ -17,7 +17,7 @@ test.describe('7-split step boxes (CardSevenSplit_IT)', () => {
       },
     });
 
-    const card7 = page.getByTestId('card-7');
+    const card7 = handCard(page, 7);
     const box1 = page.locator('.pawn-steps__input').first();
     const box2 = page.locator('.pawn-steps__input').nth(1);
 
@@ -65,7 +65,7 @@ test.describe('playing a 7-split', () => {
     const before1 = await pawnCentre(page, 'player0:1');
 
     // Select the 7 + both pawns, allocate 3/4, and play.
-    await page.getByTestId('card-7').dispatchEvent('click');
+    await handCard(page, 7).dispatchEvent('click');
     await clickPawn(page, 'player0:0');
     await clickPawn(page, 'player0:1');
     const box1 = page.locator('.pawn-steps__input').first();

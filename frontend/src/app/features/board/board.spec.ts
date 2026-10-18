@@ -317,4 +317,52 @@ describe('Board', () => {
       .sort();
     expect(shown).toEqual([1, 2]); // both visible — pile was cleared on the new deal
   });
+
+  // The pile only builds up from plays seen live, so a refresh showed it empty. The first push
+  // carries a hand, which reads as a round deal and clears the pile — the restore must survive it.
+  it('restores the pile from the played cards on the first push after a refresh', () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      cardTable: { pile: () => { suit: number; value: number }[] };
+    };
+
+    c.handleGameState({
+      playerCards: [{ uuid: 7, suit: 2, value: 4 }],
+      playedCards: ['0_5', '3_12'],
+      players: [],
+      pawns: [],
+      winners: [],
+    });
+
+    expect(c.cardTable.pile().map(({ suit, value }) => ({ suit, value }))).toEqual([
+      { suit: 0, value: 5 },
+      { suit: 3, value: 12 },
+    ]);
+  });
+
+  // Only the first push restores: after that the pile is built by the plays themselves, and a
+  // rebuild would swap the card that just flew there for a copy — or show it twice.
+  it('leaves the pile to the live plays after the first push', () => {
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      cardTable: {
+        pile: { (): { uuid: number }[]; update: (fn: (p: { uuid: number }[]) => unknown) => void };
+      };
+    };
+    const push = (playerCards: unknown[], playedCards: string[]) => ({
+      playerCards,
+      playedCards,
+      players: [],
+      pawns: [],
+      winners: [],
+    });
+    const played = { uuid: 8, suit: 2, value: 6 };
+
+    c.handleGameState(push([{ uuid: 7, suit: 2, value: 4 }, played], ['0_5']));
+    c.cardTable.pile.update((pile) => [...pile, played]); // the viewer's play lands on the pile
+    const pileAfterPlay = c.cardTable.pile();
+    c.handleGameState(push([{ uuid: 7, suit: 2, value: 4 }], ['0_5', '2_6']));
+
+    expect(c.cardTable.pile()).toBe(pileAfterPlay);
+  });
 });

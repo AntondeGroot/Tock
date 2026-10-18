@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setOnlyCard } from './support/seed';
-import { openBoard, handCards } from './support/steps';
+import { openBoard, handCard, handCards } from './support/steps';
 
 // Rewrite of CardAnimation_IT: a card selected without a pawn is an invalid move,
 // so it must not leave the hand. GWT let the click through and relied on the
@@ -14,7 +14,7 @@ test.describe('card animation (CardAnimation_IT)', () => {
     });
     await expect(handCards(page)).toHaveCount(1);
 
-    await page.getByTestId('card-5').dispatchEvent('click');
+    await handCard(page, 5).dispatchEvent('click');
 
     // No pawn → not a legal move → Play is disabled and the card is still there.
     await expect(page.locator('.send-button')).toBeDisabled();

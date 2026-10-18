@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setOnlyCard } from './support/seed';
-import { openBoard, clickPawn } from './support/steps';
+import { openBoard, clickPawn, handCard } from './support/steps';
 
 // The Keezen rule: with the `mustPlayIfPossible` game option on, if you have a
 // legal move you must play it — you cannot forfeit. So the Forfeit button is
@@ -22,7 +22,7 @@ test.describe('must-play rule — Forfeit gating', () => {
     await expect(page.locator('.forfeit-button')).toBeDisabled();
 
     // Selecting the Ace + a pawn makes the move legal → Play is enabled and green.
-    await page.getByTestId('card-1').dispatchEvent('click');
+    await handCard(page, 1).dispatchEvent('click');
     await clickPawn(page, 'player0:0');
 
     const play = page.locator('.send-button');

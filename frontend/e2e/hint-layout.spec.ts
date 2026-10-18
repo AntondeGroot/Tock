@@ -1,6 +1,7 @@
 import { test, expect, request, APIRequestContext } from '@playwright/test';
 import { API_URL } from '../playwright.config';
 import { createGame, setOnlyCard } from './support/seed';
+import { handCards } from './support/steps';
 
 // The special-card hint must be ENTIRELY visible and never collide with the
 // footer or the hand cards — for every language, every hint, on desktop AND
@@ -88,7 +89,7 @@ test.describe('special-card hint layout', () => {
           await page.waitForSelector('ct-card.card:not(.flyer)', { timeout: 30000 });
 
           // Select the only card so its hint is shown.
-          await page.locator('ct-card.card:not(.flyer):not(.face-down)').first().click();
+          await handCards(page).first().click();
           await expect(page.locator('.card-hint')).not.toHaveText('', { timeout: 5000 });
 
           const geo = await page.evaluate(() => {
@@ -99,9 +100,11 @@ test.describe('special-card hint layout', () => {
             return {
               hint: rect('.card-hint')!,
               footer: rect('footer, .footer-bar'),
-              cards: [...document.querySelectorAll('ct-card.card:not(.flyer):not(.face-down)')].map(
-                (c) => c.getBoundingClientRect().toJSON() as DOMRect,
-              ),
+              cards: [
+                ...document.querySelectorAll(
+                  'ct-card.card:not(.played):not(.flyer):not(.face-down)',
+                ),
+              ].map((c) => c.getBoundingClientRect().toJSON() as DOMRect),
               vw: window.innerWidth,
               vh: window.innerHeight,
             };
