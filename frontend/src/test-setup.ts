@@ -15,7 +15,8 @@ Object.defineProperties(HTMLMediaElement.prototype, {
 
 // jsdom has no matchMedia either, so any component that watches a layout breakpoint (the board
 // picks where to put the 7-split controls that way) would fail to construct. Report "no match" —
-// the desktop layout — and accept listeners, so specs render the same layout every run.
+// the desktop layout — and accept listeners, so specs render the same layout every run. The
+// deprecated addListener/removeListener are left out, hence the cast through unknown.
 if (!window.matchMedia) {
   window.matchMedia = (query: string): MediaQueryList =>
     ({
@@ -24,8 +25,6 @@ if (!window.matchMedia) {
       onchange: null,
       addEventListener: noop,
       removeEventListener: noop,
-      addListener: noop, // deprecated, but part of the interface
-      removeListener: noop,
       dispatchEvent: () => false,
-    }) as MediaQueryList;
+    }) as unknown as MediaQueryList;
 }
