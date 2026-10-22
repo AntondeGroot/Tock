@@ -47,7 +47,7 @@ export class OpponentFans {
     opponentsClockwise(g, Object.keys(counts), this.viewerId).forEach((playerId, i) => {
       const fan = this.fanOf(playerId);
       const dropped = fan.length - counts[playerId];
-      if (dropped === 1) this.playOutermost(fan, played.at(-1)!);
+      if (dropped === 1) this.playOutermost(fan, played.at(-1));
       else if (dropped > 1) this.discard(fan, played.slice(-dropped));
       else if (dropped < 0) this.fill(playerId, counts[playerId], firstPush ? null : i + 1);
     });
@@ -64,8 +64,13 @@ export class OpponentFans {
     else this.table.deal(fresh, { into: zone, delayMs: seat * SEAT_DEAL_MS });
   }
 
-  /** A play: the fan's outermost card goes to the pile, turning over to the face that was played. */
-  private playOutermost(fan: number[], played: string): void {
+  /**
+   * A play: the fan's outermost card goes to the pile, turning over to the face that was played.
+   * With no face listed — a reshuffle cleared the pile as the card was played — it stays in the
+   * fan: forgetting a card the table still draws would leave the fan one too many after the deal.
+   */
+  private playOutermost(fan: number[], played: string | undefined): void {
+    if (played === undefined) return;
     const uuid = fan.pop()!;
     this.table.place({ uuid, ...parseCard(played) }, PILE_ZONE);
   }

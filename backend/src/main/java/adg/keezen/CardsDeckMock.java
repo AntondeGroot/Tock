@@ -77,7 +77,7 @@ public class CardsDeckMock implements CardsDeckInterface {
 
   public void dealCards() {
     playedSinceDeal.clear();
-    hands.clearPile();
+    hands.clearPileOnNextPlay();
     hands.dropAllHands();
     for (Player player : gameState.getPlayers()) {
       if (PlayerHands.isDealtIn(player)) {

@@ -126,6 +126,45 @@ class PlayerHandsTest {
     assertTrue(hands.playedCards().isEmpty(), "pile cleared");
   }
 
+  // ── pile across a reshuffle ───────────────────────────────────────────────
+  // A reshuffle is dealt in the very request that plays the round's last card. The push it sends
+  // is how the other players learn which card that was, so the pile must still list it.
+  @Test
+  void clearPileOnNextPlay_keepsTheRoundsLastCardOnThePileForNow() {
+    Card last = card(7);
+    hands.giveCard("0", last);
+    hands.playFromHand("0", last);
+    hands.clearPileOnNextPlay();
+    assertEquals(List.of(last), hands.playedCards(), "the last card stays until the next play");
+  }
+
+  // The reshuffled round's pile starts afresh with its first card: what was played before the
+  // reshuffle went back into the deck.
+  @Test
+  void clearPileOnNextPlay_startsTheNewPileWithTheNextCardPlayed() {
+    Card last = card(7);
+    Card first = card(3);
+    hands.giveCard("0", last);
+    hands.playFromHand("0", last);
+    hands.clearPileOnNextPlay();
+    hands.giveCard("1", first);
+    hands.playFromHand("1", first);
+    assertEquals(List.of(first), hands.playedCards(), "only the new round's card is on the pile");
+  }
+
+  // A player may open the reshuffled round by forfeiting instead: their hand starts the new pile.
+  @Test
+  void clearPileOnNextPlay_startsTheNewPileWithAForfeitedHand() {
+    Card last = card(7);
+    hands.giveCard("0", last);
+    hands.playFromHand("0", last);
+    hands.clearPileOnNextPlay();
+    hands.giveCard("1", card(2));
+    hands.giveCard("1", card(9));
+    hands.forfeit("1");
+    assertEquals(List.of(card(2), card(9)), hands.playedCards(), "only the forfeited hand");
+  }
+
   // ── deal eligibility ──────────────────────────────────────────────────────
   @Test
   void isDealtIn_onlyForActiveUnplacedPlayers() {

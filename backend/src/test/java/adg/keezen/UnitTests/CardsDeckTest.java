@@ -222,7 +222,7 @@ class CardsDeckTest {
   }
 
   @Test
-  void PlayedCardsResetAfterThirdRound() {
+  void PlayedCardsResetOnTheFirstPlayAfterThirdRound() {
     createGame_With_NPlayers(gameState, 3);
     gameState.setPlayerIdTurn("0");
     for (int i = 0; i < 13; i++) {
@@ -230,7 +230,11 @@ class CardsDeckTest {
       sendValidMoveRequest(gameState, cardsDeck, "1");
       sendValidMoveRequest(gameState, cardsDeck, "2");
     }
-    assertEquals(0, cardsDeck.getPlayedCards().size());
+    // the reshuffle's push still shows the card that ended the round
+    assertEquals(3 * 5 + 3 * 4 + 3 * 4, cardsDeck.getPlayedCards().size());
+
+    sendValidMoveRequest(gameState, cardsDeck, "0");
+    assertEquals(1, cardsDeck.getPlayedCards().size());
 
     gameState.tearDown();
     cardsDeck.reset();
