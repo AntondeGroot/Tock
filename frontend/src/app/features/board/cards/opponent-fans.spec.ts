@@ -102,6 +102,22 @@ describe('OpponentFans', () => {
     expect(inFan('1')).toHaveLength(4);
   });
 
+  // A reshuffle clears the server's pile in the very request that plays the round's last card, so
+  // that push says the count dropped but lists no card to show. The card can't go to the pile
+  // without a face — but it must not be forgotten either: a fan that lost track of a card it
+  // still draws ends up one card too many once the next round is dealt into it.
+  it('keeps a played card in the fan when the push lists no card played, so the deal adds none extra', () => {
+    // GIVEN player 1 holding the round's last card
+    fans.reactToCounts({ '0': 0, '1': 1, '2': 0 }, ['0_5']);
+
+    // WHEN they play it as the pile is cleared, and the next round deals everyone five
+    fans.reactToCounts({ '0': 0, '1': 0, '2': 0 }, []);
+    fans.reactToCounts({ '0': 5, '1': 5, '2': 5 }, []);
+
+    // THEN their fan holds the five they were dealt, not six
+    expect(inFan('1')).toHaveLength(5);
+  });
+
   // A forfeit throws the whole hand onto the pile — seen as the count dropping by more than one,
   // with every discarded card added to the played list. Thrown all at once they would land as a
   // single card; they go one after another, 120ms apart, so the pile reads as a run of discards

@@ -16,6 +16,9 @@ class PlayerHands {
 
   private final HashMap<String, PlayerHand> hands = new HashMap<>();
   private final ArrayList<Card> playedCards = new ArrayList<>();
+  // Set by a reshuffle: the pile goes once the next card lands on it, not at once — the push of
+  // the request that reshuffled must still show the round's last card.
+  private boolean pileStale;
 
   /** True while the player is active and not yet placed (place &lt; 0 means no medal yet). */
   static boolean isDealtIn(Player player) {
@@ -63,18 +66,28 @@ class PlayerHands {
   /** Play a card: take it out of the player's hand and put it on the pile. */
   void playFromHand(String playerId, Card card) {
     handOf(playerId).remove(card);
-    playedCards.add(card);
+    pileUp(List.of(card));
   }
 
   /** Put a card on the pile without touching any hand (the mock's replay behaviour). */
   void discard(Card card) {
-    playedCards.add(card);
+    pileUp(List.of(card));
   }
 
   /** Move the player's whole hand to the pile — they're out of this round. */
   void forfeit(String playerId) {
-    playedCards.addAll(handOf(playerId));
+    pileUp(handOf(playerId));
     hands.get(playerId).dropCards();
+  }
+
+  // Every way onto the pile comes through here, so a reshuffled pile is cleared by whichever
+  // card lands on it first.
+  private void pileUp(List<Card> cards) {
+    if (pileStale) {
+      playedCards.clear();
+      pileStale = false;
+    }
+    playedCards.addAll(cards);
   }
 
   /**
@@ -104,8 +117,9 @@ class PlayerHands {
     }
   }
 
-  void clearPile() {
-    playedCards.clear();
+  /** A reshuffle: clear the pile once the next card is played onto it. */
+  void clearPileOnNextPlay() {
+    pileStale = true;
   }
 
   ArrayList<Card> playedCards() {
@@ -115,6 +129,7 @@ class PlayerHands {
   void reset() {
     hands.clear();
     playedCards.clear();
+    pileStale = false;
   }
 
   private ArrayList<Card> handOf(String playerId) {

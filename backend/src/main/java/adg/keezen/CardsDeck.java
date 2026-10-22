@@ -102,7 +102,9 @@ public class CardsDeck implements CardsDeckInterface {
     int nrCards = roundNr == 0 ? CARDS_DEALT_FIRST_ROUND : CARDS_DEALT_LATER_ROUNDS;
     playedSinceDeal.clear(); // fresh hands → everyone may trade again this round
     if (roundNr == 0) {
-      hands.clearPile(); // new round → reset the played-cards pile
+      // A reshuffle resets the pile — once the next card is played, so the push of this very
+      // request still shows the card that ended the round.
+      hands.clearPileOnNextPlay();
     }
 
     // Hands should already be empty here (a fresh round is only dealt once every player is
