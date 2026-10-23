@@ -18,6 +18,7 @@ import {
   TradeAction,
   TradeService,
 } from '../../api';
+import { finalize } from 'rxjs';
 import { buildBoard } from './geometry/board-geometry';
 import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
@@ -328,7 +329,13 @@ export class Board implements OnInit, OnDestroy {
     () => this.viewerId != null && this.state()?.currentPlayerId === this.viewerId,
   );
 
-  protected readonly canPlay = computed(() => this.isMyTurn() && this.selection.isComplete());
+  // Set while a play waits for the server's answer. A second click in that window used to send the
+  // same move again, and the two ran side by side on the server and broke the player's hand.
+  private readonly moveInFlight = signal(false);
+
+  protected readonly canPlay = computed(
+    () => this.isMyTurn() && this.selection.isComplete() && !this.moveInFlight(),
+  );
 
   // The backend allows a forfeit only when the player has no legal move; when they
   // do have one they must play it, so the Forfeit button is disabled. Defaults to
@@ -415,30 +422,34 @@ export class Board implements OnInit, OnDestroy {
   }
 
   private send(card: CardModel | undefined, move: MoveRequest): void {
-    if (!this.sessionId || !this.viewerId) return;
+    if (!this.sessionId || !this.viewerId || this.moveInFlight()) return;
+    this.moveInFlight.set(true);
     this.selection.clearPreview(); // stop the move preview while submitting
     const from = this.cardFly.handSlotOf(card); // the hand slot the card flies from, if accepted
-    this.movesService.makeMove(this.sessionId, this.viewerId, move).subscribe({
-      next: (response) => {
-        if (response.result === 'CAN_MAKE_MOVE') {
-          this.selection.reset(); // accepted → clear the selection
-          this.cardFly.ownPlay(from, card);
-        } else {
-          // Rejected by the rules (still a 200): explain why, and keep the
-          // selection so the player can adjust it.
-          this.rejection.show(
-            this.i18n.t(
-              rejectionMessageKey(response.rejectionReason),
-              response.rejectionDetail ?? '',
-            ),
-          );
-        }
-      },
-      error: () => {
-        // 400 — typically not your turn (or a stale double-submit).
-        this.rejection.show(this.i18n.t('moveRejectedNotYourTurn'));
-      },
-    });
+    this.movesService
+      .makeMove(this.sessionId, this.viewerId, move)
+      .pipe(finalize(() => this.moveInFlight.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response.result === 'CAN_MAKE_MOVE') {
+            this.selection.reset(); // accepted → clear the selection
+            this.cardFly.ownPlay(from, card);
+          } else {
+            // Rejected by the rules (still a 200): explain why, and keep the
+            // selection so the player can adjust it.
+            this.rejection.show(
+              this.i18n.t(
+                rejectionMessageKey(response.rejectionReason),
+                response.rejectionDetail ?? '',
+              ),
+            );
+          }
+        },
+        error: () => {
+          // 400 — typically not your turn (or a stale double-submit).
+          this.rejection.show(this.i18n.t('moveRejectedNotYourTurn'));
+        },
+      });
   }
 
   // Forfeit the turn (the amber forfeit button) — DELETE /cards/{session}/{player}.
