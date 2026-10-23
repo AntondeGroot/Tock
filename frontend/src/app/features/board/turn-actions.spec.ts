@@ -149,6 +149,18 @@ describe('Board turn actions', () => {
     expect(board.cardTable.flyers().map((f) => f.value)).toEqual([CARD.value]);
   });
 
+  // A quick second click on "play" used to send the same move again while the first was still on
+  // its way. On the server both ran at once and broke the player's hand for the rest of the game.
+  // While a play is waiting for its answer, further clicks send nothing.
+  it('sends a move only once when play is clicked again before the server answers', () => {
+    selectMoveWith();
+
+    board.playCard();
+    board.playCard();
+
+    expect(http.match(`/moves/${SESSION}/${VIEWER}`)).toHaveLength(1);
+  });
+
   // The server can refuse a move with a 200 and a reason (the rules said no, nothing went wrong).
   // That path must NOT behave like an accepted play: the card stays in the hand and the selection
   // survives, so the player can adjust it — only the explanation is new.
