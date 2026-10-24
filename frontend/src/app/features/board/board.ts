@@ -4,7 +4,9 @@ import {
   inject,
   computed,
   effect,
+  ElementRef,
   untracked,
+  viewChild,
   OnInit,
   OnDestroy,
 } from '@angular/core';
@@ -20,6 +22,7 @@ import {
 } from '../../api';
 import { finalize } from 'rxjs';
 import { buildBoard } from './geometry/board-geometry';
+import { measuredHeight } from './geometry/measured-height';
 import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
@@ -158,6 +161,13 @@ export class Board implements OnInit, OnDestroy {
       : [];
   });
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
+  /**
+   * The buttons + roster height. On a phone they sit below the hand, and the board is sized to
+   * leave them exactly that room (board.scss) — however many players, team lines or wrapped
+   * button labels there are — so it grows as large as it can without pushing them under the footer.
+   */
+  private readonly controls = viewChild<ElementRef<HTMLElement>>('controls');
+  protected readonly controlsHeight = measuredHeight(this.controls);
 
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).

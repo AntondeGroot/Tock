@@ -187,17 +187,14 @@
 // Sized as a fraction of the board so it scales; carries NO card value.
 // Button container — ported from the GWT .buttonContainer/.sendButton/.forfeitButton.
 // A dark gold-bordered panel beside the board with the play (send) + forfeit buttons.
-// Actions + roster. Mobile: two anchored halves on one row — the buttons keep their
-// width on the left, the roster fills the rest and runs out toward the right edge (so
-// player names get as much room as the screen allows). Desktop: a column pinned in the
-// right gutter (which has plenty of room), roster enlarged.
+// Actions + roster. Mobile: the buttons side by side in one row, the roster below them
+// across the full width (so player names get as much room as the screen allows).
+// Desktop: a column pinned in the right gutter (which has plenty of room), roster enlarged.
 .controls {
-  display: grid;
-  // buttons take their content width; the roster (minmax(0,…) so it may shrink, not
-  // overflow) fills from there out to the right padding below.
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  column-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box; // keep the padded row within the viewport
   margin-top: 8px;
@@ -222,6 +219,20 @@
     gap: 18px;
     z-index: 200;
   }
+}
+
+// The roster and, on a phone, the 7-split stacked in one grid cell: the split covers the roster
+// while it is open, and the cell keeps the taller one's height so nothing below shifts.
+.controls__roster-slot {
+  display: grid;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.controls__covered {
+  visibility: hidden;
 }
 
 .button-container {
@@ -335,28 +346,42 @@
 }
 
 // Narrow / short screens: the controls sit in flow below the hint, so reserve
-// extra height for them when sizing the board, and cap the buttons so long labels
-// ("Jouer la carte", "Karte spielen") wrap to two lines and the box stays narrow
-// enough to share the row with the roster in every language instead of pushing it
-// onto a second (overflowing) row. Placed last so it overrides the base button
-// rules above (notably the `font` shorthand, which would otherwise reset the size).
+// extra height for them when sizing the board. The buttons share one row, so long
+// labels ("Jouer la carte", "Karte spielen") wrap to two lines rather than pushing
+// the row off the screen. Placed last so it overrides the base button rules above
+// (notably the `font` shorthand, which would otherwise reset the size).
 @media (max-width: 699px) {
   .play {
-    --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 300px - var(--hint-row-h)) / 1.42));
+    // The height budget leaves room for the header, footer and margins (--phone-chrome-h), the
+    // hint row, and the buttons + roster below the hand, which the board measures (--controls-h):
+    // their height varies with player count, team lines and wrapped button labels, and the board
+    // takes everything that is left — never so much that the roster slides under the footer.
+    --phone-chrome-h: 150px;
+    --board-w: min(
+      600px,
+      calc(96vw / 1.24),
+      calc((100dvh - var(--phone-chrome-h) - var(--controls-h, 100px) - var(--hint-row-h)) / 1.42)
+    );
     // The footer is fixed over the bottom ~48px of the viewport. If content ever overflows and
     // the page scrolls, reserve that height plus the safe-area inset so the last controls row
     // clears the footer instead of hiding behind it.
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
+  // All buttons on one row, sharing it evenly.
   .button-container {
-    padding: 8px;
-    gap: 6px;
-    max-width: 148px;
+    flex-direction: row;
+    padding: 6px 8px;
+    gap: 8px;
+  }
+  .controls {
+    gap: 8px;
   }
   .send-button,
   .forfeit-button,
   .ask-trade-button {
+    flex: 1 1 0;
+    min-width: 0;
     font-size: 11pt;
     padding: 5px 10px;
     letter-spacing: 0.3px;

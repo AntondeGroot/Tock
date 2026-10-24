@@ -1,5 +1,9 @@
 @if (tiles().length) {
-  <div class="play" [class.play--no-hints]="!cardHints.visible()">
+  <div
+    class="play"
+    [class.play--no-hints]="!cardHints.visible()"
+    [style.--controls-h.px]="controlsHeight() || null"
+  >
     <div class="stage">
       <div class="board" [style.--cell]="cell() / 6">
         @for (t of tiles(); track t.playerId + ':' + t.tileNr) {
@@ -54,30 +58,16 @@
          A flow row centered below the hand; the cards stay absolutely positioned so
          a played card can still fly to the pile.
 
-         On a phone the 7-split takes this slot: a full-width band under the hand, rather than a
-         tall block under the buttons that ran off the bottom of the screen. The hint itself goes
-         quiet as soon as a second pawn is picked — by then you are plainly past needing it — but
-         the row keeps its height so nothing below shifts. A player who turned the hints off gets
-         no row at all, and the board takes its height. -->
-    @if (selection.splitVisible() && isPhone()) {
-      <app-split-steps
-        class="split-steps--inline"
-        [steps1]="selection.stepsPawn1()"
-        [steps2]="selection.stepsPawn2()"
-        [color1]="pawn1Highlight()"
-        [color2]="pawn2Highlight()"
-        [label1]="i18n.t('pawn1')"
-        [label2]="i18n.t('pawn2')"
-        (steps1Change)="selection.setStepsPawn1($event)"
-        (steps2Change)="selection.setStepsPawn2($event)"
-      />
-    } @else if (cardHints.visible()) {
+         The hint goes quiet as soon as a second pawn is picked — by then you are plainly past
+         needing it — but the row keeps its height so nothing below shifts. A player who turned the
+         hints off gets no row at all, and the board takes its height. -->
+    @if (cardHints.visible()) {
       <div class="card-hint">{{ selection.splitVisible() ? '' : hint() }}</div>
     }
 
-    <!-- Actions + roster. Desktop: a column pinned to the right gutter. Mobile: a
-         row directly below the hint. -->
-    <div class="controls">
+    <!-- Actions + roster. Desktop: a column pinned to the right gutter. Mobile: the buttons in one
+         row below the hint, the roster under them across the full width. -->
+    <div class="controls" #controls>
       <div class="button-container">
         <button class="send-button" [disabled]="!canPlay()" (click)="playCard()">
           {{ i18n.t('playCard') }}
@@ -92,7 +82,7 @@
         }
 
         <!-- 7-split: divide the 7 across the two selected pawns (sum stays 7). The phone
-             layout renders this under the hand instead (see the hint slot above). -->
+             layout puts this in the roster's place instead (see below). -->
         @if (selection.splitVisible() && !isPhone()) {
           <app-split-steps
             [steps1]="selection.stepsPawn1()"
@@ -107,7 +97,26 @@
         }
       </div>
 
-      <app-player-list />
+      <!-- On a phone the 7-split takes the roster's place while it is open: it is your turn, so
+           the roster has nothing to tell you then, and its space is right under the buttons. The
+           roster stays in the cell (only hidden), so the controls keep their height and nothing
+           below jumps when the split appears or goes. -->
+      <div class="controls__roster-slot">
+        <app-player-list [class.controls__covered]="selection.splitVisible() && isPhone()" />
+        @if (selection.splitVisible() && isPhone()) {
+          <app-split-steps
+            class="split-steps--inline"
+            [steps1]="selection.stepsPawn1()"
+            [steps2]="selection.stepsPawn2()"
+            [color1]="pawn1Highlight()"
+            [color2]="pawn2Highlight()"
+            [label1]="i18n.t('pawn1')"
+            [label2]="i18n.t('pawn2')"
+            (steps1Change)="selection.setStepsPawn1($event)"
+            (steps2Change)="selection.setStepsPawn2($event)"
+          />
+        }
+      </div>
     </div>
   </div>
 

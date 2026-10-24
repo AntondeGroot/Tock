@@ -191,9 +191,9 @@
   }
 }
 
-// Mobile: the roster fills its grid column (from the buttons out toward the right edge),
-// its chips laid out in a tidy 2-column grid that widens with the screen — so names get
-// as much room as there is. Even an 8-player game stays two columns (4 rows).
+// Mobile: the roster spans the full width below the buttons, its chips laid out in a tidy
+// 2-column grid that widens with the screen — so names get as much room as there is. Even
+// an 8-player game stays two columns (4 rows).
 @media (max-width: 699px) {
   :host {
     max-width: none;
@@ -204,18 +204,18 @@
     flex: 0 1 calc(50% - 3px);
     min-width: 0;
     box-sizing: border-box;
-    padding: 3px 7px 3px 3px;
-    gap: 5px;
+    padding: 2px 10px 2px 2px;
+    gap: 7px;
   }
   .chip__avatar {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
   .chip__initial {
-    font-size: 11px;
+    font-size: 12px;
   }
   .chip__name {
-    font-size: 11px;
+    font-size: 13px;
   }
   // Team membership is already spelled out in the summary lines above, and the current
   // player is shown by the gold chip highlight — so drop these inline badges on mobile
