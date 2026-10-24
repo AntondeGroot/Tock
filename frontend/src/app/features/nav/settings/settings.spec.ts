@@ -85,4 +85,25 @@ describe('Settings', () => {
     expect(hints.visible()).toBe(true);
     expect(hintSwitch.getAttribute('aria-checked')).toBe('true');
   });
+
+  // The colour screen lives inside the settings dialog. "Done" is the one way out a player needs:
+  // it closes everything, back to the game. And whoever opens Settings next — maybe for the volume —
+  // must find the settings themselves, not the colour screen they last left.
+  it('opens the pawn colours from "Change", closes on "Done", and reopens on the settings', () => {
+    const click = (selector: string) => {
+      element().querySelector<HTMLButtonElement>(selector)!.click();
+      fixture.detectChanges();
+    };
+
+    openSettings();
+    click('.settings-change');
+    expect(element().querySelector('app-pawn-colors')).not.toBeNull();
+
+    click('.colors-done');
+    expect(element().querySelector('.settings-dialog')).toBeNull();
+
+    openSettings();
+    expect(element().querySelector('app-pawn-colors')).toBeNull();
+    expect(element().querySelector('app-volume-slider')).not.toBeNull();
+  });
 });

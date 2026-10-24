@@ -1,0 +1,153 @@
+:host {
+  display: block;
+}
+
+.colors-title {
+  display: block;
+  margin: 0 0 6px;
+  font:
+    700 1.4em 'Cinzel',
+    Georgia,
+    serif;
+  letter-spacing: 0.05em;
+  color: #f4d03f;
+}
+
+.colors-howto {
+  margin: 0 0 16px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #e8d5a0;
+}
+
+.colors-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+// The pawns: big tap targets in a column, the selected one framed in gold with an arrow pointing
+// at the wheel it will be painted from. All of them stay in view — a pawn hidden below a scroll
+// edge is a pawn some players never find — so more than four players take two columns.
+.colors-pawns {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 84px;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+
+  &--two-columns {
+    grid-template-columns: repeat(2, 84px);
+    column-gap: 18px;
+
+    // From the left column the arrow would point at a neighbour, not the wheel: with two columns
+    // the gold frame alone marks the selected pawn.
+    .colors-pawn--selected::after {
+      content: none;
+    }
+  }
+}
+
+.colors-pawn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 84px;
+  padding: 6px 4px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+
+  &--selected {
+    border-color: #f4d03f;
+    background: rgba(244, 208, 63, 0.14);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -14px;
+      transform: translateY(-50%);
+      border: 9px solid transparent;
+      border-left: 10px solid #f4d03f;
+    }
+  }
+}
+
+.colors-pawn__figure {
+  width: 52px;
+  height: 60px;
+}
+
+.colors-pawn__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #e8d5a0;
+}
+
+.colors-wheel {
+  flex: 1 1 auto;
+  max-width: 280px;
+  margin: 4px auto 0;
+}
+
+// A phone has no room for two pawn columns beside a wheel worth tapping: there the wheel goes on
+// top, as big as before, with the pawns in rows of four below it.
+@media (max-width: 699px) {
+  .colors-body--many {
+    flex-direction: column;
+    align-items: stretch;
+
+    .colors-wheel {
+      order: -1;
+      width: 100%;
+      max-width: 240px;
+    }
+
+    .colors-pawns {
+      grid-template-columns: repeat(4, 1fr);
+      padding: 4px;
+    }
+
+    .colors-pawn {
+      width: auto;
+    }
+  }
+}
+
+.colors-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.colors-reset,
+.colors-done {
+  width: 100%;
+  padding: 12px 14px;
+  font:
+    600 12pt 'Cinzel',
+    Georgia,
+    serif;
+  letter-spacing: 0.5px;
+  border: 2px solid #c9a227;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.colors-reset {
+  color: #e7ddb8;
+  background: linear-gradient(145deg, #3a2000, #251400);
+}
+
+.colors-done {
+  color: #251400;
+  background: linear-gradient(145deg, #f4d03f, #c9a227);
+}

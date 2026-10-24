@@ -28,3 +28,11 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }) as unknown as MediaQueryList;
 }
+
+// jsdom has no canvas either: getContext() logs "Not implemented" and returns null. Return null
+// quietly instead, as a browser without 2D canvas would — the colour wheel then skips painting,
+// while its picking (which only reads the pointer position) still works under test.
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  configurable: true,
+  value: () => null,
+});

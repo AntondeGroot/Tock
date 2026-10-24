@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+// Round, as big as its box allows, ringed in the game's gold. touch-action: none keeps a drag on
+// the wheel picking colours instead of scrolling the dialog.
+.wheel {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px #c9a227,
+    0 4px 14px rgba(0, 0, 0, 0.6);
+  cursor: crosshair;
+  touch-action: none;
+}
