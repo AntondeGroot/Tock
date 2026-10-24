@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Board } from './board';
 import { Translations } from '../../i18n/translations.service';
+import { CardHints } from '../card-hints/card-hints.service';
 import { provideApi, GameStatePush, Card as CardModel, Pawn as ApiPawn } from '../../api';
 
 // Ports of the frontend-only parts of Board_IT and MobileLocale_IT (bucket C).
@@ -82,5 +83,22 @@ describe('Board rendering (Board_IT / MobileLocale_IT)', () => {
     TestBed.inject(Translations).setLanguage('nl');
     fixture.detectChanges();
     expect(playButtonText()).toBe('Kaart spelen');
+  });
+
+  // A player who knows the rules turns the hints off to win room for the board. The hint row must
+  // then be gone altogether — not just empty, it would still take its height — and the play area
+  // flagged so its size budget hands that height to the board (jsdom has no layout to measure it).
+  it('drops the hint row and gives its room to the board when hints are turned off', () => {
+    onTestFinished(() => {
+      document.cookie = 'cardHints=; path=/; max-age=0';
+      document.cookie = 'cardHintsDecided=; path=/; max-age=0';
+    });
+    expect(q('.card-hint')).toBe(1);
+
+    TestBed.inject(CardHints).setVisible(false);
+    fixture.detectChanges();
+
+    expect(q('.card-hint')).toBe(0);
+    expect(q('.play.play--no-hints')).toBe(1);
   });
 });

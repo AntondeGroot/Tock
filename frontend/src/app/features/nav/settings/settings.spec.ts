@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Settings } from './settings';
+import { CardHints } from '../../card-hints/card-hints.service';
 
 describe('Settings', () => {
   let fixture: ComponentFixture<Settings>;
@@ -58,5 +59,30 @@ describe('Settings', () => {
 
     closeWith(() => element().querySelector<HTMLButtonElement>('.settings-close')!.click());
     expect(isOpen()).toBe(false);
+  });
+
+  // The switch is how a player turns the hints off (or back on) for good. It has to show the
+  // current state — a screen reader reads aria-checked — and a tap flips the real setting.
+  it('shows whether card hints are on, and a tap turns them off and on again', () => {
+    onTestFinished(() => {
+      document.cookie = 'cardHints=; path=/; max-age=0';
+      document.cookie = 'cardHintsDecided=; path=/; max-age=0';
+    });
+    const hints = TestBed.inject(CardHints);
+    openSettings();
+    const hintSwitch = element().querySelector<HTMLButtonElement>('.settings-switch')!;
+    const tap = () => {
+      hintSwitch.click();
+      fixture.detectChanges();
+    };
+    expect(hintSwitch.getAttribute('aria-checked')).toBe('true');
+
+    tap();
+    expect(hints.visible()).toBe(false);
+    expect(hintSwitch.getAttribute('aria-checked')).toBe('false');
+
+    tap();
+    expect(hints.visible()).toBe(true);
+    expect(hintSwitch.getAttribute('aria-checked')).toBe('true');
   });
 });

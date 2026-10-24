@@ -41,6 +41,12 @@ export const fr: Dictionary = {
   settingsVolume: 'Volume',
   settingsLanguage: 'Langue',
   settingsClose: 'Fermer',
+  settingsCardHints: 'Astuces des cartes',
+  hintsQuestion: 'As-tu encore besoin des astuces des cartes ?',
+  hintsQuestionDetail:
+    'Sans elles, le plateau est plus grand. Tu peux les réactiver dans les Paramètres.',
+  hintsKeep: 'Oui, les garder',
+  hintsHide: 'Non, les masquer',
   moveRejectedTitle: 'Ce coup est impossible',
   moveRejectedGeneric: "Ce coup n'est pas autorisé.",
   moveRejectedNotYourTurn: "Ce n'est pas votre tour (ou le coup a déjà été joué).",

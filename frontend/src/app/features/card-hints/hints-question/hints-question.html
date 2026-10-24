@@ -1,0 +1,16 @@
+@if (asking()) {
+  <div class="hints-overlay">
+    <div class="hints-dialog" role="dialog" aria-modal="true">
+      <p class="hints-dialog__q">{{ i18n.t('hintsQuestion') }}</p>
+      <p class="hints-dialog__detail">{{ i18n.t('hintsQuestionDetail') }}</p>
+      <div class="hints-dialog__actions">
+        <button class="hints-dialog__keep" (click)="answer(true)">
+          {{ i18n.t('hintsKeep') }}
+        </button>
+        <button class="hints-dialog__hide" (click)="answer(false)">
+          {{ i18n.t('hintsHide') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

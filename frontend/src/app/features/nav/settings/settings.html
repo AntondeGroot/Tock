@@ -44,6 +44,18 @@
         <span class="settings-row-label">{{ i18n.t('settingsLanguage') }}</span>
         <app-language-selector />
       </div>
+      <div class="settings-row">
+        <span class="settings-row-label">{{ i18n.t('settingsCardHints') }}</span>
+        <button
+          class="settings-switch"
+          role="switch"
+          [attr.aria-checked]="hints.visible()"
+          [attr.aria-label]="i18n.t('settingsCardHints')"
+          (click)="hints.setVisible(!hints.visible())"
+        >
+          <span class="settings-switch__knob"></span>
+        </button>
+      </div>
 
       <button class="settings-close" (click)="open.set(false)">
         {{ i18n.t('settingsClose') }}
