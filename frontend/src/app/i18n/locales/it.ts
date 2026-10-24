@@ -36,6 +36,11 @@ export const it: Dictionary = {
     'Se la tua pedina urta una casella di partenza bloccata o la fine del tuo arrivo, torna indietro dei passi rimanenti.',
   rulesExactMoves:
     'Questa partita richiede mosse esatte: una pedina non può tornare indietro davanti a una casella di partenza bloccata o alla fine del tuo arrivo — una mossa che lo richiederebbe non è consentita.',
+  settingsButton: 'Impostazioni',
+  settingsTitle: 'Impostazioni',
+  settingsVolume: 'Volume',
+  settingsLanguage: 'Lingua',
+  settingsClose: 'Chiudi',
   moveRejectedTitle: 'Non puoi fare questa mossa',
   moveRejectedGeneric: 'Questa mossa non è consentita.',
   moveRejectedNotYourTurn: 'Non è il tuo turno (oppure la mossa è già stata giocata).',

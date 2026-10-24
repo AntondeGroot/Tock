@@ -35,6 +35,11 @@ export const nl: Dictionary = {
     'Loop je tegen een geblokkeerd startveld of het einde van je finish aan, dan keert je pion om en loopt hij de resterende stappen terug.',
   rulesExactMoves:
     'In dit spel zijn exacte zetten vereist: een pion mag niet omkeren bij een geblokkeerd startveld of het einde van je finish — een zet waarbij dat zou moeten, is niet toegestaan.',
+  settingsButton: 'Instellingen',
+  settingsTitle: 'Instellingen',
+  settingsVolume: 'Volume',
+  settingsLanguage: 'Taal',
+  settingsClose: 'Sluiten',
   moveRejectedTitle: 'Deze zet kan niet',
   moveRejectedGeneric: 'Deze zet is niet toegestaan.',
   moveRejectedNotYourTurn: 'Je bent niet aan de beurt (of deze zet is al gedaan).',

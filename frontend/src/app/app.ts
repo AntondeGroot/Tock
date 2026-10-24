@@ -1,7 +1,6 @@
 import { Component, effect, inject } from '@angular/core';
 import { Board } from './features/board/board';
-import { LanguageSelector } from './features/nav/language-selector/language-selector';
-import { VolumeSlider } from './features/nav/volume-slider/volume-slider';
+import { Settings } from './features/nav/settings/settings';
 import { GameRules } from './features/nav/game-rules/game-rules';
 import { LeaveGame } from './features/nav/leave-game/leave-game';
 import { MoveRejected } from './features/board/feedback/move-rejected/move-rejected';
@@ -15,9 +14,8 @@ import { basePath } from './base-path';
   selector: 'app-root',
   imports: [
     Board,
-    LanguageSelector,
-    VolumeSlider,
     GameRules,
+    Settings,
     LeaveGame,
     MoveRejected,
     TeamHandoffPopup,

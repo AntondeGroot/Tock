@@ -36,6 +36,11 @@ export const en: Dictionary = {
     'Run into a blocked start tile or the end of your finish, and your pawn turns around and walks its remaining steps back.',
   rulesExactMoves:
     'This game requires exact moves: a pawn may not turn around at a blocked start tile or the end of your finish — a move that would have to is not allowed.',
+  settingsButton: 'Settings',
+  settingsTitle: 'Settings',
+  settingsVolume: 'Volume',
+  settingsLanguage: 'Language',
+  settingsClose: 'Close',
   moveRejectedTitle: "You can't make that move",
   moveRejectedGeneric: "That move isn't allowed.",
   moveRejectedNotYourTurn: "It's not your turn (or that move was already played).",
