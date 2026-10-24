@@ -26,7 +26,7 @@
 }
 
 // Matching wooden strip pinned to the bottom (ported from the GWT footer). On
-// mobile it also carries the Rules + Language controls (Option D).
+// mobile it also carries the Rules button (Option D).
 .footer-bar {
   position: fixed;
   bottom: 0;
@@ -41,7 +41,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-// Rules + language. Desktop: hoisted out of the footer to the fixed top-right
+// Rules + settings. Desktop: hoisted out of the footer to the fixed top-right
 // (ported .top-nav-panel), so the footer stays a thin empty strip.
 .footer-nav {
   position: fixed;
@@ -54,14 +54,14 @@
 }
 
 @media (max-width: 699px) {
-  // A smaller title that clears the fixed exit icon on the left.
+  // A smaller title that clears the fixed exit icon on the left and the settings cog on the right.
   .title-bar {
     font-size: 1.5em;
     letter-spacing: 3px;
     padding: 14px 54px 12px;
   }
 
-  // The footer grows to hold the Rules + Language controls, centered.
+  // The footer grows to hold the Rules button, centered.
   .footer-bar {
     height: auto;
     min-height: 48px;

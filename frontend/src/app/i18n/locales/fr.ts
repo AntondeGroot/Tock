@@ -36,6 +36,11 @@ export const fr: Dictionary = {
     'Si votre pion bute contre une case de départ bloquée ou le bout de votre arrivée, il fait demi-tour et recule des pas restants.',
   rulesExactMoves:
     "Cette partie exige des coups exacts : un pion ne peut pas faire demi-tour devant une case de départ bloquée ou au bout de votre arrivée — un coup qui l'exigerait est refusé.",
+  settingsButton: 'Paramètres',
+  settingsTitle: 'Paramètres',
+  settingsVolume: 'Volume',
+  settingsLanguage: 'Langue',
+  settingsClose: 'Fermer',
   moveRejectedTitle: 'Ce coup est impossible',
   moveRejectedGeneric: "Ce coup n'est pas autorisé.",
   moveRejectedNotYourTurn: "Ce n'est pas votre tour (ou le coup a déjà été joué).",

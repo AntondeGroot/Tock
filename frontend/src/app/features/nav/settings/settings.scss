@@ -1,0 +1,148 @@
+// Same gold-on-dark-wood plaque as the rules button; on mobile a compact cog icon, fixed in the
+// title bar's top-right corner as the counterpart of the red exit icon on the left.
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+
+.settingsButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font:
+    600 13pt 'Cinzel',
+    Georgia,
+    serif;
+  color: #f4d03f;
+  background: linear-gradient(145deg, #3a2000, #251400);
+  border: 1px solid #c9a227;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  outline: none;
+  transition: background 0.15s ease;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: linear-gradient(145deg, #4a2800, #341a00);
+      border-color: #e0b830;
+    }
+  }
+}
+
+.settings-icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+@media (max-width: 699px) {
+  .settingsButton {
+    position: fixed;
+    top: 12px;
+    right: 10px;
+    z-index: 200;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 9px;
+    gap: 0;
+  }
+  .settings-icon {
+    width: 22px;
+    height: 22px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  }
+  .settings-btn-label {
+    display: none;
+  }
+}
+
+/* ── Settings dialog ─────────────────────────────────────────────────── */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  animation: settings-fade 0.15s ease;
+}
+@keyframes settings-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 22px 18px;
+  border-radius: 10px;
+  border: 2px solid #c9a227;
+  background: linear-gradient(160deg, #1a0d00 0%, #0d0800 100%);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(201, 162, 39, 0.2);
+  cursor: default;
+}
+
+.settings-title {
+  display: block;
+  margin: 0 0 18px;
+  font:
+    700 1.4em 'Cinzel',
+    Georgia,
+    serif;
+  letter-spacing: 0.05em;
+  color: #f4d03f;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.settings-row-label {
+  font:
+    700 0.95em 'Cinzel',
+    Georgia,
+    serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+
+.settings-close {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 14px;
+  font:
+    600 11pt 'Cinzel',
+    Georgia,
+    serif;
+  letter-spacing: 0.5px;
+  color: #e7ddb8;
+  background: linear-gradient(145deg, #3a2000, #251400);
+  border: 2px solid #c9a227;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-overlay {
+    animation: none;
+  }
+}

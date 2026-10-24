@@ -2,9 +2,10 @@ import { test, expect, request } from '@playwright/test';
 import { API_URL } from '../playwright.config';
 import { createGame } from './support/seed';
 
-// Option D mobile header: the title bar carries just the title + a red exit icon
-// (Leave), and the footer bar holds Rules + Language. Nothing may collide or run
-// off-screen in any language, and the Leave confirm dialog must fit on screen.
+// Option D mobile header: the title bar carries the title between a red exit icon
+// (Leave, left) and the settings cog (right), and the footer bar holds Rules.
+// Nothing may collide or run off-screen in any language, and the Leave confirm
+// dialog must fit on screen.
 
 const LANGS = ['en', 'nl', 'de', 'fr', 'nb', 'it'];
 
@@ -39,6 +40,7 @@ test.describe('mobile header (Option D)', () => {
           );
         return {
           leave: rj('.leaveGameButton'),
+          settings: rj('.settingsButton'),
           footer: rj('.footer-bar'),
           nav: rj('.footer-nav'),
           navChildren: rects('.footer-nav > *'),
@@ -53,7 +55,14 @@ test.describe('mobile header (Option D)', () => {
       expect(g.leave!.top).toBeGreaterThanOrEqual(-T);
       expect(g.leave!.right, 'exit icon should stay left of centre').toBeLessThanOrEqual(g.vw / 2);
 
-      // Rules + Language live inside the footer, fully on screen, in every language.
+      // Settings: the cog mirrors the exit icon — top-right, on screen, right of centre, and up in
+      // the title bar rather than down in the footer with the rules.
+      expect(g.settings!.top).toBeGreaterThanOrEqual(-T);
+      expect(g.settings!.right).toBeLessThanOrEqual(g.vw + T);
+      expect(g.settings!.left, 'cog should stay right of centre').toBeGreaterThanOrEqual(g.vw / 2);
+      expect(g.settings!.bottom).toBeLessThan(g.footer!.top);
+
+      // Rules (and the settings host) live inside the footer, fully on screen, in every language.
       expect(g.nav!.left).toBeGreaterThanOrEqual(-T);
       expect(g.nav!.right).toBeLessThanOrEqual(g.vw + T);
       expect(g.nav!.top).toBeGreaterThanOrEqual(g.footer!.top - T);
@@ -93,7 +102,7 @@ test.describe('mobile header (Option D)', () => {
     });
   }
 
-  test('desktop keeps Leave top-left and Rules/Language top-right', async ({ browser }) => {
+  test('desktop keeps Leave top-left and Rules/Settings top-right', async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     await ctx.addCookies([{ name: 'playerid', value: 'player0', url: 'http://localhost:4300' }]);
     const page = await ctx.newPage();

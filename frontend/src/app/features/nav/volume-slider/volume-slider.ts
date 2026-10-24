@@ -2,9 +2,9 @@ import { Component, computed, inject } from '@angular/core';
 import { SoundService } from '../../../sound.service';
 
 /**
- * A brass fader in a wooden pill — the game's master-volume control, next to the rules and
- * language selector. The speaker glyph (which toggles mute) grows sound-waves as the volume
- * rises; the carved groove fills with gold up to the thumb.
+ * A brass fader in a wooden pill — the game's master-volume control, in the settings dialog.
+ * The speaker glyph (which toggles mute) grows sound-waves as the volume rises; the carved groove
+ * fills with gold up to the thumb.
  */
 @Component({
   selector: 'app-volume-slider',

@@ -35,6 +35,11 @@ export const nb: Dictionary = {
     'Støter brikken din mot en sperret startrute eller enden av målet ditt, snur den og går de resterende stegene tilbake.',
   rulesExactMoves:
     'Dette spillet krever nøyaktige trekk: en brikke kan ikke snu ved en sperret startrute eller enden av målet ditt — et trekk som ville kreve det, er ikke tillatt.',
+  settingsButton: 'Innstillinger',
+  settingsTitle: 'Innstillinger',
+  settingsVolume: 'Volum',
+  settingsLanguage: 'Språk',
+  settingsClose: 'Lukk',
   moveRejectedTitle: 'Du kan ikke gjøre det trekket',
   moveRejectedGeneric: 'Det trekket er ikke tillatt.',
   moveRejectedNotYourTurn: 'Det er ikke din tur (eller trekket er allerede spilt).',

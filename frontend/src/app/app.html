@@ -13,12 +13,12 @@
      footer (matching the GWT layout). -->
 <app-chat />
 
-<!-- Rules + language. Desktop: hoisted to the fixed top-right nav. Mobile: they
-     sit in the footer bar (Option D), out of the title's way. -->
+<!-- Rules + settings (volume, language). Desktop: hoisted to the fixed top-right nav.
+     Mobile: the rules sit in the footer bar (Option D), and the settings cog pins itself to the
+     title bar's top-right corner, opposite the exit icon. -->
 <footer class="footer-bar">
   <div class="footer-nav">
-    <app-volume-slider />
     <app-game-rules />
-    <app-language-selector />
+    <app-settings />
   </div>
 </footer>

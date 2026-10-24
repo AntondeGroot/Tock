@@ -153,17 +153,6 @@
   border-radius: 999px;
 }
 
-// On mobile the fader shares the footer bar with Rules + Language, so keep it compact.
-@media (max-width: 699px) {
-  .vol {
-    gap: 6px;
-    padding: 4px 10px 4px 6px;
-  }
-  .vol__range {
-    width: 56px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .wave,
   .mute-x,
