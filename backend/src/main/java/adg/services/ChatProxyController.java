@@ -1,5 +1,6 @@
 package adg.services;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -38,12 +39,14 @@ public class ChatProxyController {
   private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
   /**
-   * Interrupts open proxy streams when the app is undeployed: inside the shared Tomcat the JVM
-   * outlives the app, and a thread still blocked on the chat server would pin the old classes.
+   * Interrupts open proxy streams and closes the HTTP client when the app is undeployed: inside the
+   * shared Tomcat the JVM outlives the app, and a thread still blocked on the chat server — or the
+   * client's own selector thread — would pin the old classes, so every redeploy left another copy.
    */
   @PreDestroy
   void shutdown() {
     streamExecutor.shutdownNow();
+    httpClient.close();
   }
 
   @GetMapping(value = "/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -68,8 +71,9 @@ public class ChatProxyController {
         StringBuilder data = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {
-          if (line.startsWith("data: ")) {
-            data.append(line.substring(6));
+          String payload = dataOf(line);
+          if (payload != null) {
+            data.append(payload);
           } else if (line.isBlank() && !data.isEmpty()) {
             emitter.send(SseEmitter.event().data(data.toString(), MediaType.APPLICATION_JSON));
             data.setLength(0);
@@ -78,8 +82,26 @@ public class ChatProxyController {
       }
       emitter.complete();
     } catch (Exception e) {
-      emitter.completeWithError(e);
+      // Cut off by shutdown(): the app is going away along with the request, so there is no one
+      // left to tell — Tomcat refuses the error dispatch and logs a stack trace instead.
+      if (!streamExecutor.isShutdown()) {
+        emitter.completeWithError(e);
+      }
     }
+  }
+
+  /**
+   * The payload of an SSE {@code data:} line, or null for any other line. The space after the colon
+   * is optional in SSE, and the chat server (Spring's SseEmitter) leaves it out — requiring it
+   * dropped every message, so the chat never appeared.
+   */
+  @Nullable
+  static String dataOf(String line) {
+    if (!line.startsWith("data:")) {
+      return null;
+    }
+    String value = line.substring("data:".length());
+    return value.startsWith(" ") ? value.substring(1) : value;
   }
 
   @GetMapping("/{sessionId}")
