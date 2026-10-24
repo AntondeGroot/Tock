@@ -17,6 +17,8 @@
 //   • HEIGHT: the board + top strip (12%) + hand strip (30%) + chrome (header +
 //     hint + footer ≈ 230px) ≤ viewport height. Factor 1.42. On mobile the
 //     controls sit in flow below the hint, so more height is reserved there.
+//     A player who turned the hints off has no hint row, so its height
+//     (--hint-row-h) goes to the board instead.
 .play {
   position: relative;
   display: flex;
@@ -25,7 +27,8 @@
 
   // Height budget uses dvh (the *visible* viewport) so the board fits between the mobile
   // browser's top/bottom chrome instead of being sized to the full screen.
-  --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 230px) / 1.42));
+  --hint-row-h: calc(0.4rem + 2.6em); // .card-hint's margin-top + min-height
+  --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 182px - var(--hint-row-h)) / 1.42));
   --ct-hand-top: calc(0.12 * var(--board-w));
 }
 
@@ -315,6 +318,10 @@
 // under the cards without any board-% positioning. min-height reserves two lines
 // so showing/clearing the hint doesn't shift the footer. Ported from GWT
 // .cardHintLabel.
+.play--no-hints {
+  --hint-row-h: 0px;
+}
+
 .card-hint {
   max-width: min(600px, 92vmin);
   margin: 0.4rem auto 0;
@@ -335,7 +342,7 @@
 // rules above (notably the `font` shorthand, which would otherwise reset the size).
 @media (max-width: 699px) {
   .play {
-    --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 348px) / 1.42));
+    --board-w: min(600px, calc(96vw / 1.24), calc((100dvh - 300px - var(--hint-row-h)) / 1.42));
     // The footer is fixed over the bottom ~48px of the viewport. If content ever overflows and
     // the page scrolls, reserve that height plus the safe-area inset so the last controls row
     // clears the footer instead of hiding behind it.

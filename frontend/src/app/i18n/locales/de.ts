@@ -40,6 +40,12 @@ export const de: Dictionary = {
   settingsVolume: 'Lautstärke',
   settingsLanguage: 'Sprache',
   settingsClose: 'Schließen',
+  settingsCardHints: 'Kartentipps',
+  hintsQuestion: 'Brauchst du die Kartentipps noch?',
+  hintsQuestionDetail:
+    'Ohne Tipps wird das Spielbrett größer. Du kannst sie in den Einstellungen wieder einschalten.',
+  hintsKeep: 'Ja, behalten',
+  hintsHide: 'Nein, ausblenden',
   moveRejectedTitle: 'Dieser Zug ist nicht möglich',
   moveRejectedGeneric: 'Dieser Zug ist nicht erlaubt.',
   moveRejectedNotYourTurn: 'Du bist nicht an der Reihe (oder der Zug wurde bereits gespielt).',

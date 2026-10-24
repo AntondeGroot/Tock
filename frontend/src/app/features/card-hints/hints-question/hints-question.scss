@@ -1,0 +1,96 @@
+// Same themed dialog as "Leave game?". No backdrop-to-close: the question wants an answer, and
+// either button is one tap.
+.hints-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: hints-fade 0.15s ease;
+}
+@keyframes hints-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hints-dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 20px 18px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid #c9a227;
+  background: linear-gradient(160deg, #3a2410, #241206);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+
+  &__q {
+    margin: 0 0 10px;
+    font:
+      600 13pt 'Cinzel',
+      Georgia,
+      serif;
+    line-height: 1.4;
+    color: #f4d03f;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  &__detail {
+    margin: 0 0 18px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #e8d5a0;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  &__keep,
+  &__hide {
+    flex: 1 1 0;
+    max-width: 160px;
+    font:
+      600 11pt 'Cinzel',
+      Georgia,
+      serif;
+    letter-spacing: 0.5px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 2px solid #c9a227;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  &__keep {
+    color: #e7ddb8;
+    background: linear-gradient(145deg, #3a2000, #251400);
+  }
+  &__hide {
+    color: #251400;
+    background: linear-gradient(145deg, #f4d03f, #c9a227);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    &__keep:hover,
+    &__hide:hover {
+      transform: translateY(-1px);
+    }
+  }
+  &__keep:active,
+  &__hide:active {
+    transform: translateY(1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hints-overlay {
+    animation: none;
+  }
+}

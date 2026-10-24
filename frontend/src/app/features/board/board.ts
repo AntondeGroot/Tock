@@ -43,6 +43,7 @@ import { pawnKey } from './pawn/pawn-key';
 import { hintKeyFor, isSpecialCard } from './cards/special-cards';
 import { Translations } from '../../i18n/translations.service';
 import { GameStore } from '../../game-store';
+import { CardHints } from '../card-hints/card-hints.service';
 import { MoveRejection } from './feedback/move-rejected/move-rejection.service';
 import { TeamHandoff } from '../team-handoff/team-handoff.service';
 import { localRejectionKey, rejectionMessageKey } from './feedback/rejection-message';
@@ -125,6 +126,7 @@ export class Board implements OnInit, OnDestroy {
   private readonly cardsService = inject(CardsService);
   private readonly tradeService = inject(TradeService);
   protected readonly i18n = inject(Translations);
+  protected readonly cardHints = inject(CardHints);
   private readonly rejection = inject(MoveRejection);
   private readonly teamHandoff = inject(TeamHandoff);
   private readonly sound = inject(SoundService);

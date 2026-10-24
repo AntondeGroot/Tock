@@ -40,6 +40,12 @@ export const nl: Dictionary = {
   settingsVolume: 'Volume',
   settingsLanguage: 'Taal',
   settingsClose: 'Sluiten',
+  settingsCardHints: 'Kaarttips',
+  hintsQuestion: 'Heb je de kaarttips nog nodig?',
+  hintsQuestionDetail:
+    'Zonder tips wordt het bord groter. Je kunt ze weer aanzetten bij Instellingen.',
+  hintsKeep: 'Ja, laat staan',
+  hintsHide: 'Nee, verbergen',
   moveRejectedTitle: 'Deze zet kan niet',
   moveRejectedGeneric: 'Deze zet is niet toegestaan.',
   moveRejectedNotYourTurn: 'Je bent niet aan de beurt (of deze zet is al gedaan).',
