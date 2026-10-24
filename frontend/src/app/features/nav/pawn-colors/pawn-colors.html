@@ -1,0 +1,27 @@
+<span class="colors-title">{{ i18n.t('settingsPawnColors') }}</span>
+<p class="colors-howto">{{ i18n.t('colorsHowTo') }}</p>
+
+<div class="colors-body" [class.colors-body--many]="twoColumns()">
+  <div class="colors-pawns" [class.colors-pawns--two-columns]="twoColumns()">
+    @for (seat of seats(); track seat.playerInt) {
+      <button
+        class="colors-pawn"
+        [class.colors-pawn--selected]="seat.playerInt === selectedSeat()"
+        [attr.aria-pressed]="seat.playerInt === selectedSeat()"
+        (click)="select(seat.playerInt)"
+      >
+        <app-pawn class="colors-pawn__figure" [color]="seatColor(seat.playerInt)" />
+        <span class="colors-pawn__name">{{ seat.name }}</span>
+      </button>
+    }
+  </div>
+
+  <app-color-wheel class="colors-wheel" (picked)="paint($event)" />
+</div>
+
+<div class="colors-actions">
+  @if (hasChosenColors()) {
+    <button class="colors-reset" (click)="resetColors()">{{ i18n.t('colorsReset') }}</button>
+  }
+  <button class="colors-done" (click)="done.emit()">{{ i18n.t('colorsDone') }}</button>
+</div>

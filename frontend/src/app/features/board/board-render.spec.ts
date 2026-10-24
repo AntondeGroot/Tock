@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Board } from './board';
 import { Translations } from '../../i18n/translations.service';
 import { CardHints } from '../card-hints/card-hints.service';
+import { chooseSeatColor, resetSeatColors } from '../../player-colors';
 import { provideApi, GameStatePush, Card as CardModel, Pawn as ApiPawn } from '../../api';
 
 // Ports of the frontend-only parts of Board_IT and MobileLocale_IT (bucket C).
@@ -100,5 +101,25 @@ describe('Board rendering (Board_IT / MobileLocale_IT)', () => {
 
     expect(q('.card-hint')).toBe(0);
     expect(q('.play.play--no-hints')).toBe(1);
+  });
+
+  // A colour picked in Settings must show on the board at once — the player is looking at it to see
+  // whether the new colour is easier to tell apart. Nothing new comes from the server for that, so
+  // the board has to follow the pick by itself.
+  it('repaints the pawns of a seat as soon as its colour is changed', () => {
+    onTestFinished(() => {
+      resetSeatColors();
+      document.cookie = 'pawnColors=; path=/; max-age=0';
+    });
+    const pawnColorsOf = (playerId: string): string[] =>
+      [...fixture.nativeElement.querySelectorAll(`app-pawn[data-testid^="pawn-${playerId}:"]`)].map(
+        (pawn: HTMLElement) => pawn.style.getPropertyValue('--pawn-color'),
+      );
+
+    chooseSeatColor(1, '#ff00aa');
+    fixture.detectChanges();
+
+    expect(pawnColorsOf('1')).toEqual(Array(4).fill('#ff00aa'));
+    expect(pawnColorsOf('0')).toEqual(Array(4).fill('#A52A2A')); // the other seats are untouched
   });
 });

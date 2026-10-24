@@ -1,0 +1,8 @@
+<canvas
+  #wheel
+  class="wheel"
+  (pointerdown)="press($event)"
+  (pointermove)="drag($event)"
+  (pointerup)="release()"
+  (pointercancel)="release()"
+></canvas>

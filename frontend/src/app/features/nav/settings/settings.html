@@ -1,8 +1,4 @@
-<button
-  class="settingsButton"
-  (click)="open.set(true)"
-  [attr.aria-label]="i18n.t('settingsButton')"
->
+<button class="settingsButton" (click)="show()" [attr.aria-label]="i18n.t('settingsButton')">
   <svg
     class="settings-icon"
     viewBox="0 0 24 24"
@@ -25,41 +21,52 @@
   <div
     class="settings-overlay"
     tabindex="0"
-    (click)="$event.target === $event.currentTarget && open.set(false)"
-    (keydown.escape)="open.set(false)"
+    (click)="$event.target === $event.currentTarget && close()"
+    (keydown.escape)="close()"
   >
     <div
       class="settings-dialog"
+      [class.settings-dialog--wide]="page() === 'colors'"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="i18n.t('settingsTitle')"
     >
-      <span class="settings-title">{{ i18n.t('settingsTitle') }}</span>
+      @if (page() === 'colors') {
+        <app-pawn-colors (done)="close()" />
+      } @else {
+        <span class="settings-title">{{ i18n.t('settingsTitle') }}</span>
 
-      <div class="settings-row">
-        <span class="settings-row-label">{{ i18n.t('settingsVolume') }}</span>
-        <app-volume-slider />
-      </div>
-      <div class="settings-row">
-        <span class="settings-row-label">{{ i18n.t('settingsLanguage') }}</span>
-        <app-language-selector />
-      </div>
-      <div class="settings-row">
-        <span class="settings-row-label">{{ i18n.t('settingsCardHints') }}</span>
-        <button
-          class="settings-switch"
-          role="switch"
-          [attr.aria-checked]="hints.visible()"
-          [attr.aria-label]="i18n.t('settingsCardHints')"
-          (click)="hints.setVisible(!hints.visible())"
-        >
-          <span class="settings-switch__knob"></span>
+        <div class="settings-row">
+          <span class="settings-row-label">{{ i18n.t('settingsVolume') }}</span>
+          <app-volume-slider />
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">{{ i18n.t('settingsLanguage') }}</span>
+          <app-language-selector />
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">{{ i18n.t('settingsCardHints') }}</span>
+          <button
+            class="settings-switch"
+            role="switch"
+            [attr.aria-checked]="hints.visible()"
+            [attr.aria-label]="i18n.t('settingsCardHints')"
+            (click)="hints.setVisible(!hints.visible())"
+          >
+            <span class="settings-switch__knob"></span>
+          </button>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">{{ i18n.t('settingsPawnColors') }}</span>
+          <button class="settings-change" (click)="page.set('colors')">
+            {{ i18n.t('settingsChange') }}
+          </button>
+        </div>
+
+        <button class="settings-close" (click)="close()">
+          {{ i18n.t('settingsClose') }}
         </button>
-      </div>
-
-      <button class="settings-close" (click)="open.set(false)">
-        {{ i18n.t('settingsClose') }}
-      </button>
+      }
     </div>
   </div>
 }
