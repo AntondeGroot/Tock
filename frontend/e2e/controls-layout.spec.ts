@@ -106,8 +106,8 @@ test.describe('controls + roster placement', () => {
   }
 
   // Selecting a 7 with two pawns reveals the split step boxes. Where they belong depends on the
-  // layout: tucked inside the button box on desktop, but a band under the hand on a phone —
-  // stacked under the buttons they made that column so tall the last row fell off the screen.
+  // layout: tucked inside the button box on desktop, but on a phone in the roster's place right
+  // under the buttons — it is your turn, so the roster has nothing to tell you then.
   for (const vp of VIEWPORTS) {
     for (const lang of LANGS) {
       test(`${vp.name} · ${lang} · 7-split step boxes`, async ({ browser }) => {
@@ -141,6 +141,8 @@ test.describe('controls + roster placement', () => {
           return {
             box: rj('.button-container'),
             controls: rj('.controls'),
+            roster: rj('app-player-list'),
+            rosterHidden: getComputedStyle(document.querySelector('app-player-list')!).visibility,
             split: rj('.pawn-steps'),
             nestedInButtonBox: document.querySelectorAll('.button-container .pawn-steps').length,
             splitParts: [
@@ -168,8 +170,8 @@ test.describe('controls + roster placement', () => {
             );
           }
         } else {
-          // The phone lifts it out into a full-width band above the controls. The rule that
-          // matters there is that all of it is on screen — it used to run off the bottom.
+          // The phone puts it where the roster was: below the buttons, the roster hidden under it.
+          // All of it on screen — it once ran off the bottom.
           expect(g.nestedInButtonBox, 'the phone must not nest the split in the button box').toBe(
             0,
           );
@@ -178,9 +180,13 @@ test.describe('controls + roster placement', () => {
             expect(el.right, 'split control off screen (right)').toBeLessThanOrEqual(g.vw + T);
             expect(el.bottom, 'split control off screen (bottom)').toBeLessThanOrEqual(g.vh + T);
           }
-          expect(g.split!.bottom, 'the split band sits above the controls row').toBeLessThanOrEqual(
-            g.controls!.top + T,
+          expect(g.split!.top, 'the split sits below the buttons').toBeGreaterThanOrEqual(
+            g.box!.bottom - T,
           );
+          expect(g.split!.top, "the split takes the roster's place").toBeGreaterThanOrEqual(
+            g.roster!.top - T,
+          );
+          expect(g.rosterHidden, 'the roster is hidden under the split').toBe('hidden');
         }
         // Controls and every chip stay on screen.
         expect(g.controls!.left).toBeGreaterThanOrEqual(-T);

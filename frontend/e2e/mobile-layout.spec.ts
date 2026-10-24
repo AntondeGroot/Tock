@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
+import { API_URL } from '../playwright.config';
+import { createGame } from './support/seed';
 import { openBoard } from './support/steps';
 
 // Rewrite of MobileLayoutCheck_IT: on the mobile layout the board, the roster and
@@ -49,5 +51,58 @@ test.describe('mobile layout (MobileLayoutCheck_IT)', () => {
 
       await page.context().close();
     });
+  }
+});
+
+// On a phone the roster spans the screen below the buttons, so a big game takes real height — and
+// the footer bar is fixed over the bottom of the screen. The board sizes itself to leave the
+// controls exactly the room they measure; if it took more, the last players would slide under the
+// footer. "On screen" alone doesn't catch that: the footer covers part of the screen.
+const ROSTERS = [
+  { label: '2 players', players: 2 },
+  { label: '8 players', players: 8 },
+  { label: '6 players in teams', players: 6, gameOptions: { teamPlay: true } }, // + team lines
+];
+const PHONES = [
+  { label: 'short phone', width: 375, height: 667 }, // where the board is height-limited
+  { label: 'tall phone', width: 390, height: 844 },
+];
+
+test.describe('phone roster clears the footer', () => {
+  for (const roster of ROSTERS) {
+    for (const phone of PHONES) {
+      for (const hints of ['on', 'off']) {
+        test(`${roster.label} · ${phone.label} · hints ${hints}`, async ({ browser }) => {
+          const api = await request.newContext({ baseURL: API_URL });
+          const { sessionId } = await createGame(api, roster.players, roster.gameOptions);
+          await api.dispose();
+          const ctx = await browser.newContext({ viewport: phone });
+          await ctx.addCookies([
+            { name: 'playerid', value: 'player0', url: 'http://localhost:4300' },
+            { name: 'cardHints', value: hints === 'on' ? '1' : '0', url: 'http://localhost:4300' },
+          ]);
+          const page = await ctx.newPage();
+          await page.goto(`/?sessionid=${sessionId}&playerid=player0`);
+          await expect(page.locator('.chip')).toHaveCount(roster.players);
+
+          const g = await page.evaluate(() => ({
+            lastChipBottom: Math.max(
+              ...[...document.querySelectorAll('.chip')].map(
+                (c) => c.getBoundingClientRect().bottom,
+              ),
+            ),
+            footerTop: document.querySelector('.footer-bar')!.getBoundingClientRect().top,
+            board: document.querySelector('.board')!.getBoundingClientRect(),
+          }));
+
+          expect(g.lastChipBottom, 'the last players slide under the footer').toBeLessThanOrEqual(
+            g.footerTop,
+          );
+          expect(g.board.width, 'the board shrank to nothing').toBeGreaterThan(150);
+
+          await ctx.close();
+        });
+      }
+    }
   }
 });
