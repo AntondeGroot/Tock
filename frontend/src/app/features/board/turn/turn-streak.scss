@@ -1,0 +1,94 @@
+// Covers the board exactly, in the board's own 0..600 units; the streak lies just outside the
+// tiles, so let it paint past the box. Never in the way of a click.
+:host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.turn-streak {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+line {
+  stroke-linecap: round;
+}
+
+.edge {
+  animation: edge-in 0.45s ease both;
+}
+
+.edge--leaving {
+  animation: edge-out 0.45s ease both;
+}
+
+@keyframes edge-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes edge-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.glow {
+  opacity: 0.9;
+}
+
+// A short bright dash travelling along the line (pathLength = 100, so one cycle is 18 + 132).
+.shine {
+  opacity: 0.85;
+  stroke-dasharray: 18 132;
+  animation: shine 2.4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    stroke-dashoffset: -150;
+  }
+}
+
+// The flare stretches along the edge (x) and only a little across it (y). Drawn in the edge's
+// frame, so this holds for diagonal seats too.
+.flare {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flare 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes flare {
+  0% {
+    opacity: 0;
+    transform: scale(0.15, 0.8);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.12, 1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge,
+  .edge--leaving {
+    animation-duration: 0.01s;
+  }
+
+  .shine,
+  .flare {
+    animation: none;
+  }
+
+  .shine {
+    display: none;
+  }
+}

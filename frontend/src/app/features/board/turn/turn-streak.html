@@ -1,0 +1,108 @@
+<svg class="turn-streak" [attr.viewBox]="viewBox" aria-hidden="true">
+  <defs>
+    <!-- A fixed user-space region: a bounding-box region has no height on a straight line, which
+         would clip the glow away. -->
+    <filter
+      id="turn-streak-glow"
+      filterUnits="userSpaceOnUse"
+      x="-1000"
+      y="-1000"
+      width="3000"
+      height="3000"
+    >
+      <feGaussianBlur stdDeviation="5" />
+    </filter>
+    <!-- All gradients run along the edge's own x axis (see TurnEdge), centred on its middle. -->
+    <linearGradient
+      id="turn-streak-line"
+      gradientUnits="userSpaceOnUse"
+      [attr.x1]="-half()"
+      y1="0"
+      [attr.x2]="half()"
+      y2="0"
+    >
+      <stop offset="0" stop-color="#f4d03f" stop-opacity="0" />
+      <stop offset="0.22" stop-color="#f4d03f" />
+      <stop offset="0.78" stop-color="#f4d03f" />
+      <stop offset="1" stop-color="#f4d03f" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient
+      id="turn-streak-glow-fill"
+      gradientUnits="userSpaceOnUse"
+      [attr.x1]="-glowHalf()"
+      y1="0"
+      [attr.x2]="glowHalf()"
+      y2="0"
+    >
+      <stop offset="0" stop-color="#f4d03f" stop-opacity="0" />
+      <stop offset="0.1" stop-color="#f4d03f" />
+      <stop offset="0.9" stop-color="#f4d03f" />
+      <stop offset="1" stop-color="#f4d03f" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient
+      id="turn-streak-white"
+      gradientUnits="userSpaceOnUse"
+      [attr.x1]="-half()"
+      y1="0"
+      [attr.x2]="half()"
+      y2="0"
+    >
+      <stop offset="0" stop-color="#fffbe8" stop-opacity="0" />
+      <stop offset="0.22" stop-color="#fffbe8" />
+      <stop offset="0.78" stop-color="#fffbe8" />
+      <stop offset="1" stop-color="#fffbe8" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  @for (e of edges(); track e.playerId) {
+    <g class="edge" animate.leave="edge--leaving" [attr.transform]="transformOf(e)">
+      <!-- The steady streak: a soft glow, the line itself, and a shimmer running along it. -->
+      <line
+        class="glow"
+        [attr.x1]="-glowHalf()"
+        [attr.x2]="glowHalf()"
+        stroke="url(#turn-streak-glow-fill)"
+        stroke-width="14"
+        filter="url(#turn-streak-glow)"
+      />
+      <line
+        [attr.x1]="-half()"
+        [attr.x2]="half()"
+        stroke="url(#turn-streak-line)"
+        stroke-width="4"
+      />
+      <line
+        class="shine"
+        [attr.x1]="-half()"
+        [attr.x2]="half()"
+        stroke="url(#turn-streak-white)"
+        stroke-width="3"
+        pathLength="100"
+      />
+
+      <!-- The flare: plays once as this edge appears, bursting out from its middle. -->
+      <g class="flare">
+        <line
+          [attr.x1]="-glowHalf()"
+          [attr.x2]="glowHalf()"
+          stroke="url(#turn-streak-glow-fill)"
+          stroke-width="20"
+          filter="url(#turn-streak-glow)"
+        />
+        <line
+          [attr.x1]="-half()"
+          [attr.x2]="half()"
+          stroke="url(#turn-streak-white)"
+          stroke-width="6"
+          filter="url(#turn-streak-glow)"
+        />
+        <line
+          [attr.x1]="-half()"
+          [attr.x2]="half()"
+          stroke="url(#turn-streak-white)"
+          stroke-width="4"
+        />
+      </g>
+    </g>
+  }
+</svg>
