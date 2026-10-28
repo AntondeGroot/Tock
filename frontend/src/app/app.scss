@@ -25,8 +25,8 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
 
-// Matching wooden strip pinned to the bottom (ported from the GWT footer). On
-// mobile it also carries the Rules button (Option D).
+// Matching wooden strip pinned to the bottom (ported from the GWT footer). Desktop only: on
+// mobile its buttons move up into the title bar and the strip goes, freeing its height.
 .footer-bar {
   position: fixed;
   bottom: 0;
@@ -54,24 +54,24 @@
 }
 
 @media (max-width: 699px) {
-  // A smaller title that clears the fixed exit icon on the left and the settings cog on the right.
+  // A smaller title, centred on the screen: the same padding on both sides, wide enough to clear
+  // the rules + settings icons on the right (two 40px icons with an 8px gap, 10px from the edge)
+  // and so also the single exit icon on the left.
+  //
+  // On the narrowest phones the longest name ("Jeu de Toc", ~6.1px of glyph per px of font plus
+  // 30px of letter-spacing) would wrap between the paddings, so the font shrinks just enough to
+  // keep it on one line: (100vw − 2 × 104px padding − 30px spacing) / 6.1. From ~390px wide up,
+  // the title keeps its full 1.5em.
   .title-bar {
-    font-size: 1.5em;
+    font-size: min(1.5em, calc((100vw - 240px) / 6.1));
     letter-spacing: 3px;
-    padding: 14px 54px 12px;
+    padding: 14px 104px 12px;
   }
 
-  // The footer grows to hold the Rules button, centered.
-  .footer-bar {
-    height: auto;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 10px;
-  }
+  // No footer strip: the rules and settings buttons pin themselves to the title bar (see their
+  // own styles), so the footer and its nav only pass them through.
+  .footer-bar,
   .footer-nav {
-    position: static;
-    gap: 8px;
+    display: contents;
   }
 }

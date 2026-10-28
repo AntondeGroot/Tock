@@ -54,10 +54,10 @@ test.describe('mobile layout (MobileLayoutCheck_IT)', () => {
   }
 });
 
-// On a phone the roster spans the screen below the buttons, so a big game takes real height — and
-// the footer bar is fixed over the bottom of the screen. The board sizes itself to leave the
-// controls exactly the room they measure; if it took more, the last players would slide under the
-// footer. "On screen" alone doesn't catch that: the footer covers part of the screen.
+// On a phone the roster spans the screen below the buttons, so a big game takes real height. The
+// board sizes itself to leave the controls exactly the room they measure; if it took more, the
+// last players would be pushed off the bottom of the screen. (Phones have no footer bar: the board
+// takes that height too, so the room left is tighter.)
 const ROSTERS = [
   { label: '2 players', players: 2 },
   { label: '8 players', players: 8 },
@@ -68,7 +68,7 @@ const PHONES = [
   { label: 'tall phone', width: 390, height: 844 },
 ];
 
-test.describe('phone roster clears the footer', () => {
+test.describe('phone roster stays on screen', () => {
   for (const roster of ROSTERS) {
     for (const phone of PHONES) {
       for (const hints of ['on', 'off']) {
@@ -91,13 +91,14 @@ test.describe('phone roster clears the footer', () => {
                 (c) => c.getBoundingClientRect().bottom,
               ),
             ),
-            footerTop: document.querySelector('.footer-bar')!.getBoundingClientRect().top,
+            screenBottom: window.innerHeight,
             board: document.querySelector('.board')!.getBoundingClientRect(),
           }));
 
-          expect(g.lastChipBottom, 'the last players slide under the footer').toBeLessThanOrEqual(
-            g.footerTop,
-          );
+          expect(
+            g.lastChipBottom,
+            'the last players are pushed off the bottom of the screen',
+          ).toBeLessThanOrEqual(g.screenBottom);
           expect(g.board.width, 'the board shrank to nothing').toBeGreaterThan(150);
 
           await ctx.close();
