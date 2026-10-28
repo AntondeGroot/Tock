@@ -1,45 +1,51 @@
 @if (chips().length) {
   <aside class="roster" aria-label="Players">
     @if (teams().length) {
+      <!-- Team game: a "Teams" heading, then one row per team outlined in its colour. -->
+      <span class="roster__heading">{{ i18n.t('rosterTeams') }}</span>
       <div class="roster__teams">
-        @for (t of teams(); track t.team) {
-          <span class="team-line" [attr.data-team]="t.team">
-            <span class="team-line__lbl">Team {{ t.team }}:</span>
-            <span class="team-line__who">{{ t.names.join(' & ') }}</span>
-          </span>
+        @for (t of teams(); track t.colorKey) {
+          <div class="team" role="group" [attr.data-team]="t.colorKey">
+            @for (c of t.members; track c.id) {
+              <ng-container
+                [ngTemplateOutlet]="chip"
+                [ngTemplateOutletContext]="{ $implicit: c }"
+              />
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="roster__chips">
+        @for (c of chips(); track c.id) {
+          <ng-container [ngTemplateOutlet]="chip" [ngTemplateOutletContext]="{ $implicit: c }" />
         }
       </div>
     }
-
-    <div class="roster__chips">
-      @for (c of chips(); track c.id) {
-        <div
-          class="chip"
-          [attr.data-testid]="'chip-' + c.id"
-          [class.chip--turn]="c.isPlaying"
-          [class.chip--inactive]="!c.isActive"
-          [style.--player-color]="c.color"
-        >
-          <span class="chip__avatar" aria-hidden="true">
-            <span class="chip__initial">{{ c.initial }}</span>
-            @if (c.avatar) {
-              <img class="chip__pic" [src]="c.avatar" alt="" (error)="onAvatarError($event)" />
-            }
-          </span>
-
-          <span class="chip__name">{{ c.name }}</span>
-
-          @if (c.team) {
-            <span class="tag" [attr.data-team]="c.team">{{ c.team }}</span>
-          }
-
-          @if (c.medal) {
-            <span class="chip__medal">{{ c.medal }}</span>
-          } @else if (c.isPlaying) {
-            <span class="chip__dot" aria-label="Their turn"></span>
-          }
-        </div>
-      }
-    </div>
   </aside>
 }
+
+<ng-template #chip let-c>
+  <div
+    class="chip"
+    [attr.data-testid]="'chip-' + c.id"
+    [class.chip--turn]="c.isPlaying"
+    [class.chip--inactive]="!c.isActive"
+    [style.--player-color]="c.color"
+  >
+    <span class="chip__avatar" aria-hidden="true">
+      <span class="chip__initial">{{ c.initial }}</span>
+      @if (c.avatar) {
+        <img class="chip__pic" [src]="c.avatar" alt="" (error)="onAvatarError($event)" />
+      }
+    </span>
+
+    <span class="chip__name">{{ c.name }}</span>
+
+    @if (c.medal) {
+      <span class="chip__medal">{{ c.medal }}</span>
+    } @else if (c.isPlaying) {
+      <span class="chip__dot" aria-label="Their turn"></span>
+    }
+  </div>
+</ng-template>

@@ -69,18 +69,18 @@ describe('PlayerList (scoreboard)', () => {
     expect(chips()[0].classList.contains('chip--inactive')).toBe(true);
   });
 
-  it('solo game: no team tags and no team summary', () => {
+  it('solo game: no "Teams" heading and no team rows', () => {
     store.players.set([
       player({ id: 'a', name: 'alice', playerInt: 0 }),
       player({ id: 'b', name: 'bob', playerInt: 1 }),
     ]);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.tag')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.roster__heading')).toBeNull();
     expect(fixture.nativeElement.querySelector('.roster__teams')).toBeNull();
   });
 
-  it('team game: tags every chip and lists the partnerships', () => {
+  it('team game: one row per team under a "Teams" heading, partners side by side', () => {
     store.players.set([
       player({ id: 'a', name: 'Aria', playerInt: 0, teamId: 0 }),
       player({ id: 'b', name: 'Bram', playerInt: 1, teamId: 1 }),
@@ -89,17 +89,19 @@ describe('PlayerList (scoreboard)', () => {
     ]);
     fixture.detectChanges();
 
-    // tags follow turn order: A B A B
-    expect(chips().map((c) => c.querySelector('.tag')?.textContent)).toEqual(['A', 'B', 'A', 'B']);
-
-    const lines = Array.from(fixture.nativeElement.querySelectorAll('.team-line')) as HTMLElement[];
-    expect(lines.length).toBe(2);
-    const line = (el: HTMLElement) => ({
-      lbl: el.querySelector('.team-line__lbl')!.textContent!.trim(),
-      who: el.querySelector('.team-line__who')!.textContent!.trim(),
+    const heading = fixture.nativeElement.querySelector('.roster__heading') as HTMLElement;
+    expect(heading.textContent!.trim()).toBe('Teams');
+    const rows = Array.from(fixture.nativeElement.querySelectorAll('.team')) as HTMLElement[];
+    const row = (el: HTMLElement) => ({
+      colour: el.dataset['team'],
+      members: Array.from(el.querySelectorAll('.chip__name')).map((n) => n.textContent!.trim()),
     });
-    expect(line(lines[0])).toEqual({ lbl: 'Team A:', who: 'Aria & Cato' });
-    expect(line(lines[1])).toEqual({ lbl: 'Team B:', who: 'Bram & Dex' });
+    // No "Team A" label anywhere: the team is told apart by its outline colour alone.
+    expect(rows.map(row)).toEqual([
+      { colour: 'A', members: ['Aria', 'Cato'] },
+      { colour: 'B', members: ['Bram', 'Dex'] },
+    ]);
+    expect(fixture.nativeElement.textContent).not.toContain('Team A');
   });
 
   // A widened two-player board seats empty placeholders between the players to stretch the track.

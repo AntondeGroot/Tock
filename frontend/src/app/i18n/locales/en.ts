@@ -28,6 +28,7 @@ export const en: Dictionary = {
   rulesGettingOnBoard: 'Getting on the board',
   rulesSpecialCards: 'Special Cards',
   rulesClickToClose: 'Click anywhere to close',
+  rosterTeams: 'Teams',
   rulesMoving: 'Moving on the board',
   rulesStartBlocks:
     'A pawn on its own start tile blocks the road: no pawn can pass it — not even another pawn of the same player.',

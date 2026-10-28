@@ -27,6 +27,7 @@ export const nb: Dictionary = {
   rulesGettingOnBoard: 'Komme på brettet',
   rulesSpecialCards: 'Spesialkort',
   rulesClickToClose: 'Klikk hvor som helst for å lukke',
+  rosterTeams: 'Lag',
   rulesMoving: 'Flytte på brettet',
   rulesStartBlocks:
     'En brikke på sin egen startrute sperrer veien: ingen brikke kan passere den — heller ikke en annen brikke fra samme spiller.',
