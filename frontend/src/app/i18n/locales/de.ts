@@ -27,6 +27,7 @@ export const de: Dictionary = {
   rulesGettingOnBoard: 'Auf das Spielfeld kommen',
   rulesSpecialCards: 'Sonderkarten',
   rulesClickToClose: 'Klicke irgendwo zum Schließen',
+  rosterTeams: 'Teams',
   rulesMoving: 'Auf dem Spielfeld ziehen',
   rulesStartBlocks:
     'Eine Figur auf ihrem eigenen Startfeld blockiert den Weg: keine Figur kann an ihr vorbeiziehen — auch keine andere Figur desselben Spielers.',

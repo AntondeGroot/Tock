@@ -27,6 +27,7 @@ export const nl: Dictionary = {
   rulesGettingOnBoard: 'Op het bord komen',
   rulesSpecialCards: 'Speciale kaarten',
   rulesClickToClose: 'Klik ergens om te sluiten',
+  rosterTeams: 'Teams',
   rulesMoving: 'Over het bord bewegen',
   rulesStartBlocks:
     'Een pion op zijn eigen startveld blokkeert de weg: geen enkele pion kan erlangs — ook geen andere pion van dezelfde speler.',

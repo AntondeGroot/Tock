@@ -28,6 +28,7 @@ export const it: Dictionary = {
   rulesGettingOnBoard: 'Entrare sul tabellone',
   rulesSpecialCards: 'Carte speciali',
   rulesClickToClose: 'Clicca ovunque per chiudere',
+  rosterTeams: 'Squadre',
   rulesMoving: 'Muoversi sul tabellone',
   rulesStartBlocks:
     "Una pedina sulla propria casella di partenza blocca la strada: nessuna pedina può superarla — nemmeno un'altra pedina dello stesso giocatore.",

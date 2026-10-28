@@ -14,37 +14,53 @@
   --team-d: #ee7ab6; // pink
 }
 
-/* ── Team summary lines (only in team games) ─────────────────────────── */
+/* ── Team game: a "Teams" heading, then one row per team, outlined in the team colour ── */
+.roster__heading {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ded4ad;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
 .roster__teams {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-bottom: 9px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  gap: 6px;
 }
-.team-line {
-  font-size: 12.5px;
-  line-height: 1.4;
+.team {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  border: 2px solid var(--team-color);
+  border-radius: 999px;
+  background: rgba(6, 18, 11, 0.55);
 }
-.team-line__lbl {
-  font-weight: 800;
-  letter-spacing: 0.03em;
+.team[data-team='A'] {
+  --team-color: var(--team-a);
 }
-.team-line[data-team='A'] .team-line__lbl {
-  color: var(--team-a);
+.team[data-team='B'] {
+  --team-color: var(--team-b);
 }
-.team-line[data-team='B'] .team-line__lbl {
-  color: var(--team-b);
+.team[data-team='C'] {
+  --team-color: var(--team-c);
 }
-.team-line[data-team='C'] .team-line__lbl {
-  color: var(--team-c);
+.team[data-team='D'] {
+  --team-color: var(--team-d);
 }
-.team-line[data-team='D'] .team-line__lbl {
-  color: var(--team-d);
+// The team outline already frames its players: their chips drop their own border and shadow,
+// except for the gold turn highlight.
+.team .chip {
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  border-color: transparent;
+  box-shadow: none;
 }
-.team-line__who {
-  margin-left: 5px;
-  color: #ded4ad;
+.team .chip--turn {
+  border-color: #f4d03f;
 }
 
 /* ── Chips in turn order. Mobile: a compact grid that wraps beside the buttons
@@ -110,30 +126,6 @@
   text-overflow: ellipsis;
 }
 
-.tag {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 5px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #14251b;
-}
-.tag[data-team='A'] {
-  background: var(--team-a);
-}
-.tag[data-team='B'] {
-  background: var(--team-b);
-}
-.tag[data-team='C'] {
-  background: var(--team-c);
-}
-.tag[data-team='D'] {
-  background: var(--team-d);
-}
-
 .chip__medal {
   flex: 0 0 auto;
   font-size: 15px;
@@ -193,7 +185,7 @@
 
 // Mobile: the roster spans the full width below the buttons, its chips laid out in a tidy
 // 2-column grid that widens with the screen — so names get as much room as there is. Even
-// an 8-player game stays two columns (4 rows).
+// an 8-player game stays two columns (4 rows). A team row holds its members side by side.
 @media (max-width: 699px) {
   :host {
     max-width: none;
@@ -217,10 +209,8 @@
   .chip__name {
     font-size: 13px;
   }
-  // Team membership is already spelled out in the summary lines above, and the current
-  // player is shown by the gold chip highlight — so drop these inline badges on mobile
-  // to give the name the full chip width.
-  .tag,
+  // The current player is shown by the gold chip highlight — so drop the dot on mobile to give
+  // the name the full chip width.
   .chip__dot {
     display: none;
   }
@@ -246,7 +236,15 @@
   .chip__name {
     font-size: 14px;
   }
-  .team-line {
+  // In the narrow right column a team's members stack inside its outline.
+  .team {
+    flex-direction: column;
+    border-radius: 24px;
+  }
+  .team .chip {
+    flex: 0 0 auto;
+  }
+  .roster__heading {
     font-size: 13.5px;
   }
 }

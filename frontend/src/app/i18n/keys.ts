@@ -38,6 +38,7 @@ export type TranslationKey =
   | 'rulesGettingOnBoard'
   | 'rulesSpecialCards'
   | 'rulesClickToClose'
+  | 'rosterTeams'
   | 'rulesMoving'
   | 'rulesStartBlocks'
   | 'rulesFinishNoPassing'
