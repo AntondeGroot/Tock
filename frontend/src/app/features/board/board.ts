@@ -23,6 +23,8 @@ import {
 import { finalize } from 'rxjs';
 import { buildBoard } from './geometry/board-geometry';
 import { measuredHeight } from './geometry/measured-height';
+import { TurnStreak } from './turn/turn-streak';
+import { turnEdge } from './turn/turn-edge';
 import { resolveGameSession } from '../../session';
 import { basePath } from '../../base-path';
 import { SoundService } from '../../sound.service';
@@ -57,7 +59,7 @@ import { parseCard } from './cards/played-card';
 
 @Component({
   selector: 'app-board',
-  imports: [Pawn, CardLayer, PlayerList, TradePanel, SplitSteps],
+  imports: [Pawn, CardLayer, PlayerList, TradePanel, SplitSteps, TurnStreak],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -161,6 +163,12 @@ export class Board implements OnInit, OnDestroy {
       : [];
   });
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
+  /** The edge of the player on turn, where the gold turn streak lies (beside the roster's chip). */
+  protected readonly turnEdge = computed(() => {
+    const g = this.geometry();
+    const current = this.state()?.currentPlayerId;
+    return g && current ? turnEdge(g, current) : undefined;
+  });
   /**
    * The buttons + roster height. On a phone they sit below the hand, and the board is sized to
    * leave them exactly that room (board.scss) — however many players, team lines or wrapped

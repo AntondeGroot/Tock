@@ -6,6 +6,7 @@
   >
     <div class="stage">
       <div class="board" [style.--cell]="cell() / 6">
+        <app-turn-streak [edge]="turnEdge()" />
         @for (t of tiles(); track t.playerId + ':' + t.tileNr) {
           <div
             class="tile"
