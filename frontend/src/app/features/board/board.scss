@@ -352,20 +352,19 @@
 // (notably the `font` shorthand, which would otherwise reset the size).
 @media (max-width: 699px) {
   .play {
-    // The height budget leaves room for the header, footer and margins (--phone-chrome-h), the
-    // hint row, and the buttons + roster below the hand, which the board measures (--controls-h):
-    // their height varies with player count, team lines and wrapped button labels, and the board
-    // takes everything that is left — never so much that the roster slides under the footer.
-    --phone-chrome-h: 150px;
+    // The height budget leaves room for the header and margins (--phone-chrome-h; there is no
+    // footer on a phone), the hint row, and the buttons + roster below the hand, which the board
+    // measures (--controls-h): their height varies with player count, team lines and wrapped
+    // button labels, and the board takes everything that is left.
+    --phone-chrome-h: 96px;
     --board-w: min(
       600px,
       calc(96vw / 1.24),
       calc((100dvh - var(--phone-chrome-h) - var(--controls-h, 100px) - var(--hint-row-h)) / 1.42)
     );
-    // The footer is fixed over the bottom ~48px of the viewport. If content ever overflows and
-    // the page scrolls, reserve that height plus the safe-area inset so the last controls row
-    // clears the footer instead of hiding behind it.
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    // If content ever overflows and the page scrolls, keep the last controls row clear of the
+    // phone's home indicator.
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
   }
 
   // All buttons on one row, sharing it evenly.

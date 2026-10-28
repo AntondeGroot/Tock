@@ -99,7 +99,11 @@ test.describe('special-card hint layout', () => {
             };
             return {
               hint: rect('.card-hint')!,
-              footer: rect('footer, .footer-bar'),
+              // Phones draw no footer (it only passes its buttons through), so it has no box.
+              footer: (() => {
+                const r = rect('footer, .footer-bar');
+                return r && r.height > 0 ? r : null;
+              })(),
               cards: [
                 ...document.querySelectorAll(
                   'ct-card.card:not(.played):not(.flyer):not(.face-down)',

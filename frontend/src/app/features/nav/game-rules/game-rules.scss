@@ -37,14 +37,21 @@
   top: -1px;
 }
 
-// Mobile: the rules control lives in the footer as a book icon only (its label
-// moves out to save room).
+// Mobile: a compact book icon, fixed in the title bar's top-right corner just left of the
+// settings cog (10px edge + 40px cog + 8px gap), the same size as the cog and the exit icon.
 @media (max-width: 699px) {
   .rulesButton {
+    position: fixed;
+    top: 12px;
+    right: 58px;
+    z-index: 200;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 9px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 9px;
   }
   .rules-btn-label {
     display: none;

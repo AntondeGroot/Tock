@@ -90,8 +90,11 @@
 }
 
 .leave-dialog {
+  // The padding and border count inside the width, so on a narrow phone the dialog never pokes
+  // past the overlay's edges. Wider screens see the same 384px (340px of content) as before.
+  box-sizing: border-box;
   width: 100%;
-  max-width: 340px;
+  max-width: 384px;
   padding: 22px 20px 18px;
   text-align: center;
   border-radius: 14px;
