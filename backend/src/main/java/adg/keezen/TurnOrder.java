@@ -8,6 +8,7 @@ import com.adg.openapi.model.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * Whose turn it is, who is still active this round, and moving the turn on to the next active
@@ -27,6 +28,7 @@ class TurnOrder {
   private final PlayerRoster roster;
   private final Runnable clearMustPlayBlocked;
   private final Runnable dealRoundCards;
+  private final BooleanSupplier gameOver;
 
   TurnOrder(
       List<Player> players,
@@ -34,13 +36,15 @@ class TurnOrder {
       Set<String> leavers,
       PlayerRoster roster,
       Runnable clearMustPlayBlocked,
-      Runnable dealRoundCards) {
+      Runnable dealRoundCards,
+      BooleanSupplier gameOver) {
     this.players = players;
     this.winners = winners;
     this.leavers = leavers;
     this.roster = roster;
     this.clearMustPlayBlocked = clearMustPlayBlocked;
     this.dealRoundCards = dealRoundCards;
+    this.gameOver = gameOver;
   }
 
   String getPlayerIdTurn() {
@@ -91,9 +95,15 @@ class TurnOrder {
     return players.stream().noneMatch(Player::getIsActive);
   }
 
-  /** The round ran out of players to play, but not everyone has finished — deal a fresh round. */
+  /** The round ran out of players to play, but the game isn't over — deal a fresh round. */
   boolean roundIsOverButGameContinues() {
-    return activePlayers.isEmpty() && winners.size() < players.size();
+    return activePlayers.isEmpty() && !gameOver.getAsBoolean();
+  }
+
+  /** Nobody is left to play: no round to deal and nobody on turn, now or later. */
+  void endGame() {
+    activePlayers.clear();
+    setPlayingPlayer(null);
   }
 
   void nextRoundPlayer() {
@@ -102,7 +112,6 @@ class TurnOrder {
     if (!activePlayers.isEmpty() && !activePlayers.contains(playerIdTurn)) {
       nextRoundPlayer();
     }
-    // todo: check if all players have finished
     setPlayingPlayer(playerIdTurn);
   }
 
@@ -124,12 +133,14 @@ class TurnOrder {
   }
 
   /**
-   * Drop the player from the round: if that leaves no one active, start a fresh round; otherwise
-   * remove them from the active list and, when {@code advanceTurn}, pass the turn to the next
-   * active player.
+   * Drop the player from the round: if nobody is left to play, end the game; if no one is left
+   * active this round, start a fresh round; otherwise remove them from the active list and, when
+   * {@code advanceTurn}, pass the turn to the next active player.
    */
   void dropFromRound(String playerId, boolean advanceTurn) {
-    if (allActivePlayersExhausted()) {
+    if (gameOver.getAsBoolean()) {
+      endGame();
+    } else if (allActivePlayersExhausted()) {
       startNewRound();
     } else {
       removeActive(playerId);

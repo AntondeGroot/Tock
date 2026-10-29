@@ -158,6 +158,7 @@ public class SseEmitterService {
     push.setWinners(gs.getWinners());
     push.setVersion(gs.getVersion());
     push.setExactMoveRequired(gs.isExactMoveRequired());
+    push.setGameOver(gs.isGameOver());
     push.setLastMoveResponse(omitLastMove ? null : session.getLastMoveResponse());
   }
 

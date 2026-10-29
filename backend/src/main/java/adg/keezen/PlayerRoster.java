@@ -117,6 +117,17 @@ class PlayerRoster {
     return !seated.isEmpty() && seated.stream().allMatch(p -> leavers.contains(p.getId()));
   }
 
+  /**
+   * True once nobody at the table is still playing: every seated player has finished or left. An
+   * empty table does not count. Empty seats and leavers never earn a place, so they can't be
+   * waited for.
+   */
+  boolean nobodyLeftToPlay(Set<String> leavers) {
+    List<Player> seated = seatedPlayers();
+    return !seated.isEmpty()
+        && seated.stream().allMatch(p -> PlayerStatus.hasFinished(p) || leavers.contains(p.getId()));
+  }
+
   Player findById(String playerId) {
     for (Player player : players) {
       if (player.getId().equals(playerId)) {

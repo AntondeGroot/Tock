@@ -122,6 +122,7 @@ export class Board implements OnInit, OnDestroy {
     this.gameStore.pawnsSettleMs.set(this.pawnAnimator.remainingMs());
     this.gameStore.winners.set(next.winners ?? []);
     this.gameStore.exactMoveRequired.set(next.exactMoveRequired ?? false);
+    this.gameStore.gameOver.set(next.gameOver ?? false);
     this.state.set(next);
     // Last: the fanfare for a player who just finished is delayed by the pawn animation queued
     // above, so this has to run after animateMove — an ordering an effect would leave implicit.
@@ -165,10 +166,15 @@ export class Board implements OnInit, OnDestroy {
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
   /** Six or more players: on a phone the board may then use nearly the full width (board.scss). */
   protected readonly bigTable = this.gameStore.bigTable;
+  /** Who is on turn — nobody once the game is over, though the server still names the last mover. */
+  private readonly playerOnTurn = computed(() => {
+    const state = this.state();
+    return state?.gameOver ? undefined : state?.currentPlayerId;
+  });
   /** The edge of the player on turn, where the gold turn streak lies (beside the roster's chip). */
   protected readonly turnEdge = computed(() => {
     const g = this.geometry();
-    const current = this.state()?.currentPlayerId;
+    const current = this.playerOnTurn();
     return g && current ? turnEdge(g, current) : undefined;
   });
   /**
@@ -348,7 +354,7 @@ export class Board implements OnInit, OnDestroy {
 
   /** Both action buttons are dead outside your own turn — the server refuses those moves anyway. */
   protected readonly isMyTurn = computed(
-    () => this.viewerId != null && this.state()?.currentPlayerId === this.viewerId,
+    () => this.viewerId != null && this.playerOnTurn() === this.viewerId,
   );
 
   // Set while a play waits for the server's answer. A second click in that window used to send the

@@ -5,6 +5,9 @@ import { seatColor } from '../../player-colors';
 
 const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
+/** How long a finisher's banner stays up before it dismisses itself. */
+export const WINNER_BANNER_MS = 4500;
+
 interface WinnerView {
   name: string;
   medal: string;
@@ -78,7 +81,7 @@ export class WinnerBanner {
   private announce(w: WinnerView): void {
     this.current.set(w);
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.current.set(null), 4500);
+    this.timer = setTimeout(() => this.current.set(null), WINNER_BANNER_MS);
   }
 
   protected dismiss(): void {

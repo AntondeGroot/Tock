@@ -1,0 +1,28 @@
+@if (open()) {
+  <div class="game-over-overlay">
+    <div
+      class="game-over"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="game-over-title"
+      data-testid="game-over"
+    >
+      <h2 id="game-over-title" class="game-over__title">{{ i18n.t('gameOverTitle') }}</h2>
+      <ol class="game-over__standings">
+        @for (s of standings(); track s.place) {
+          <li class="game-over__row">
+            <span class="game-over__medal">{{ s.medal }}</span>
+            <span class="game-over__names">{{ s.names }}</span>
+          </li>
+        }
+      </ol>
+      <!-- role="timer" keeps screen readers from announcing every tick. -->
+      <p class="game-over__countdown" role="timer">
+        {{ i18n.t('gameOverCountdown', secondsLeft()) }}
+      </p>
+      <button class="game-over__back" (click)="backToGameRoom()">
+        {{ i18n.t('gameOverBack') }}
+      </button>
+    </div>
+  </div>
+}

@@ -197,6 +197,19 @@ describe('Board turn actions', () => {
   // Forfeiting discards the WHOLE hand. The cards leave one at a time rather than all at once —
   // the same 120ms stagger an opponent's forfeit gets — so the pile reads as a sequence of
   // discards. The selection goes with them: there is nothing left to play.
+  // The server keeps naming the last mover as "current" after the final pawn comes home, but the
+  // game is over: there is no turn left to play or forfeit.
+  it('leaves nobody on turn once the game is over, so Forfeit is dead', () => {
+    const forfeitButton = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('.forfeit-button');
+    expect(forfeitButton().disabled).toBe(false);
+
+    board.handleGameState({ ...playableState(), gameOver: true });
+    fixture.detectChanges();
+
+    expect(forfeitButton().disabled).toBe(true);
+  });
+
   it('forfeits the turn, clearing the selection and discarding the hand one card at a time', () => {
     selectMoveWith();
     vi.useFakeTimers();

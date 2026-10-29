@@ -28,6 +28,9 @@ export const de: Dictionary = {
   rulesSpecialCards: 'Sonderkarten',
   rulesClickToClose: 'Klicke irgendwo zum Schließen',
   rosterTeams: 'Teams',
+  gameOverTitle: 'Spiel vorbei',
+  gameOverCountdown: 'In %s s zurück zum Spielraum',
+  gameOverBack: 'Zurück zum Spielraum',
   rulesMoving: 'Auf dem Spielfeld ziehen',
   rulesStartBlocks:
     'Eine Figur auf ihrem eigenen Startfeld blockiert den Weg: keine Figur kann an ihr vorbeiziehen — auch keine andere Figur desselben Spielers.',

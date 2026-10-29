@@ -1,0 +1,114 @@
+// The end-of-game panel: the same brown-and-gold plaque as the leave dialog, over a dimmed board.
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: game-over-fade 0.3s ease;
+}
+
+.game-over {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 384px;
+  padding: 22px 20px 18px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid #f4d03f;
+  background:
+    radial-gradient(120% 160% at 20% 0%, rgba(244, 208, 63, 0.22), transparent 60%),
+    linear-gradient(160deg, #3a2410, #241206);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.6),
+    0 0 26px rgba(244, 208, 63, 0.35);
+
+  &__title {
+    margin: 0 0 14px;
+    font:
+      700 1.5rem 'Cinzel',
+      Georgia,
+      serif;
+    letter-spacing: 1px;
+    color: #f4d03f;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+
+  &__standings {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &__medal {
+    flex: 0 0 2rem;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #d8cead;
+  }
+
+  &__names {
+    min-width: 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font:
+      600 1.05rem 'Cinzel',
+      Georgia,
+      serif;
+    color: #fdf3cf;
+  }
+
+  &__countdown {
+    margin: 0 0 14px;
+    font:
+      600 0.9rem 'Lato',
+      'Helvetica Neue',
+      sans-serif;
+    color: #d8cead;
+  }
+
+  &__back {
+    font:
+      600 11pt 'Cinzel',
+      Georgia,
+      serif;
+    letter-spacing: 0.5px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 2px solid #c9a227;
+    color: #e7ddb8;
+    background: linear-gradient(145deg, #3a2000, #251400);
+    cursor: pointer;
+  }
+}
+
+@keyframes game-over-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-over-overlay {
+    animation: none;
+  }
+}

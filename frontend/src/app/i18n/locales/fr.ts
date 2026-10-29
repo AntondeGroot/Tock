@@ -28,6 +28,9 @@ export const fr: Dictionary = {
   rulesSpecialCards: 'Cartes spéciales',
   rulesClickToClose: "Cliquez n'importe où pour fermer",
   rosterTeams: 'Équipes',
+  gameOverTitle: 'Partie terminée',
+  gameOverCountdown: 'Retour à la salle de jeu dans %s s',
+  gameOverBack: 'Retour à la salle de jeu',
   rulesMoving: 'Se déplacer sur le plateau',
   rulesStartBlocks:
     'Un pion sur sa propre case de départ bloque le chemin : aucun pion ne peut le dépasser — pas même un autre pion du même joueur.',
