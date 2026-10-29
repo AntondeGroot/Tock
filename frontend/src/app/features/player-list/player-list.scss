@@ -216,6 +216,53 @@
   }
 }
 
+// Mobile, 6+ players: four players per row (two teams side by side), with smaller avatars and
+// names, so the roster takes half the height and the board gets it. A name too long for its chip
+// fades out at the edge instead of ending in "…", which would cost another letter.
+@media (max-width: 699px) {
+  .roster--compact {
+    .roster__heading {
+      margin-bottom: 3px;
+      font-size: 11px;
+    }
+    .roster__chips,
+    .roster__teams {
+      gap: 4px;
+    }
+    .roster__chips .chip {
+      flex: 0 1 calc(25% - 3px);
+    }
+    .roster__teams {
+      flex-flow: row wrap;
+    }
+    .team {
+      flex: 1 1 calc(50% - 2px);
+      max-width: calc(50% - 2px);
+      min-width: 0;
+      box-sizing: border-box;
+      gap: 2px;
+      padding: 1px;
+      border-width: 1.5px;
+    }
+    .chip {
+      gap: 4px;
+      padding: 1px 3px 1px 1px;
+    }
+    .chip__avatar {
+      width: 20px;
+      height: 20px;
+    }
+    .chip__initial {
+      font-size: 9px;
+    }
+    .chip__name {
+      font-size: 11px;
+      text-overflow: clip;
+      mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent);
+    }
+  }
+}
+
 // Desktop: the roster sits in the right column — a single stack of larger chips.
 @media (min-width: 700px) {
   .roster__chips {

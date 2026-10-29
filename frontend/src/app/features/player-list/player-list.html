@@ -1,5 +1,5 @@
 @if (chips().length) {
-  <aside class="roster" aria-label="Players">
+  <aside class="roster" aria-label="Players" [class.roster--compact]="compact()">
     @if (teams().length) {
       <!-- Team game: a "Teams" heading, then one row per team outlined in its colour. -->
       <span class="roster__heading">{{ i18n.t('rosterTeams') }}</span>

@@ -57,11 +57,18 @@ test.describe('mobile layout (MobileLayoutCheck_IT)', () => {
 // On a phone the roster spans the screen below the buttons, so a big game takes real height. The
 // board sizes itself to leave the controls exactly the room they measure; if it took more, the
 // last players would be pushed off the bottom of the screen. (Phones have no footer bar: the board
-// takes that height too, so the room left is tighter.)
+// takes that height too, so the room left is tighter.) From six players on the roster packs four
+// to a row to give the board that height, and the board may use nearly the full width.
+//
+// The tiles must not shrink back to the unreadable ~5px a full team table once got: the smallest
+// case here (8 in teams, short phone, hints on) measures 9.0px. A floor, not a target — raise it
+// when the layout improves; turning the card hints off already buys ~1px.
+const MIN_TILE_PX = 8.5;
 const ROSTERS = [
   { label: '2 players', players: 2 },
   { label: '8 players', players: 8 },
-  { label: '6 players in teams', players: 6, gameOptions: { teamPlay: true } }, // + team lines
+  { label: '6 players in teams', players: 6, gameOptions: { teamPlay: true } },
+  { label: '8 players in teams', players: 8, gameOptions: { teamPlay: true } },
 ];
 const PHONES = [
   { label: 'short phone', width: 375, height: 667 }, // where the board is height-limited
@@ -85,21 +92,33 @@ test.describe('phone roster stays on screen', () => {
           await page.goto(`/?sessionid=${sessionId}&playerid=player0`);
           await expect(page.locator('.chip')).toHaveCount(roster.players);
 
-          const g = await page.evaluate(() => ({
-            lastChipBottom: Math.max(
-              ...[...document.querySelectorAll('.chip')].map(
-                (c) => c.getBoundingClientRect().bottom,
+          const g = await page.evaluate(() => {
+            const rj = (s: string) =>
+              document.querySelector(s)!.getBoundingClientRect().toJSON() as DOMRect;
+            return {
+              chips: [...document.querySelectorAll('.chip')].map(
+                (c) => c.getBoundingClientRect().toJSON() as DOMRect,
               ),
-            ),
-            screenBottom: window.innerHeight,
-            board: document.querySelector('.board')!.getBoundingClientRect(),
-          }));
+              board: rj('.board'),
+              tile: rj('.tile'),
+              vw: window.innerWidth,
+              vh: window.innerHeight,
+            };
+          });
 
-          expect(
-            g.lastChipBottom,
-            'the last players are pushed off the bottom of the screen',
-          ).toBeLessThanOrEqual(g.screenBottom);
-          expect(g.board.width, 'the board shrank to nothing').toBeGreaterThan(150);
+          const T = 1;
+          for (const c of g.chips) {
+            expect(c.bottom, 'a player is pushed off the bottom of the screen').toBeLessThanOrEqual(
+              g.vh + T,
+            );
+            expect(c.left, 'a player runs off the left edge').toBeGreaterThanOrEqual(-T);
+            expect(c.right, 'a player runs off the right edge').toBeLessThanOrEqual(g.vw + T);
+          }
+          expect(g.board.left, 'the board runs off the left edge').toBeGreaterThanOrEqual(-T);
+          expect(g.board.right, 'the board runs off the right edge').toBeLessThanOrEqual(g.vw + T);
+          expect(g.tile.width, 'the tiles got too small to read').toBeGreaterThanOrEqual(
+            MIN_TILE_PX,
+          );
 
           await ctx.close();
         });

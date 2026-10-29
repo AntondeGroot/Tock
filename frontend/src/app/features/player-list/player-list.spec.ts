@@ -104,6 +104,23 @@ describe('PlayerList (scoreboard)', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Team A');
   });
 
+  it('packs the roster compactly from six players on, so a phone board gets the room', () => {
+    const table = (n: number) =>
+      Array.from({ length: n }, (_, i) => player({ id: `p${i}`, name: `P${i}`, playerInt: i }));
+    const isCompact = () =>
+      (fixture.nativeElement.querySelector('.roster') as HTMLElement).classList.contains(
+        'roster--compact',
+      );
+
+    store.players.set(table(5));
+    fixture.detectChanges();
+    expect(isCompact()).toBe(false);
+
+    store.players.set(table(6));
+    fixture.detectChanges();
+    expect(isCompact()).toBe(true);
+  });
+
   // A widened two-player board seats empty placeholders between the players to stretch the track.
   // They own board, not a chair: the scoreboard is a list of people, and a nameless colourless
   // entry there would read as a player who has not connected yet.
