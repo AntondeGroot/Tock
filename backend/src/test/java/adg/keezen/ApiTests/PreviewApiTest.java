@@ -20,7 +20,7 @@ class PreviewApiTest extends BaseUnitTest {
   private static final String BASE = "http://localhost:4200/preview/";
 
   private static final List<String> SCENARIOS = List.of(
-      "2-players", "3-players", "4-players", "5-players", "8-players", "team", "medals", "cards");
+      "2-players", "3-players", "4-players", "5-players", "8-players", "team", "8-players-teams", "medals", "cards");
 
   @Test
   void allScenarios_return200_withHtmlBody() {
