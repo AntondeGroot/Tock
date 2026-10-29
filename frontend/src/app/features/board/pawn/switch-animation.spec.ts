@@ -92,4 +92,50 @@ describe('Jack switch animation', () => {
     expect(position(fixture, '2:0')).toBe(teamMateStart);
     expect(position(fixture, '1:0')).toBe(opponentStart);
   });
+
+  // Switching the same two pawns straight back, picked in the other order, gives the very same two
+  // tile paths as the switch before it. Only the pawns differ — so they must count, or the board
+  // takes it for the old move and snaps both pawns back without walking them.
+  it('walks the pawns when the next Jack switches the same two pawns straight back', async () => {
+    document.cookie = 'playerid=0';
+    await TestBed.configureTestingModule({
+      imports: [Board],
+      providers: [provideHttpClient(), provideApi('')],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Board);
+    fixture.detectChanges();
+
+    // The first switch has landed: the teammate's pawn walked 4 → 9, the opponent's 9 → 4.
+    const switched = [...viewerPawnsHome(), onBoard('2', 0, '1', 9), onBoard('1', 0, '1', 4)];
+    receive(
+      fixture,
+      push(switched, {
+        result: 'CAN_MAKE_MOVE',
+        moveType: 'switch',
+        pawn1: switched[4],
+        pawn2: switched[5],
+        movePawn1: [TEAM_MATE_TILE, OPPONENT_TILE],
+        movePawn2: [OPPONENT_TILE, TEAM_MATE_TILE],
+      }),
+    );
+    const teamMateStart = position(fixture, '2:0');
+    const opponentStart = position(fixture, '1:0');
+
+    // The next Jack switches them back, the opponent's pawn picked first: the same two paths.
+    const back = [...viewerPawnsHome(), onBoard('2', 0, '1', 4), onBoard('1', 0, '1', 9)];
+    receive(
+      fixture,
+      push(back, {
+        result: 'CAN_MAKE_MOVE',
+        moveType: 'switch',
+        pawn1: back[5],
+        pawn2: back[4],
+        movePawn1: [TEAM_MATE_TILE, OPPONENT_TILE],
+        movePawn2: [OPPONENT_TILE, TEAM_MATE_TILE],
+      }),
+    );
+
+    expect(position(fixture, '2:0')).toBe(teamMateStart);
+    expect(position(fixture, '1:0')).toBe(opponentStart);
+  });
 });

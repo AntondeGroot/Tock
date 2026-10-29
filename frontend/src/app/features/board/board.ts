@@ -90,12 +90,16 @@ export class Board implements OnInit, OnDestroy {
   }
 
   private handleGameState(next: GameStatePush): void {
-    // Animate the pawns of the last move. Detect a NEW move (its paths changed)
+    // Animate the pawns of the last move. Detect a NEW move (its pawns or paths changed)
     // and set it up BEFORE state.set, so pawns hold their start tiles instead of
     // snapping to the server's already-final positions. Skipped on the first push.
+    // The pawns count too: a Jack switching the same two pawns straight back, picked in the
+    // other order, walks the very same two paths as the switch before it.
     const mr = next.lastMoveResponse;
     const moveKey = mr
       ? JSON.stringify([
+          mr.pawn1?.pawnId,
+          mr.pawn2?.pawnId,
           mr.movePawn1,
           mr.movePawn2,
           mr.movePawnKilledByPawn1,
