@@ -41,6 +41,7 @@ final class PreviewScenarios {
       new Scenario("5-players", "5 players · mid-game"),
       new Scenario("8-players", "8 players · mid-game, full board with pawns everywhere"),
       new Scenario("team", "4 players · 2 teams, team play + card trade"),
+      new Scenario("8-players-teams", "8 players · 4 teams, card trade — the fullest phone layout"),
       new Scenario("medals", "3 players · 1 winner with a medal, others still active"),
       new Scenario("cards", "3 players · active player holds every special card"));
 
@@ -68,6 +69,7 @@ final class PreviewScenarios {
       case "5-players" -> setup5Players();
       case "8-players" -> setup8Players();
       case "team" -> setupTeam();
+      case "8-players-teams" -> setup8PlayersInTeams();
       case "medals" -> setupMedals();
       case "cards" -> setupCards();
       default -> null;
@@ -149,6 +151,22 @@ final class PreviewScenarios {
       movePawn(gs, ids[2], 1, ids[3], 13);
       movePawn(gs, ids[1], 0, ids[0], 8);
       movePawn(gs, ids[3], 0, ids[2], 11);
+    });
+  }
+
+  private static List<PlayerLink> setup8PlayersInTeams() {
+    return setupNPlayers(8, true, (gs, deck, ids) -> {
+      gs.setTeamCardTrade(true);
+      // Teams pair opposite seats: ids[i]+ids[i+4]. Nobody has played yet, so every player can
+      // still ask their teammate for a King or Ace.
+      movePawn(gs, ids[0], 0, ids[1], 8);
+      movePawn(gs, ids[4], 0, ids[5], 3);
+      movePawn(gs, ids[1], 0, ids[3], 12);
+      movePawn(gs, ids[5], 0, ids[6], 9);
+      movePawn(gs, ids[2], 0, ids[7], 14);
+      movePawn(gs, ids[6], 0, ids[0], 5);
+      movePawn(gs, ids[3], 0, ids[2], 6);
+      movePawn(gs, ids[7], 0, ids[4], 11);
     });
   }
 
