@@ -1,5 +1,8 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { Player } from './api';
+
+/** From this many players on the table counts as big (see GameStore.bigTable). */
+const BIG_TABLE_PLAYERS = 6;
 
 /**
  * Small shared slice of game state so components outside the board (e.g. the
@@ -10,6 +13,15 @@ import { Player } from './api';
 export class GameStore {
   /** Players from the latest server push: name, colour, turn/active flags, medal place. */
   readonly players = signal<Player[]>([]);
+
+  /**
+   * A table of six or more players (the empty seats of a widened board don't count). On a phone it
+   * gets a compact roster and a board that may use nearly the full width, its side opponents' cards
+   * touching the screen edge; smaller tables keep room beside the board for those cards.
+   */
+  readonly bigTable = computed(
+    () => this.players().filter((p) => p.placeholder !== true).length >= BIG_TABLE_PLAYERS,
+  );
 
   /** Player ids in the order they finished (1st, 2nd, 3rd, …). */
   readonly winners = signal<string[]>([]);

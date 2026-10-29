@@ -2,6 +2,7 @@
   <div
     class="play"
     [class.play--no-hints]="!cardHints.visible()"
+    [class.play--big-table]="bigTable()"
     [style.--controls-h.px]="controlsHeight() || null"
   >
     <div class="stage">

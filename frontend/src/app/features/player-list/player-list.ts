@@ -91,6 +91,8 @@ export class PlayerList {
   protected readonly chips = computed(() => this.view().chips);
   /** The team rows — empty outside a team game, where the chips show as one plain grid. */
   protected readonly teams = computed(() => this.view().teams);
+  /** A big table: on a phone the roster packs four players per row, leaving the board more room. */
+  protected readonly compact = this.store.bigTable;
 
   /** Hide a broken profile picture so the colour-ringed initial shows instead. */
   protected onAvatarError(ev: Event): void {

@@ -163,6 +163,8 @@ export class Board implements OnInit, OnDestroy {
       : [];
   });
   protected readonly cell = computed(() => this.geometry()?.cellDistance ?? 0);
+  /** Six or more players: on a phone the board may then use nearly the full width (board.scss). */
+  protected readonly bigTable = this.gameStore.bigTable;
   /** The edge of the player on turn, where the gold turn streak lies (beside the roster's chip). */
   protected readonly turnEdge = computed(() => {
     const g = this.geometry();
