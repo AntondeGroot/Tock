@@ -43,6 +43,7 @@ final class PreviewScenarios {
       new Scenario("team", "4 players · 2 teams, team play + card trade"),
       new Scenario("8-players-teams", "8 players · 4 teams, card trade — the fullest phone layout"),
       new Scenario("medals", "3 players · 1 winner with a medal, others still active"),
+      new Scenario("game-end", "2 players · one finished; Player 2's Ace ends the game"),
       new Scenario("cards", "3 players · active player holds every special card"));
 
   private PreviewScenarios() {}
@@ -71,6 +72,7 @@ final class PreviewScenarios {
       case "team" -> setupTeam();
       case "8-players-teams" -> setup8PlayersInTeams();
       case "medals" -> setupMedals();
+      case "game-end" -> setupGameEnd();
       case "cards" -> setupCards();
       default -> null;
     };
@@ -185,6 +187,22 @@ final class PreviewScenarios {
       movePawn(gs, ids[1], 0, ids[2], 8);
       movePawn(gs, ids[1], 1, ids[0], 3);
       movePawn(gs, ids[2], 0, ids[1], 11);
+    });
+  }
+
+  private static List<PlayerLink> setupGameEnd() {
+    return setupNPlayers(2, (gs, deck, ids) -> {
+      // ids[0] has finished.
+      for (int n = 0; n < 4; n++) movePawn(gs, ids[0], n, ids[0], 16 + n);
+      gs.checkForWinners(gs.getWinners());
+      gs.removeWinnerFromActivePlayerList();
+      gs.setPlayerIdTurn(ids[1]);
+      gs.getPlayers().forEach(p -> p.setIsPlaying(p.getId().equals(ids[1])));
+
+      // ids[1] has three pawns home and the last one a single step away, with an Ace to play.
+      for (int n = 1; n < 4; n++) movePawn(gs, ids[1], n, ids[1], 16 + n);
+      movePawn(gs, ids[1], 0, ids[0], 15);
+      deck.setPlayerCard(ids[1], new Card().value(1).suit(0).uuid(1)); // Ace
     });
   }
 

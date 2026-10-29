@@ -6,6 +6,7 @@ import { LeaveGame } from './features/nav/leave-game/leave-game';
 import { MoveRejected } from './features/board/feedback/move-rejected/move-rejected';
 import { TeamHandoffPopup } from './features/team-handoff/team-handoff';
 import { WinnerBanner } from './features/winner-banner/winner-banner';
+import { GameOver } from './features/game-over/game-over';
 import { HintsQuestion } from './features/card-hints/hints-question/hints-question';
 import { ChatPanel } from './features/chat/chat';
 import { Translations } from './i18n/translations.service';
@@ -21,6 +22,7 @@ import { basePath } from './base-path';
     MoveRejected,
     TeamHandoffPopup,
     WinnerBanner,
+    GameOver,
     HintsQuestion,
     ChatPanel,
   ],

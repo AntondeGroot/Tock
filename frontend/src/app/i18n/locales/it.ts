@@ -29,6 +29,9 @@ export const it: Dictionary = {
   rulesSpecialCards: 'Carte speciali',
   rulesClickToClose: 'Clicca ovunque per chiudere',
   rosterTeams: 'Squadre',
+  gameOverTitle: 'Partita finita',
+  gameOverCountdown: 'Ritorno alla sala giochi tra %s s',
+  gameOverBack: 'Torna alla sala giochi',
   rulesMoving: 'Muoversi sul tabellone',
   rulesStartBlocks:
     "Una pedina sulla propria casella di partenza blocca la strada: nessuna pedina può superarla — nemmeno un'altra pedina dello stesso giocatore.",

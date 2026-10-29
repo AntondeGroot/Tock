@@ -60,7 +60,13 @@ public final class GameState {
             players, leavers, roster, pawnLocations, cardsDeck, version, () -> teamPlay);
     this.turnOrder =
         new TurnOrder(
-            players, winners, leavers, roster, this::clearMustPlayBlocked, this::dealRoundCards);
+            players,
+            winners,
+            leavers,
+            roster,
+            this::clearMustPlayBlocked,
+            this::dealRoundCards,
+            this::isGameOver);
     this.teamPlayRules = new TeamPlayRules(roster, pawnLocations, () -> teamPlay);
     this.departure =
         new PlayerDeparture(
@@ -203,7 +209,9 @@ public final class GameState {
     }
     checkForWinners(winners);
     turnOrder.removeWinnersFromActive();
-    if (turnOrder.roundIsOverButGameContinues()) {
+    if (isGameOver()) {
+      turnOrder.endGame();
+    } else if (turnOrder.roundIsOverButGameContinues()) {
       turnOrder.startNewRound();
     }
   }
@@ -409,6 +417,11 @@ public final class GameState {
 
   public Boolean hasStarted() {
     return hasStarted;
+  }
+
+  /** The game is over once every seated player has finished or left: no more rounds, no turns. */
+  public boolean isGameOver() {
+    return hasStarted && roster.nobodyLeftToPlay(leavers);
   }
 
   public long getVersion() {

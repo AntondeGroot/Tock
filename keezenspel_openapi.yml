@@ -610,6 +610,11 @@ components:
             blocked start tile or the end of the finish is refused instead (drives the game rules)
         trade:
           $ref: '#/components/schemas/Trade'
+        gameOver:
+          type: boolean
+          description: |
+            Whether the game has ended: every seated player has finished or left. No round is dealt
+            and nobody is on turn any more, so the client returns the player to the game room.
 
     Trade:
       type: object

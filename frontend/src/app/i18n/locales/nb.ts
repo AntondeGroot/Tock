@@ -28,6 +28,9 @@ export const nb: Dictionary = {
   rulesSpecialCards: 'Spesialkort',
   rulesClickToClose: 'Klikk hvor som helst for å lukke',
   rosterTeams: 'Lag',
+  gameOverTitle: 'Spillet er over',
+  gameOverCountdown: 'Tilbake til spillrommet om %s s',
+  gameOverBack: 'Tilbake til spillrommet',
   rulesMoving: 'Flytte på brettet',
   rulesStartBlocks:
     'En brikke på sin egen startrute sperrer veien: ingen brikke kan passere den — heller ikke en annen brikke fra samme spiller.',

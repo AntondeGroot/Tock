@@ -34,4 +34,7 @@ export class GameStore {
 
   /** The game option that refuses a move instead of letting a blocked pawn turn around. */
   readonly exactMoveRequired = signal(false);
+
+  /** Every seated player has finished or left: no more turns, time to go back to the game room. */
+  readonly gameOver = signal(false);
 }

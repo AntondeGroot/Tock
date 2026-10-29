@@ -41,6 +41,9 @@ public class GameStatePush {
   // Whether the exact-move option is on (the game rules describe the game being played)
   private boolean exactMoveRequired = false;
 
+  // Every seated player has finished or left: the client returns to the game room
+  private boolean gameOver = false;
+
   // The pending team card-trade, if any (null otherwise)
   private Trade trade;
 
@@ -82,6 +85,9 @@ public class GameStatePush {
 
   public boolean isExactMoveRequired() { return exactMoveRequired; }
   public void setExactMoveRequired(boolean v) { exactMoveRequired = v; }
+
+  public boolean isGameOver() { return gameOver; }
+  public void setGameOver(boolean v) { gameOver = v; }
 
   public Trade getTrade() { return trade; }
   public void setTrade(Trade v) { trade = v; }

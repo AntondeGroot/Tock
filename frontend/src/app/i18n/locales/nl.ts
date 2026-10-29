@@ -28,6 +28,9 @@ export const nl: Dictionary = {
   rulesSpecialCards: 'Speciale kaarten',
   rulesClickToClose: 'Klik ergens om te sluiten',
   rosterTeams: 'Teams',
+  gameOverTitle: 'Spel afgelopen',
+  gameOverCountdown: 'Over %s s terug naar de spelkamer',
+  gameOverBack: 'Terug naar de spelkamer',
   rulesMoving: 'Over het bord bewegen',
   rulesStartBlocks:
     'Een pion op zijn eigen startveld blokkeert de weg: geen enkele pion kan erlangs — ook geen andere pion van dezelfde speler.',

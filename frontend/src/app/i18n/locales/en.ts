@@ -29,6 +29,9 @@ export const en: Dictionary = {
   rulesSpecialCards: 'Special Cards',
   rulesClickToClose: 'Click anywhere to close',
   rosterTeams: 'Teams',
+  gameOverTitle: 'Game over',
+  gameOverCountdown: 'Back to the game room in %s s',
+  gameOverBack: 'Back to the game room',
   rulesMoving: 'Moving on the board',
   rulesStartBlocks:
     'A pawn on its own start tile blocks the road: no pawn can pass it — not even another pawn of the same player.',
