@@ -65,20 +65,33 @@ public class ChatProxyController {
       conn.connect();
 
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-        StringBuilder data = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-          if (line.startsWith("data: ")) {
-            data.append(line.substring(6));
-          } else if (line.isBlank() && !data.isEmpty()) {
-            emitter.send(SseEmitter.event().data(data.toString(), MediaType.APPLICATION_JSON));
-            data.setLength(0);
-          }
-        }
+        forwardEvents(reader, data -> emitter.send(SseEmitter.event().data(data, MediaType.APPLICATION_JSON)));
       }
       emitter.complete();
     } catch (Exception e) {
       emitter.completeWithError(e);
+    }
+  }
+
+  /** Receives the data of one complete SSE event. */
+  @FunctionalInterface
+  interface EventSink {
+    void accept(String data) throws IOException;
+  }
+
+  /** Reads an SSE stream and hands the data of each event (ended by a blank line) to the sink. */
+  static void forwardEvents(BufferedReader reader, EventSink sink) throws IOException {
+    StringBuilder data = new StringBuilder();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      if (line.startsWith("data:")) {
+        // SSE spec: the space after "data:" is optional (Spring's SseEmitter omits it).
+        String value = line.substring(5);
+        data.append(value.startsWith(" ") ? value.substring(1) : value);
+      } else if (line.isBlank() && !data.isEmpty()) {
+        sink.accept(data.toString());
+        data.setLength(0);
+      }
     }
   }
 
