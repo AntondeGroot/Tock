@@ -109,9 +109,8 @@ export class Board implements OnInit, OnDestroy {
           mr.movePawnKilledByPawn2,
         ])
       : '';
-    if (this.prevMoveKey !== undefined && moveKey && moveKey !== this.prevMoveKey) {
-      this.animateMove(mr!);
-    }
+    const isNewMove = this.prevMoveKey !== undefined && moveKey && moveKey !== this.prevMoveKey;
+    const finishLandingsMs = isNewMove ? this.animateMove(mr!) : [];
     this.prevMoveKey = moveKey;
 
     // Hand the card fields to the animator: it deals in anything new and decides what may be
@@ -133,7 +132,7 @@ export class Board implements OnInit, OnDestroy {
     this.state.set(next);
     // Last: the fanfare for a player who just finished is delayed by the pawn animation queued
     // above, so this has to run after animateMove — an ordering an effect would leave implicit.
-    this.transitionSounds.react(next);
+    this.transitionSounds.react(next, finishLandingsMs);
   }
   private readonly movesService = inject(MovesService);
   private readonly cardsService = inject(CardsService);
@@ -345,11 +344,13 @@ export class Board implements OnInit, OnDestroy {
    * Queue a move's pawns as ONE group, so they move together. The animator plays queued groups
    * strictly in order — this move waits for any still-running one instead of cutting it short —
    * so the sounds are offset by that wait too.
+   *
+   * @return in how many ms each pawn coming in off the board lands in its finish lane.
    */
-  private animateMove(mr: MoveResponse): void {
+  private animateMove(mr: MoveResponse): number[] {
     const g = this.geometry();
-    if (!g) return;
-    const { walks, killDelay1, killDelay2 } = moveAnimation(g, mr);
+    if (!g) return [];
+    const { walks, killDelay1, killDelay2, finishLandingsMs } = moveAnimation(g, mr);
     const wait = this.pawnAnimator.enqueue(walks);
     const colorOf = (playerId: string) => seatColor(this.playerInt(playerId));
     this.pawnTrails()?.add(moveTrails(g, mr, walks, colorOf, performance.now() + wait));
@@ -357,6 +358,7 @@ export class Board implements OnInit, OnDestroy {
     // A captured pawn "dies" as it's flung home — play the kill sound as that begins.
     if (mr.pawnKilledByPawn1) this.sound.play('pawnKilled', wait + killDelay1);
     if (mr.pawnKilledByPawn2) this.sound.play('pawnKilled', wait + killDelay2);
+    return finishLandingsMs.map((landingMs) => wait + landingMs);
   }
 
   private playerInt(playerId: string): number | undefined {

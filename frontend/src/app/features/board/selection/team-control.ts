@@ -1,7 +1,7 @@
 import { Pawn, Player } from '../../../api';
 
 /** The finish lane is tiles 16-19, so a pawn standing on one of them is home. */
-const FIRST_FINISH_TILE = 16;
+export const FIRST_FINISH_TILE = 16;
 
 /**
  * Who may play whose pawns in team play. In the second phase of a team game you play your

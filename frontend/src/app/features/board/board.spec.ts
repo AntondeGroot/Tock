@@ -139,6 +139,42 @@ describe('Board', () => {
     expect(add.mock.calls[0][0].map((trail) => trail.color)).toEqual([seatColor(0)]);
   });
 
+  // Only a move that is new to this viewer may sound — the last step proves the sound is wired at all.
+  it('plays the pawn-home sound only for a move the viewer has not seen yet', async () => {
+    const c = component as unknown as { handleGameState: (push: unknown) => void };
+    const play = vi.spyOn(TestBed.inject(SoundService), 'play').mockImplementation(() => undefined);
+    const pawnHomes = () => play.mock.calls.filter(([name]) => name === 'pawnHome').length;
+    const tile = (tileNr: number) => ({ playerId: '1', tileNr });
+    const pushAfter = (pawnNr: number, landedOn: number) => ({
+      players: teamPlayers,
+      pawns: [pawnOn('1', pawnNr, landedOn), pawnOn('1', 3, 5)], // one still out: nobody finishes
+      winners: [],
+      playerCards: [],
+      currentPlayerId: '1',
+      lastMoveResponse: {
+        pawn1: pawnOn('1', pawnNr, landedOn),
+        movePawn1: [tile(14), tile(landedOn)],
+      },
+    });
+
+    // GIVEN the viewer connects to a game whose last move brought a pawn home
+    c.handleGameState(pushAfter(0, 16));
+    await fixture.whenStable();
+    expect(pawnHomes()).toBe(0);
+
+    // WHEN the next push merely repeats that move
+    c.handleGameState(pushAfter(0, 16));
+    await fixture.whenStable();
+    expect(pawnHomes()).toBe(0);
+
+    // WHEN another pawn then really comes home
+    c.handleGameState(pushAfter(1, 17));
+    await fixture.whenStable();
+
+    // THEN that one is heard
+    expect(pawnHomes()).toBe(1);
+  });
+
   // Coming home LAST of your team ends the game for that team: the winner banner pops, and there
   // is no teammate left to play for — announcing the hand-off on top of it is nonsense.
   it('does not announce the team hand-off when the teammate is already home too', async () => {

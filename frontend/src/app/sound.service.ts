@@ -2,13 +2,20 @@ import { Injectable, signal } from '@angular/core';
 import { basePath } from './base-path';
 
 export type SoundName =
-  'buttonClick' | 'pawnOnBoard' | 'pawnKilled' | 'turnChange' | 'medalAwarded' | 'chatMessage';
+  | 'buttonClick'
+  | 'pawnOnBoard'
+  | 'pawnKilled'
+  | 'pawnHome'
+  | 'turnChange'
+  | 'medalAwarded'
+  | 'chatMessage';
 
 // The same clips the GWT client used, now bundled in the Angular app (public/assets/audio).
 const FILES: Record<SoundName, string> = {
   buttonClick: 'zapsplat_multimedia_button_click_bright_001_92098.mp3',
   pawnOnBoard: 'master_of_dreams_8_bit_arcade_up_3_012.mp3',
   pawnKilled: 'zapsplat_multimedia_game_sound_classic_arcade_negative_lose_life_die_etc_113889.mp3',
+  pawnHome: 'zapsplat_multimedia_game_sound_fanfare_trumpets_simple_positive_109639.mp3',
   turnChange: 'zapsplat_vehicles_car_cabin_light_buttom_press_on_002_113419.mp3',
   medalAwarded:
     'zapsplat_multimedia_game_sound_fanfare_trumpets_staccato_finish_complete_109640.mp3',
