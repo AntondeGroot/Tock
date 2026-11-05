@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatPanel } from './chat';
 import { ChatService } from './chat.service';
 import { GameStore } from '../../game-store';
+import { SoundService } from '../../sound.service';
 
 class FakeEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
@@ -135,6 +136,75 @@ describe('ChatPanel', () => {
 
     // THEN it shows the newest message again
     expect(list.scrollTop).toBe(500);
+  });
+
+  // Every delivery holds the whole conversation, so the first one is history: whoever joins a game
+  // or refreshes must not hear a pop for messages written before they got there.
+  it('stays silent for the history, and pops once when another player writes', async () => {
+    const play = vi.spyOn(TestBed.inject(SoundService), 'play').mockImplementation(() => undefined);
+    const chat = TestBed.inject(ChatService);
+    const fromBob = { timestampUTC: '14:30', sender: 'Bob', message: 'hi' };
+
+    // GIVEN a viewer arriving at a chat that already has a message
+    const f = render();
+    chat.ingest(JSON.stringify([fromBob]));
+    await f.whenStable();
+    expect(play).not.toHaveBeenCalled();
+
+    // WHEN Bob writes another one
+    chat.ingest(JSON.stringify([fromBob, fromBob]));
+    await f.whenStable();
+
+    // THEN it pops once
+    expect(play.mock.calls).toEqual([['chatMessage']]);
+  });
+
+  // The server sends a player's own message back to them along with everyone else's. They have
+  // just typed it, so a pop would tell them nothing, and only be annoying in a longer conversation.
+  it('stays silent for the player own message', async () => {
+    const play = vi.spyOn(TestBed.inject(SoundService), 'play').mockImplementation(() => undefined);
+    const chat = TestBed.inject(ChatService);
+
+    // GIVEN an empty chat, watched by Ann
+    const f = render();
+    chat.ingest('[]');
+    await f.whenStable();
+
+    // WHEN her own message comes back from the server
+    chat.ingest(JSON.stringify([{ timestampUTC: '14:30', sender: 'Ann', message: 'hi' }]));
+    await f.whenStable();
+
+    // THEN nothing plays
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  // A reopened stream delivers the whole conversation again. That is no news, unless something was
+  // written during the outage, and then one pop says so rather than one for every missed message.
+  it('stays silent when a reconnect repeats the messages, and pops once for missed ones', async () => {
+    const play = vi.spyOn(TestBed.inject(SoundService), 'play').mockImplementation(() => undefined);
+    const chat = TestBed.inject(ChatService);
+    const fromBob = { timestampUTC: '14:30', sender: 'Bob', message: 'hi' };
+
+    // GIVEN a chat with one message
+    const f = render();
+    chat.ingest(JSON.stringify([fromBob]));
+    await f.whenStable();
+
+    // WHEN the stream reconnects and delivers that same message again
+    chat.ingest(JSON.stringify([fromBob]));
+    await f.whenStable();
+
+    // THEN nothing plays
+    expect(play).not.toHaveBeenCalled();
+
+    // WHEN the chat goes offline for a while, and comes back with two messages it missed
+    chat.disconnect();
+    await f.whenStable();
+    chat.ingest(JSON.stringify([fromBob, fromBob, fromBob]));
+    await f.whenStable();
+
+    // THEN it pops once
+    expect(play.mock.calls).toEqual([['chatMessage']]);
   });
 
   it('renders nothing while the chat server is offline', () => {

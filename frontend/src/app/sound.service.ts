@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { basePath } from './base-path';
 
 export type SoundName =
-  'buttonClick' | 'pawnOnBoard' | 'pawnKilled' | 'turnChange' | 'medalAwarded';
+  'buttonClick' | 'pawnOnBoard' | 'pawnKilled' | 'turnChange' | 'medalAwarded' | 'chatMessage';
 
 // The same clips the GWT client used, now bundled in the Angular app (public/assets/audio).
 const FILES: Record<SoundName, string> = {
@@ -12,6 +12,7 @@ const FILES: Record<SoundName, string> = {
   turnChange: 'zapsplat_vehicles_car_cabin_light_buttom_press_on_002_113419.mp3',
   medalAwarded:
     'zapsplat_multimedia_game_sound_fanfare_trumpets_staccato_finish_complete_109640.mp3',
+  chatMessage: 'zapsplat_multimedia_pop_up_pop_002_91296.mp3',
 };
 // Per-sound base volume — the arcade "up" is loud, so the GWT played it at 0.1. Scaled by the
 // user's master volume.
