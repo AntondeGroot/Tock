@@ -31,7 +31,7 @@
   ></div>
 
   <section class="chat" [class.chat--open]="open()" aria-label="Chat">
-    <div class="chat__display" data-testid="chat-display">
+    <div #display class="chat__display" data-testid="chat-display" (scroll)="noteScroll(display)">
       @for (m of chat.messages(); track $index) {
         <div class="chat__line">
           <span class="chat__meta">{{ m.time }} {{ m.sender }}:</span>

@@ -44,10 +44,6 @@
     display: flex;
     animation: chatPop 0.16s ease;
   }
-  .chat__display {
-    max-height: 44vh;
-  }
-
   // The floating chat button — a gold coin in the bottom-right corner (no footer on a phone).
   .chat-fab {
     display: grid;
@@ -132,6 +128,12 @@
   font-size: 12.5px;
   line-height: 1.4;
   color: #e7ddb8;
+}
+// The popup has room to spare on a phone. After the rule above, or that one's height would win.
+@media (max-width: 699px) {
+  .chat__display {
+    max-height: 44vh;
+  }
 }
 .chat__line {
   overflow-wrap: anywhere;

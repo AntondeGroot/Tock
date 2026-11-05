@@ -50,6 +50,93 @@ describe('ChatPanel', () => {
     return f;
   }
 
+  // The phone popup is hidden until it opens, so nothing can be scrolled before that. Without this
+  // it always opened at the oldest message, and the player had to scroll down every time.
+  it('shows the newest message when the chat is opened', async () => {
+    // GIVEN a chat whose messages are too long to fit in the list
+    const f = render();
+    TestBed.inject(ChatService).ingest('[]');
+    await f.whenStable();
+    const list = q(f, 'chat-display')!;
+    Object.defineProperty(list, 'scrollHeight', { value: 500 });
+    list.scrollTop = 0;
+
+    // WHEN the player opens it
+    (f.nativeElement.querySelector('.chat-fab') as HTMLElement).click();
+    await f.whenStable();
+
+    // THEN the list is scrolled all the way down
+    expect(list.scrollTop).toBe(500);
+  });
+
+  // With the chat open the list only moves if this does it. A player following the conversation
+  // would otherwise have to scroll down for every message that comes in.
+  it('brings a new message into view for a player at the newest message', async () => {
+    // GIVEN a chat showing its newest message
+    const f = render();
+    const chat = TestBed.inject(ChatService);
+    chat.ingest('[]');
+    await f.whenStable();
+    const list = q(f, 'chat-display')!;
+
+    // WHEN a message comes in that makes the list taller
+    Object.defineProperty(list, 'scrollHeight', { value: 500 });
+    chat.ingest(JSON.stringify([{ timestampUTC: '14:30', sender: 'Bob', message: 'hi' }]));
+    await f.whenStable();
+
+    // THEN the list follows it down
+    expect(list.scrollTop).toBe(500);
+  });
+
+  // Following new messages must stop as soon as the player scrolls back, or every message that
+  // comes in would throw them out of the history they are reading.
+  it('leaves the list where it is while the player reads back through history', async () => {
+    // GIVEN a player who has scrolled back to well above the newest message
+    const f = render();
+    const chat = TestBed.inject(ChatService);
+    chat.ingest('[]');
+    await f.whenStable();
+    const list = q(f, 'chat-display')!;
+    Object.defineProperty(list, 'scrollHeight', { value: 500, configurable: true });
+    Object.defineProperty(list, 'clientHeight', { value: 100 });
+    list.scrollTop = 50;
+    list.dispatchEvent(new Event('scroll'));
+
+    // WHEN a message comes in
+    Object.defineProperty(list, 'scrollHeight', { value: 520 });
+    chat.ingest(JSON.stringify([{ timestampUTC: '14:30', sender: 'Bob', message: 'hi' }]));
+    await f.whenStable();
+
+    // THEN they stay where they were reading
+    expect(list.scrollTop).toBe(50);
+  });
+
+  // Having read back through history last time must not count against the player the next time:
+  // opening the chat is meant to show what is new, wherever they left the list.
+  it('goes back to the newest message when reopened after reading history', async () => {
+    // GIVEN an open chat in which the player has scrolled back
+    const f = render();
+    TestBed.inject(ChatService).ingest('[]');
+    await f.whenStable();
+    const button = f.nativeElement.querySelector('.chat-fab') as HTMLElement;
+    button.click();
+    await f.whenStable();
+    const list = q(f, 'chat-display')!;
+    Object.defineProperty(list, 'scrollHeight', { value: 500 });
+    Object.defineProperty(list, 'clientHeight', { value: 100 });
+    list.scrollTop = 50;
+    list.dispatchEvent(new Event('scroll'));
+
+    // WHEN they close the chat and open it again
+    (f.nativeElement.querySelector('.chat-backdrop') as HTMLElement).click();
+    await f.whenStable();
+    button.click();
+    await f.whenStable();
+
+    // THEN it shows the newest message again
+    expect(list.scrollTop).toBe(500);
+  });
+
   it('renders nothing while the chat server is offline', () => {
     const f = render();
     expect(q(f, 'chat-send')).toBeNull();
