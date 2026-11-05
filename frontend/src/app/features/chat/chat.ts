@@ -8,11 +8,13 @@ import {
   effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { ChatService } from './chat.service';
 import { GameStore } from '../../game-store';
 import { resolveGameSession } from '../../session';
+import { SoundService } from '../../sound.service';
 
 /** This close to the end of the messages still counts as reading the latest one. */
 const AT_BOTTOM_TOLERANCE_PX = 20;
@@ -33,6 +35,7 @@ const AT_BOTTOM_TOLERANCE_PX = 20;
 export class ChatPanel implements OnInit, OnDestroy {
   protected readonly chat = inject(ChatService);
   private readonly store = inject(GameStore);
+  private readonly sound = inject(SoundService);
   private readonly session = resolveGameSession();
 
   /** Mobile popup open/closed (ignored on desktop, where the panel is always shown). */
@@ -45,6 +48,8 @@ export class ChatPanel implements OnInit, OnDestroy {
   private readonly display = viewChild<ElementRef<HTMLElement>>('display');
   /** Whether the viewer is at the newest message; false while they scroll back through history. */
   private followsLatest = true;
+  /** How many messages were delivered so far; undefined until the first delivery. */
+  private deliveredCount: number | undefined;
 
   /** Unread badge count for the mobile chat button. */
   protected readonly unread = computed(() =>
@@ -62,6 +67,7 @@ export class ChatPanel implements OnInit, OnDestroy {
       // While the popup is open, keep everything marked seen so the badge stays cleared.
       if (this.open()) this.seenCount.set(total);
     });
+    effect(() => this.announceNewMessages());
     // After rendering: the new message has to be in the list to scroll to it, and the phone popup
     // is hidden until it opens, so a list that is not showing yet has nothing to scroll.
     afterRenderEffect(() => {
@@ -77,6 +83,20 @@ export class ChatPanel implements OnInit, OnDestroy {
     const me = this.store.players().find((p) => p.id === this.session.playerId);
     return me?.name ?? this.session.playerId ?? 'anon';
   });
+
+  /**
+   * A pop for what other players just wrote. It goes by the count because every delivery holds the
+   * whole conversation: the first one is history, and a reconnect repeats what was already there.
+   */
+  private announceNewMessages(): void {
+    const messages = this.chat.messages();
+    if (!this.chat.available()) return;
+    const before = this.deliveredCount;
+    this.deliveredCount = messages.length;
+    if (before === undefined) return;
+    const me = untracked(this.sender);
+    if (messages.slice(before).some((m) => m.sender !== me)) this.sound.play('chatMessage');
+  }
 
   ngOnInit(): void {
     if (this.session.sessionId) this.chat.connect(this.session.sessionId);
