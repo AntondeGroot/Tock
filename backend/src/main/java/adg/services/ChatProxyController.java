@@ -65,7 +65,7 @@ public class ChatProxyController {
       conn.connect();
 
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-        forwardEvents(reader, data -> emitter.send(SseEmitter.event().data(data, MediaType.APPLICATION_JSON)));
+        forwardEvents(reader, sinkFor(emitter));
       }
       emitter.complete();
     } catch (Exception e) {
@@ -73,13 +73,38 @@ public class ChatProxyController {
     }
   }
 
-  /** Receives the data of one complete SSE event. */
-  @FunctionalInterface
-  interface EventSink {
-    void accept(String data) throws IOException;
+  private static EventSink sinkFor(SseEmitter emitter) {
+    return new EventSink() {
+      @Override
+      public void accept(String data) throws IOException {
+        emitter.send(SseEmitter.event().data(data, MediaType.APPLICATION_JSON));
+      }
+
+      @Override
+      public void keepAlive() throws IOException {
+        emitter.send(SseEmitter.event().comment("ping"));
+      }
+    };
   }
 
-  /** Reads an SSE stream and hands the data of each event (ended by a blank line) to the sink. */
+  /** Receives what comes out of an SSE stream. */
+  @FunctionalInterface
+  interface EventSink {
+    /** The data of one complete SSE event. */
+    void accept(String data) throws IOException;
+
+    /**
+     * The chat server sent a keep-alive. Passing it on keeps a quiet chat from looking dead: nginx
+     * drops a stream after 60 seconds without bytes, and writing to the browser is also how this
+     * proxy finds out that the browser has left.
+     */
+    default void keepAlive() throws IOException {}
+  }
+
+  /**
+   * Reads an SSE stream: hands the data of each event (ended by a blank line) to the sink, and
+   * reports each comment line, which is what SSE keep-alives are.
+   */
   static void forwardEvents(BufferedReader reader, EventSink sink) throws IOException {
     StringBuilder data = new StringBuilder();
     String line;
@@ -88,6 +113,8 @@ public class ChatProxyController {
         // SSE spec: the space after "data:" is optional (Spring's SseEmitter omits it).
         String value = line.substring(5);
         data.append(value.startsWith(" ") ? value.substring(1) : value);
+      } else if (line.startsWith(":")) {
+        sink.keepAlive();
       } else if (line.isBlank() && !data.isEmpty()) {
         sink.accept(data.toString());
         data.setLength(0);

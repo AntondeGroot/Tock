@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class ChatProxyControllerTest {
@@ -46,5 +47,32 @@ class ChatProxyControllerTest {
   @Test
   void drops_an_event_without_a_closing_blank_line() throws IOException {
     assertEquals(List.of("[1]"), forwardedEvents("data:[1]\n\ndata:[2"));
+  }
+
+  /**
+   * Keep-alives must reach the browser: a quiet chat otherwise sends nothing, and nginx drops the
+   * stream after 60 seconds. They are reported separately, so they never end up in a message.
+   */
+  @Test
+  void reports_comment_lines_as_keep_alives_and_keeps_them_out_of_the_data() throws IOException {
+    List<String> events = new ArrayList<>();
+    AtomicInteger keepAlives = new AtomicInteger();
+    ChatProxyController.EventSink sink = new ChatProxyController.EventSink() {
+      @Override
+      public void accept(String data) {
+        events.add(data);
+      }
+
+      @Override
+      public void keepAlive() {
+        keepAlives.incrementAndGet();
+      }
+    };
+
+    String stream = ":ping\n\ndata:x\n\n:ping\n\n";
+    ChatProxyController.forwardEvents(new BufferedReader(new StringReader(stream)), sink);
+
+    assertEquals(List.of("x"), events);
+    assertEquals(2, keepAlives.get());
   }
 }
