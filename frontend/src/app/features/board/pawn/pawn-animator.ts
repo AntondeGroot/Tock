@@ -24,7 +24,7 @@ function moveSpeed(distance: number): number {
   return 0.1;
 }
 
-function pathLength(points: Pt[]): number {
+export function pathLength(points: Pt[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {
     total += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);

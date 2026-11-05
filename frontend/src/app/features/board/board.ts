@@ -41,6 +41,9 @@ import { GameStateStream } from './game-state-stream';
 import { PawnAnimator } from './pawn/pawn-animator';
 import { SplitSteps } from './selection/split-steps/split-steps';
 import { moveAnimation } from './pawn/move-animation';
+import { moveTrails } from './pawn/trail/pawn-trail';
+import { PawnTrails } from './pawn/trail/pawn-trails';
+import { seatColor } from '../../player-colors';
 import { postTradeAction } from './trade/trade-actions';
 import { MoveSelection } from './selection/move-selection';
 import { teammateCaptureTiles } from './selection/teammate-capture';
@@ -59,7 +62,7 @@ import { parseCard } from './cards/played-card';
 
 @Component({
   selector: 'app-board',
-  imports: [Pawn, CardLayer, PlayerList, TradePanel, SplitSteps, TurnStreak],
+  imports: [Pawn, PawnTrails, CardLayer, PlayerList, TradePanel, SplitSteps, TurnStreak],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -192,6 +195,8 @@ export class Board implements OnInit, OnDestroy {
   // Pawn move animation: a small engine that walks pawns along pixel waypoints and exposes their
   // live positions; the `pawns` computed reads those to place a pawn mid-move (see below).
   private readonly pawnAnimator = new PawnAnimator();
+  // The trails those moving pawns leave behind, on a layer between the tiles and the pawns.
+  private readonly pawnTrails = viewChild(PawnTrails);
   // The reusable card table (the ng-card-table library): it holds the zones cards lie in — the pile,
   // the deck and each opponent's face-down fan — and works out where every card is drawn. It asks
   // for the viewer's hand rather than being given it, and lays it all out with the default layout.
@@ -346,10 +351,16 @@ export class Board implements OnInit, OnDestroy {
     if (!g) return;
     const { walks, killDelay1, killDelay2 } = moveAnimation(g, mr);
     const wait = this.pawnAnimator.enqueue(walks);
+    const colorOf = (playerId: string) => seatColor(this.playerInt(playerId));
+    this.pawnTrails()?.add(moveTrails(g, mr, walks, colorOf, performance.now() + wait));
     if (mr.moveType === 'onBoard') this.sound.play('pawnOnBoard', wait);
     // A captured pawn "dies" as it's flung home — play the kill sound as that begins.
     if (mr.pawnKilledByPawn1) this.sound.play('pawnKilled', wait + killDelay1);
     if (mr.pawnKilledByPawn2) this.sound.play('pawnKilled', wait + killDelay2);
+  }
+
+  private playerInt(playerId: string): number | undefined {
+    return this.state()?.players?.find((p) => p.id === playerId)?.playerInt;
   }
 
   private findPawn(id: string) {
