@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { vi } from 'vitest';
+import { onTestFinished, vi } from 'vitest';
 
 import { Board } from './board';
 import { provideApi } from '../../api';
 import { Translations } from '../../i18n/translations.service';
 import { TeamHandoff } from '../team-handoff/team-handoff.service';
 import { SoundService } from '../../sound.service';
+import { seatColor } from '../../player-colors';
+import { PawnTrails } from './pawn/trail/pawn-trails';
 
 /** A pawn of `playerId` standing on `tileNr` (≥ 16 is a finish tile, i.e. home). */
 const pawnOn = (playerId: string, pawnNr: number, tileNr: number) => ({
@@ -95,6 +97,46 @@ describe('Board', () => {
     c.handleGameState(push(1, 2));
     await fixture.whenStable();
     expect(fanfares()).toBe(1);
+  });
+
+  // Every push repeats the last move, and a (re)connect's snapshot carries one the viewer never saw
+  // being played (GameStateStream's onOpen clears the baseline, the same state as a first push).
+  // A trail shows a pawn moving NOW, so only a move that is new to this viewer may leave one.
+  it('starts a trail only for a move the viewer has not seen yet', async () => {
+    const c = component as unknown as { handleGameState: (push: unknown) => void };
+    const add = vi.spyOn(PawnTrails.prototype, 'add');
+    onTestFinished(() => add.mockRestore());
+    const tile = (tileNr: number) => ({ playerId: '1', tileNr });
+    const pushAfter = (pawnNr: number, landedOn: number) => ({
+      players: teamPlayers,
+      pawns: [pawnOn('1', pawnNr, landedOn)],
+      winners: [],
+      playerCards: [],
+      currentPlayerId: '1',
+      lastMoveResponse: {
+        pawn1: pawnOn('1', pawnNr, landedOn),
+        movePawn1: [tile(3), tile(landedOn)],
+        moveType: 'move',
+      },
+    });
+
+    // GIVEN the viewer connects to a game that already has a last move
+    c.handleGameState(pushAfter(0, 5));
+    await fixture.whenStable();
+    expect(add).not.toHaveBeenCalled();
+
+    // WHEN the next push merely repeats that move
+    c.handleGameState(pushAfter(0, 5));
+    await fixture.whenStable();
+    expect(add).not.toHaveBeenCalled();
+
+    // WHEN another pawn then really moves
+    c.handleGameState(pushAfter(1, 6));
+    await fixture.whenStable();
+
+    // THEN one trail starts, in the colour of the player who moved
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(add.mock.calls[0][0].map((trail) => trail.color)).toEqual([seatColor(0)]);
   });
 
   // Coming home LAST of your team ends the game for that team: the winner banner pops, and there

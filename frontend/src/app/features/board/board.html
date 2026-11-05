@@ -20,6 +20,7 @@
             [style.--tile-color]="t.color"
           ></div>
         }
+        <app-pawn-trails [cell]="cell()" />
         @for (p of pawns(); track p.id) {
           <app-pawn
             class="pawn"
