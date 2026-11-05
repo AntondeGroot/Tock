@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { decrypt, encrypt } from './chat-cipher';
+import { utcClockToLocal } from './chat-time';
 import { basePath } from '../../base-path';
 
 /** A chat message as it travels on the wire (message text is XOR-obfuscated). */
@@ -15,11 +16,6 @@ export interface DisplayMessage {
   time: string;
   sender: string;
   text: string;
-}
-
-function toLocalTime(utc: string): string {
-  const d = new Date(utc);
-  return isNaN(d.getTime()) ? utc : d.toLocaleTimeString();
 }
 
 /**
@@ -45,7 +41,7 @@ export class ChatService {
   readonly messages: Signal<DisplayMessage[]> = computed(() => {
     const key = this.sessionId ?? '';
     return this._raw().map((m) => ({
-      time: toLocalTime(m.timestampUTC),
+      time: utcClockToLocal(m.timestampUTC),
       sender: m.sender,
       text: decrypt(m.message, key),
     }));
