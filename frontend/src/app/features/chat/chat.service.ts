@@ -18,11 +18,18 @@ export interface DisplayMessage {
   text: string;
 }
 
+/** How long a broken stream may take to deliver again before the chat counts as down. */
+const OFFLINE_GRACE_MS = 10_000;
+/** How soon to reopen a stream the browser has given up on. */
+const RECONNECT_MS = 2_000;
+
 /**
  * Talks to the external chat server via the keezen backend's `/chat/**` proxy — a port
  * of the GWT `GameBoardPresenter` chat wiring. Availability follows the stream: any
- * payload means the server is up (`available` → true); a stream error means it's down
- * (`available` → false). The UI uses `available` to show/hide itself, exactly like GWT.
+ * payload means the server is up (`available` → true). A stream error alone does not mean
+ * it's down, because streams get dropped and reopened all the time and the reopened one delivers
+ * the messages again: only when none arrive within a grace period does `available` go false.
+ * The UI uses `available` to show/hide itself, so the chat stays put through a reconnect.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatService {
@@ -30,11 +37,13 @@ export class ChatService {
 
   private sessionId: string | null = null;
   private source?: EventSource;
+  private offlineTimer?: ReturnType<typeof setTimeout>;
+  private reconnectTimer?: ReturnType<typeof setTimeout>;
 
   private readonly _available = signal(false);
   private readonly _raw = signal<WireMessage[]>([]);
 
-  /** True once the chat stream has delivered at least one payload; false while it's down. */
+  /** True once the chat stream has delivered a payload; false once it has stayed quiet after an error. */
   readonly available = this._available.asReadonly();
 
   /** The messages, decrypted with the sessionId key and formatted for display. */
@@ -51,9 +60,26 @@ export class ChatService {
   connect(sessionId: string): void {
     this.disconnect();
     this.sessionId = sessionId;
-    this.source = new EventSource(`${basePath()}/chat/${sessionId}/stream`);
-    this.source.onmessage = (e: MessageEvent) => this.ingest(e.data);
-    this.source.onerror = () => this._available.set(false);
+    this.openStream(sessionId);
+  }
+
+  private openStream(sessionId: string): void {
+    const source = new EventSource(`${basePath()}/chat/${sessionId}/stream`);
+    this.source = source;
+    source.onmessage = (e: MessageEvent) => this.ingest(e.data);
+    source.onerror = () => this.onStreamError(source, sessionId);
+  }
+
+  private onStreamError(source: EventSource, sessionId: string): void {
+    this.offlineTimer ??= setTimeout(() => {
+      this.offlineTimer = undefined;
+      this._available.set(false);
+    }, OFFLINE_GRACE_MS);
+    // CONNECTING → the browser is retrying by itself. CLOSED → it gave up, so reopen it ourselves.
+    if (source.readyState === EventSource.CLOSED) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = setTimeout(() => this.openStream(sessionId), RECONNECT_MS);
+    }
   }
 
   /** Handle one SSE payload (a JSON array of messages). Any valid array = server is up. */
@@ -65,6 +91,7 @@ export class ChatService {
       return; // ignore malformed frames; stay in the current state
     }
     if (!Array.isArray(parsed)) return;
+    this.cancelOfflineTimer();
     this._available.set(true);
     this._raw.set(parsed as WireMessage[]);
   }
@@ -82,8 +109,15 @@ export class ChatService {
   }
 
   disconnect(): void {
+    this.cancelOfflineTimer();
+    clearTimeout(this.reconnectTimer);
     this.source?.close();
     this.source = undefined;
     this._available.set(false);
+  }
+
+  private cancelOfflineTimer(): void {
+    clearTimeout(this.offlineTimer);
+    this.offlineTimer = undefined;
   }
 }
