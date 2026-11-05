@@ -1,7 +1,21 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  afterRenderEffect,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ChatService } from './chat.service';
 import { GameStore } from '../../game-store';
 import { resolveGameSession } from '../../session';
+
+/** This close to the end of the messages still counts as reading the latest one. */
+const AT_BOTTOM_TOLERANCE_PX = 20;
 
 /**
  * In-game chat, ported from the GWT board's chat widget. It shows only while the chat
@@ -28,6 +42,10 @@ export class ChatPanel implements OnInit, OnDestroy {
   private readonly seenCount = signal(0);
   private seenInitialized = false;
 
+  private readonly display = viewChild<ElementRef<HTMLElement>>('display');
+  /** Whether the viewer is at the newest message; false while they scroll back through history. */
+  private followsLatest = true;
+
   /** Unread badge count for the mobile chat button. */
   protected readonly unread = computed(() =>
     Math.max(0, this.chat.messages().length - this.seenCount()),
@@ -43,6 +61,14 @@ export class ChatPanel implements OnInit, OnDestroy {
       }
       // While the popup is open, keep everything marked seen so the badge stays cleared.
       if (this.open()) this.seenCount.set(total);
+    });
+    // After rendering: the new message has to be in the list to scroll to it, and the phone popup
+    // is hidden until it opens, so a list that is not showing yet has nothing to scroll.
+    afterRenderEffect(() => {
+      this.chat.messages();
+      this.open();
+      const list = this.display()?.nativeElement;
+      if (list && this.followsLatest) list.scrollTop = list.scrollHeight;
     });
   }
 
@@ -61,7 +87,14 @@ export class ChatPanel implements OnInit, OnDestroy {
   }
 
   protected toggle(): void {
+    this.followsLatest = true; // opening always starts at the newest message
     this.open.update((o) => !o);
+  }
+
+  /** Scrolling back to read history must not get interrupted by the next message coming in. */
+  protected noteScroll(list: HTMLElement): void {
+    const distanceToEnd = list.scrollHeight - list.scrollTop - list.clientHeight;
+    this.followsLatest = distanceToEnd <= AT_BOTTOM_TOLERANCE_PX;
   }
 
   protected close(): void {
