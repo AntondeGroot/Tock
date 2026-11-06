@@ -144,4 +144,59 @@ describe('TransitionSounds', () => {
     // THEN exactly one more fanfare — not one per finisher, and not one per medal on top
     expect(fanfares()).toBe(2);
   });
+
+  // The two homecoming sounds must never stack. The fourth pawn home is a pawn entering the finish
+  // AND a player finishing, in the same push — only the bigger occasion may be heard.
+  it('plays only the fanfare when the pawn coming home is the fourth', () => {
+    // GIVEN a player with three pawns home and the last one still out
+    sounds.react(teamPush(3, 0));
+
+    // WHEN that last pawn lands in the finish lane, 800ms from now
+    pawnsRemaining = 800;
+    sounds.react(teamPush(4, 0), [800]);
+
+    // THEN the fanfare plays and the smaller pawn-home sound does not
+    expect(play.mock.calls).toEqual([['medalAwarded', 800]]);
+  });
+
+  // A 7-split can bring two pawns home in one move. That is one occasion, not two, and with pawns
+  // still out it is not the player's finish either — so it gets the pawn-home sound, a single time.
+  it('plays the pawn-home sound once when a split brings two pawns home', () => {
+    // GIVEN a player with no pawns home yet
+    sounds.react(teamPush(0, 0));
+
+    // WHEN a split lands two pawns in the finish lane, 500ms and 900ms from now
+    sounds.react(teamPush(2, 0), [500, 900]);
+
+    // THEN the sound plays once, as the last of the two lands
+    expect(play.mock.calls).toEqual([['pawnHome', 900]]);
+  });
+
+  // The same split, but these two pawns were the player's last: finishing outranks the pawns coming
+  // home, so the victory trumpets play alone and wait for the whole move, like any other finish.
+  it('plays only the fanfare when a split brings the last two pawns home', () => {
+    // GIVEN a player with two pawns home and two still out
+    sounds.react(teamPush(2, 0));
+
+    // WHEN a split lands both remaining pawns in the finish lane
+    pawnsRemaining = 900;
+    sounds.react(teamPush(4, 0), [500, 900]);
+
+    // THEN the fanfare plays once, and the pawn-home sound not at all
+    expect(play.mock.calls).toEqual([['medalAwarded', 900]]);
+  });
+
+  // The sound follows the pawn, not the move: in a split the other pawn may still be walking, or a
+  // captured pawn still flying home, long after this one has landed in its finish lane.
+  it('plays the pawn-home sound as the pawn lands, not when the whole move ends', () => {
+    // GIVEN a player with no pawns home yet
+    sounds.react(teamPush(0, 0));
+
+    // WHEN one pawn lands in the finish lane in 400ms, while the move as a whole runs for 1500ms
+    pawnsRemaining = 1500;
+    sounds.react(teamPush(1, 0), [400]);
+
+    // THEN the sound is timed to that pawn's landing
+    expect(play.mock.calls).toEqual([['pawnHome', 400]]);
+  });
 });

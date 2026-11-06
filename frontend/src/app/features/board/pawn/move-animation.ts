@@ -1,5 +1,6 @@
 import { MoveResponse, Pawn as ApiPawn, PositionKey } from '../../../api';
 import { BoardGeometry, Pt } from '../geometry/board-geometry';
+import { FIRST_FINISH_TILE } from '../selection/team-control';
 import { PawnWalk, walkDurationMs } from './pawn-animator';
 import { pawnKey } from './pawn-key';
 
@@ -12,6 +13,19 @@ export interface MoveAnimation {
   /** Ms into the group at which pawn1's / pawn2's victim starts flying home (for the sound). */
   killDelay1: number;
   killDelay2: number;
+  /** Ms into the group at which each pawn coming in off the board lands in its finish lane. */
+  finishLandingsMs: number[];
+}
+
+/**
+ * Whether this path takes a pawn from the board into the finish lane. Only its two ends count: a
+ * pawn already in the lane stays in it, and one that bounces off the lane's end can land back on
+ * the board having touched a finish tile on the way.
+ */
+function entersFinish(path: PositionKey[] | undefined): boolean {
+  const from = path?.at(0);
+  const to = path?.at(-1);
+  return !!from && !!to && from.tileNr < FIRST_FINISH_TILE && to.tileNr >= FIRST_FINISH_TILE;
 }
 
 /** A pawn's tile path as the pixel waypoints the animator walks; undefined when it isn't moving. */
@@ -45,5 +59,11 @@ export function moveAnimation(g: BoardGeometry, mr: MoveResponse): MoveAnimation
     pawnWalk(g, mr.pawnKilledByPawn1, mr.movePawnKilledByPawn1, killDelay1),
     pawnWalk(g, mr.pawnKilledByPawn2, mr.movePawnKilledByPawn2, killDelay2),
   ].filter((w): w is PawnWalk => w !== undefined);
-  return { walks, killDelay1, killDelay2 };
+  const finishLandingsMs = [
+    { path: mr.movePawn1, landingMs: killDelay1 },
+    { path: mr.movePawn2, landingMs: killDelay2 },
+  ]
+    .filter((leg) => entersFinish(leg.path))
+    .map((leg) => leg.landingMs);
+  return { walks, killDelay1, killDelay2, finishLandingsMs };
 }

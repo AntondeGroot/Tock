@@ -17,8 +17,8 @@ function finishedPlayers(state: GameStatePush | undefined): ReadonlySet<string> 
 
 /**
  * Sound effects (ported from the GWT AudioPlayer): a soft click when the turn passes to a new
- * player, and a fanfare when a player's race ends. Both fire on the TRANSITION, so this keeps the
- * previous push's turn and finishers — feed it every push.
+ * player, a fanfare when a player's race ends, and a smaller one when a pawn comes home. They fire
+ * on the TRANSITION, so this keeps the previous push's turn and finishers — feed it every push.
  */
 export class TransitionSounds {
   private prevCurrentPlayerId: string | undefined;
@@ -36,7 +36,11 @@ export class TransitionSounds {
     private readonly pawns: { remainingMs(): number } = { remainingMs: () => 0 },
   ) {}
 
-  react(state: GameStatePush | undefined): void {
+  /**
+   * @param finishLandingsMs for a new move in this push: in how many ms each pawn coming in off the
+   *   board lands in its finish lane. Empty when no pawn came home, or the push carries no new move.
+   */
+  react(state: GameStatePush | undefined, finishLandingsMs: readonly number[] = []): void {
     const cur = state?.currentPlayerId;
     if (cur && this.prevCurrentPlayerId !== undefined && cur !== this.prevCurrentPlayerId) {
       this.sound.play('turnChange');
@@ -44,10 +48,20 @@ export class TransitionSounds {
     if (cur) this.prevCurrentPlayerId = cur;
 
     const finished = finishedPlayers(state);
-    if (this.prevFinished && this.hasNewFinisher(finished)) {
-      this.sound.play('medalAwarded', this.pawns.remainingMs());
-    }
+    this.playHomecoming(finished, finishLandingsMs);
     this.prevFinished = finished;
+  }
+
+  /**
+   * One sound per move, the biggest occasion winning: a player finishing earns the fanfare, and
+   * any other pawn home the smaller one. A 7-split can bring two home, heard once as the last lands.
+   */
+  private playHomecoming(finished: ReadonlySet<string>, finishLandingsMs: readonly number[]): void {
+    if (this.hasNewFinisher(finished)) {
+      this.sound.play('medalAwarded', this.pawns.remainingMs());
+    } else if (finishLandingsMs.length > 0) {
+      this.sound.play('pawnHome', Math.max(...finishLandingsMs));
+    }
   }
 
   /**
