@@ -2,6 +2,8 @@ package adg.processing;
 
 import static adg.util.CardValueCheck.isSeven;
 import static com.adg.openapi.model.MoveResult.CAN_MAKE_MOVE;
+import static com.adg.openapi.model.MoveType.SPLIT;
+import static com.adg.openapi.model.TempMessageType.CHECK_MOVE;
 
 import adg.keezen.GameState;
 import com.adg.openapi.model.Card;
@@ -26,7 +28,8 @@ import java.util.function.ToIntFunction;
  * default), so the suggestion can never produce an unplayable selection.
  *
  * <p>Each candidate move is evaluated with a non-mutating {@link ProcessOnMove} CHECK (deliberately
- * NOT {@code ProcessOnSplit}, which temporarily mutates the shared game state). A pawn's furthest
+ * NOT {@code ProcessOnSplit}, which temporarily mutates the shared game state). Only the one chosen
+ * split is then confirmed through {@code ProcessOnSplit}, the same CHECK the preview already runs. A pawn's furthest
  * forward reach is the step count whose landing tile has the highest forward position along the
  * pawn's path to its finish; overshooting a wall bounces the pawn back to a lower position.
  */
@@ -151,19 +154,24 @@ public final class SevenSplitRecommender {
     return new Analysis(Kind.FREE, 7, bestTileNr);
   }
 
+  /**
+   * Judged by the split itself, as the move will be: pawn1 moves first, so pawn2 may land on the
+   * tile pawn1 just left. (Checking each pawn alone against the current board would reject that.)
+   */
   private static boolean isValidSplit(
       GameState gs, MoveRequest base, int cardId, int steps1, int steps2) {
-    MoveResponse m1 = checkSingleMove(gs, base, base.getPawn1Id(), cardId, steps1);
-    if (!CAN_MAKE_MOVE.equals(m1.getResult())) {
-      return false;
-    }
-    MoveResponse m2 = checkSingleMove(gs, base, base.getPawn2Id(), cardId, steps2);
-    if (!CAN_MAKE_MOVE.equals(m2.getResult())) {
-      return false;
-    }
-    PositionKey dest1 = lastTile(m1.getMovePawn1());
-    PositionKey dest2 = lastTile(m2.getMovePawn1());
-    return dest1 == null || !dest1.equals(dest2); // both pawns may not land on the same tile
+    MoveRequest split = new MoveRequest();
+    split.setPlayerId(base.getPlayerId());
+    split.setCardId(cardId);
+    split.setPawn1Id(base.getPawn1Id());
+    split.setPawn2Id(base.getPawn2Id());
+    split.setStepsPawn1(steps1);
+    split.setStepsPawn2(steps2);
+    split.setMoveType(SPLIT);
+    split.setTempMessageType(CHECK_MOVE);
+    MoveResponse response = new MoveResponse();
+    ProcessOnSplit.process(gs, split, response);
+    return CAN_MAKE_MOVE.equals(response.getResult());
   }
 
   /** Quick test of whether a pawn is close enough to a wall (finish or a blockaded start) to matter. */
