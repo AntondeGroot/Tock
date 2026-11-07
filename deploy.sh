@@ -12,6 +12,14 @@ fi
 SSH="ssh -i ~/.ssh/pi_deploy_key $TARGET"
 SCP="scp -i ~/.ssh/pi_deploy_key"
 
+# Fail now rather than after the full build and test run: once the Pi is unreachable, every later
+# remote check fails too, and the Tomcat check would wrongly report Tomcat as missing.
+echo "🔌 Checking SSH to $TARGET..."
+if ! ssh -i ~/.ssh/pi_deploy_key -o ConnectTimeout=10 -o BatchMode=yes "$TARGET" true; then
+  echo "❌ Cannot reach $TARGET over SSH. Is the Pi on, is cloudflared running for my-pi-ext? Or is your internet off?"
+  exit 1
+fi
+
 echo "🔨 Building and running all backend tests..."
 mvn clean verify
 
