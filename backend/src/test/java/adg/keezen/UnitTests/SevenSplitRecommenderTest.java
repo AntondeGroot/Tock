@@ -155,4 +155,17 @@ class SevenSplitRecommenderTest {
 
     assertArrayEquals(new int[] {4, 3}, rec);
   }
+
+  @Test
+  void pawn2MayLandOnTheTilePawn1JustLeft() {
+    // pawn1 at (7,15) goes 4 deep into the finish (→19), and pawn2 at (7,12) then takes its 3 steps
+    // onto (7,15) — the tile pawn1 has already left, since pawn1 moves first.
+    Card card = givePlayerSeven(cardsDeck, 0);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("0", 1), new PositionKey("7", 15));
+    Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("0", 2), new PositionKey("7", 12));
+
+    int[] rec = SevenSplitRecommender.recommend(gameState, baseRequest(pawn1, pawn2, card));
+
+    assertArrayEquals(new int[] {4, 3}, rec);
+  }
 }
