@@ -34,6 +34,8 @@ const forfeitablePush = (playerCards: { uuid: number; suit: number; value: numbe
   pawns: [pawnOn('1', 0, 5)],
   winners: [],
   playerCards,
+  // As the server sends it, the viewer's own hand included: a count going up is what reads as a deal.
+  nrOfCardsPerPlayer: { '1': playerCards.length },
   currentPlayerId: '1',
   canForfeit: true,
 });
@@ -371,6 +373,7 @@ describe('Board', () => {
     const card = (uuid: number, suit: number, value: number) => ({ uuid, suit, value });
     const push = (cards: { uuid: number; suit: number; value: number }[]) => ({
       playerCards: cards,
+      nrOfCardsPerPlayer: { '1': cards.length },
       players: [],
       pawns: [],
       winners: [],

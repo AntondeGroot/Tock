@@ -112,12 +112,17 @@ export class Board implements OnInit, OnDestroy {
     const isNewMove = this.prevMoveKey !== undefined && moveKey && moveKey !== this.prevMoveKey;
     const finishLandingsMs = isNewMove ? this.animateMove(mr!) : [];
     this.prevMoveKey = moveKey;
+    this.moveSettlesInMs = isNewMove ? this.pawnAnimator.remainingMs() : undefined;
 
     // Hand the card fields to the animator: it deals in anything new and decides what may be
     // rendered yet — a fresh round waits for the last play/forfeit to finish first. First note
     // where the cards lie now: a card this push takes away (one given in a trade) flies from there.
     this.cardFly.noteHand();
-    this.roundCards.accept(next.playerCards ?? [], next.nrOfCardsPerPlayer ?? {});
+    this.roundCards.accept(
+      next.playerCards ?? [],
+      next.nrOfCardsPerPlayer ?? {},
+      this.moveSettlesInMs,
+    );
     // After accept: with its baseline reset, the first push reads as a round deal and clears the pile.
     if (this.pileStale) {
       this.cardTable.restorePile((next.playedCards ?? []).map(parseCard));
@@ -205,7 +210,10 @@ export class Board implements OnInit, OnDestroy {
   protected readonly cardTable: CardTable = new CardTable({ hand: () => this.hand() });
   // Owns the hand and counts the board renders: it diffs each push into deal-in animations and
   // holds a new round back until the play or forfeit that ended the previous one has settled.
-  private readonly roundCards = new RoundCardsAnimator(this.cardTable, this.pawnAnimator);
+  // A winner's leftover cards are flown off the hand the same way a forfeit flies the whole hand.
+  private readonly roundCards = new RoundCardsAnimator(this.cardTable, this.pawnAnimator, () =>
+    this.cardFly.ownForfeit(),
+  );
   /** The hand as SHOWN — the animator's, which holds a new round back until the table settles. */
   protected readonly hand = this.roundCards.hand;
   // Every other player's hand, as a face-down fan on the card table: dealt, played and forfeited.
@@ -256,8 +264,15 @@ export class Board implements OnInit, OnDestroy {
     const counts = this.roundCards.counts();
     const played = this.state()?.playedCards ?? [];
     this.geometry();
-    untracked(() => this.opponentFans.reactToCounts(counts, played));
+    untracked(() => this.opponentFans.reactToCounts(counts, played, this.moveSettlesInMs));
   }
+
+  /**
+   * For the latest push: in how many ms the pawns of the move it brought stop, or undefined when it
+   * brought none (a forfeit, a deal). A hand that loses several cards WITH a move is a win, whose
+   * leftovers wait for that moment. A plain field: the count reactions read it, never track it.
+   */
+  private moveSettlesInMs?: number;
 
   /**
    * Feed the selection state machine the current player, pawns (with live positions) and hand

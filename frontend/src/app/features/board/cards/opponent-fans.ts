@@ -38,7 +38,11 @@ export class OpponentFans {
     private readonly viewerId: string | null,
   ) {}
 
-  reactToCounts(counts: Record<string, number>, played: string[]): void {
+  /**
+   * @param moveSettlesInMs set when the push came with a move: in how many ms its pawns stop. A
+   *     hand that drops by more than one card with a move is a win — see {@link winnerDiscard}.
+   */
+  reactToCounts(counts: Record<string, number>, played: string[], moveSettlesInMs?: number): void {
     const g = this.geometry();
     if (!g) return;
     const firstPush = !this.seen;
@@ -48,6 +52,8 @@ export class OpponentFans {
       const fan = this.fanOf(playerId);
       const dropped = fan.length - counts[playerId];
       if (dropped === 1) this.playOutermost(fan, played.at(-1));
+      else if (dropped > 1 && moveSettlesInMs !== undefined)
+        this.winnerDiscard(fan, played.slice(-dropped), moveSettlesInMs);
       else if (dropped > 1) this.discard(fan, played.slice(-dropped));
       else if (dropped < 0) this.fill(playerId, counts[playerId], firstPush ? null : i + 1);
     });
@@ -76,15 +82,25 @@ export class OpponentFans {
   }
 
   /**
+   * A win: the server plays the card, then throws away the cards the winner no longer needs — so
+   * the first face listed is the play. It goes now, like any play; the rest wait for the pawn.
+   */
+  private winnerDiscard(fan: number[], faces: string[], moveSettlesInMs: number): void {
+    const [playedFace, ...leftovers] = faces;
+    this.playOutermost(fan, playedFace);
+    this.discard(fan, leftovers, moveSettlesInMs);
+  }
+
+  /**
    * A forfeit: the fan's cards go to the pile one after another, turning over to the faces the
    * server discarded them as — paired in order, so the pile reads like the played list.
    */
-  private discard(fan: number[], faces: string[]): void {
+  private discard(fan: number[], faces: string[], startMs = 0): void {
     const leaving = fan.splice(0, faces.length);
     leaving.forEach((uuid, i) =>
       setTimeout(
         () => this.table.place({ uuid, ...parseCard(faces[i]) }, PILE_ZONE),
-        i * DISCARD_STAGGER_MS,
+        startMs + i * DISCARD_STAGGER_MS,
       ),
     );
   }
