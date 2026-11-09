@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import { RoundCardsAnimator } from './round-cards-animator';
 import { CardTable } from 'ng-card-table';
 import { Card as CardModel } from '../../../api';
@@ -13,13 +13,16 @@ describe('RoundCardsAnimator', () => {
   let animator: RoundCardsAnimator;
   /** How long the pawns still need; 0 (nothing moving) unless a test says otherwise. */
   let pawnsRemaining = 0;
+  /** Flies the viewer's remaining hand to the pile — the board's BoardCardFly.ownForfeit. */
+  let discardHand: Mock<() => void>;
 
   beforeEach(() => {
     vi.useFakeTimers();
     pawnsRemaining = 0;
+    discardHand = vi.fn<() => void>();
     // Wired as the board does it: the table renders whatever the animator has released.
     table = new CardTable({ hand: () => animator.hand() });
-    animator = new RoundCardsAnimator(table, { remainingMs: () => pawnsRemaining });
+    animator = new RoundCardsAnimator(table, { remainingMs: () => pawnsRemaining }, discardHand);
   });
 
   afterEach(() => {
@@ -122,5 +125,100 @@ describe('RoundCardsAnimator', () => {
     vi.advanceTimersByTime(1300); // 1800ms after the round ended
     expect(animator.hand().map((c) => c.uuid)).toEqual([11, 12, 13, 14]);
     expect(animator.counts()).toEqual({ me: 4 });
+  });
+
+  // A viewer who has finished, or is only watching, is dealt nothing: their own hand stays empty
+  // across the round, so it cannot be what tells them a round was dealt. The other hands can — a
+  // count only ever goes UP when a round is dealt (a trade swaps a card, it never adds one).
+  it('holds a new round back for a viewer who is not dealt in', () => {
+    // GIVEN a viewer with no cards, watching the last player hold the round's final card
+    animator.accept([], { me: 0, them: 1 });
+
+    // WHEN that card is played and the next round is dealt to the others only
+    animator.accept([], { me: 0, them: 4 });
+
+    // THEN the table still reads as the round that just ended, so the last card can fly to the pile
+    expect(animator.counts()).toEqual({ me: 0, them: 0 });
+
+    // …and the dealt counts appear only once the cards' flight and the pause have passed
+    vi.advanceTimersByTime(1799);
+    expect(animator.counts()).toEqual({ me: 0, them: 0 });
+    vi.advanceTimersByTime(1);
+    expect(animator.counts()).toEqual({ me: 0, them: 4 });
+  });
+
+  // A new round starts on an empty pile. For a viewer who is dealt nothing, releasing the round
+  // must still clear it — else the others' fresh cards are dealt out over the old round's pile.
+  it('clears the pile when a round is released to a viewer who is not dealt in', () => {
+    // GIVEN the round's last card lying on the pile, from a viewer with no cards of their own
+    animator.accept([], { me: 0, them: 1 });
+    table.pile.set([card(7)]);
+    animator.accept([], { me: 0, them: 4 });
+
+    // WHEN the held round is released
+    vi.advanceTimersByTime(1800);
+
+    // THEN the pile starts the round empty
+    expect(table.pile()).toEqual([]);
+  });
+
+  // A team trade also brings a card the viewer has not seen, but it is no round: one card leaves,
+  // one arrives, and no count goes up. Holding it back would freeze the trade for nearly two
+  // seconds, and clearing the pile would wipe the round's played cards.
+  it('applies a trade at once, keeping the pile', () => {
+    // GIVEN a round in play, with a card on the pile
+    animator.accept([card(1), card(2)], { me: 2, them: 3 });
+    table.pile.set([card(7)]);
+
+    // WHEN a trade swaps one of the viewer's cards for a King
+    animator.accept([card(1), card(20, 13)], { me: 2, them: 3 });
+
+    // THEN the King is in the hand straight away, and the pile is left alone
+    expect(animator.hand().map((c) => c.uuid)).toEqual([1, 20]);
+    expect(table.pile().map((c) => c.uuid)).toEqual([7]);
+  });
+
+  // When the viewer wins, the push takes their whole hand at once: the card they played, and the
+  // ones the server throws away because they no longer need them. Shown straight away, those
+  // leftovers just vanish mid-walk. They stay in the hand until the winning pawn has stopped, and
+  // only then are thrown onto the pile — while the hand still shows them, so they fly from there.
+  it("keeps a winner's leftover cards in hand until the pawn has stopped, then discards them", () => {
+    // GIVEN the viewer holding three cards
+    animator.accept([card(1), card(2), card(3)], { me: 3, them: 2 });
+    let handWhenDiscarded: number[] = [];
+    discardHand.mockImplementation(() => (handWhenDiscarded = animator.hand().map((c) => c.uuid)));
+
+    // WHEN they win, playing card 1, with a pawn walk of 2000ms: the push empties their hand
+    animator.accept([], { me: 0, them: 2 }, 2000);
+
+    // THEN the hand still shows the cards while the pawn walks (card 1 flies off on its own)
+    vi.advanceTimersByTime(1999);
+    expect(animator.hand().map((c) => c.uuid)).toEqual([1, 2, 3]);
+    expect(discardHand).not.toHaveBeenCalled();
+
+    // …and once it has stopped they are thrown onto the pile from the hand, which then empties
+    vi.advanceTimersByTime(1);
+    expect(discardHand).toHaveBeenCalledTimes(1);
+    expect(handWhenDiscarded).toEqual([1, 2, 3]);
+    expect(animator.hand()).toEqual([]);
+  });
+
+  // A win can also end the round. The winner's leftovers are only thrown away once their pawn has
+  // stopped, so the round's cards settle that much later — and the deal must wait for them too,
+  // or fresh cards fly out over the leftovers still on their way to the pile.
+  it("deals a round that a win ended only once the winner's leftovers have landed", () => {
+    // GIVEN the viewer out of cards, and the last player still holding three
+    animator.accept([], { me: 0, them: 3 });
+
+    // WHEN that player wins with a pawn walk of 2000ms, which ends the round: the viewer is dealt
+    // a new hand, the winner is dealt nothing
+    pawnsRemaining = 2000;
+    animator.accept(dealtHand(), { me: 4, them: 0 }, 2000);
+
+    // THEN the round waits for the walk, the leftovers' flight to the pile, and the pause on top
+    vi.advanceTimersByTime(3799); // 2000ms walk + 1100ms for the cards to settle + 700ms pause
+    expect(animator.hand()).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(animator.hand().map((c) => c.uuid)).toEqual([11, 12, 13, 14]);
   });
 });

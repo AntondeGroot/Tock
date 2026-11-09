@@ -142,4 +142,30 @@ describe('OpponentFans', () => {
     expect(table.pile().map((c) => `${c.suit}_${c.value}`)).toEqual(['1_4', '0_7', '3_12']);
     expect(inFan('1')).toEqual([]);
   });
+
+  // A winning move also empties the hand at once: the server plays the card, then throws the cards
+  // the winner no longer needs onto the pile, all in one push. Thrown together they read as a
+  // forfeit, mid-walk. So the card that made the move is played now, like any play, and the
+  // leftovers wait until the winning pawn has stopped — the move first, then the clean-up.
+  it("plays a winner's card at once, and discards the rest only once the pawn has stopped", () => {
+    // GIVEN player 1 holding three cards, with one card played earlier this round
+    fans.reactToCounts({ '0': 5, '1': 3, '2': 5 }, ['2_2']);
+
+    // WHEN they win with a 4 of suit 1, whose pawn walk takes 2000ms: the 4 is listed first, then
+    // the two cards they no longer need
+    fans.reactToCounts({ '0': 5, '1': 0, '2': 5 }, ['2_2', '1_4', '0_7', '3_12'], 2000);
+
+    // THEN the 4 goes to the pile straight away, alone
+    const onPile = () => table.pile().map((c) => `${c.suit}_${c.value}`);
+    expect(onPile()).toEqual(['1_4']);
+    vi.advanceTimersByTime(1999);
+    expect(onPile()).toEqual(['1_4']);
+
+    // …and the leftovers follow once the pawn has stopped, one after another, 120ms apart
+    vi.advanceTimersByTime(1);
+    expect(onPile()).toEqual(['1_4', '0_7']);
+    vi.advanceTimersByTime(120);
+    expect(onPile()).toEqual(['1_4', '0_7', '3_12']);
+    expect(inFan('1')).toEqual([]);
+  });
 });
