@@ -18,7 +18,11 @@ export async function createGame(
   gameOptions?: Record<string, unknown>,
 ): Promise<SeededGame> {
   const created = await api.post('/games', {
-    data: { roomName: `e2e-${Date.now()}`, maxPlayers, ...(gameOptions ? { gameOptions } : {}) },
+    data: {
+      roomName: `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      maxPlayers,
+      ...(gameOptions ? { gameOptions } : {}),
+    },
   });
   const { sessionId } = (await created.json()) as { sessionId: string };
 

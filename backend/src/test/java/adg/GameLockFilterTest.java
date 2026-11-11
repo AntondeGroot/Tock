@@ -7,15 +7,25 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import adg.keezen.GameRegistry;
+import adg.keezen.GameSession;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.yaml.snakeyaml.Yaml;
 
 class GameLockFilterTest {
 
@@ -134,6 +144,41 @@ class GameLockFilterTest {
 
     // THEN it gets through
     assertTrue(nextInside.await(1, TimeUnit.SECONDS), "game is not left locked");
+  }
+
+  // Every request that names a game must hold that game's lock — endpoints added later included,
+  // or a double-click on them runs side by side again. Each path in the API spec that names a game
+  // is sent through the filter while the test holds the game's lock itself: a covered path waits
+  // for it, while a path the filter misses would run straight through.
+  @ParameterizedTest
+  @MethodSource("specPathsNamingAGame")
+  void everyEndpointNamingAGame_waitsForThatGamesLock(String specPath) throws Exception {
+    GameRegistry.createNewGame(GAME);
+    GameSession game = GameRegistry.getGameOrThrow(GAME);
+    String path = specPath.replace("{sessionId}", GAME).replaceAll("\\{[^}]+}", "p1");
+    CountDownLatch inside = new CountDownLatch(1);
+
+    // GIVEN the game is busy: something holds its lock
+    synchronized (game) {
+      // WHEN a request to this endpoint arrives
+      send(request(path), (req, resp) -> inside.countDown());
+
+      // THEN it waits for the game
+      assertFalse(inside.await(200, TimeUnit.MILLISECONDS), path + " waits while the game is busy");
+    }
+    // …and runs once the game is free
+    assertTrue(inside.await(1, TimeUnit.SECONDS), path + " runs once the game is free");
+  }
+
+  /** Every path in the API spec that names a game by its {sessionId}. */
+  @SuppressWarnings("unchecked")
+  static Stream<String> specPathsNamingAGame() throws IOException {
+    Map<String, Object> spec;
+    try (Reader reader = Files.newBufferedReader(Path.of("../keezenspel_openapi.yml"))) {
+      spec = new Yaml().load(reader);
+    }
+    Map<String, Object> paths = (Map<String, Object>) spec.get("paths");
+    return paths.keySet().stream().filter(path -> path.contains("{sessionId}"));
   }
 
   private static void await(CountDownLatch latch) {

@@ -153,10 +153,13 @@ public final class GameState {
 
   // ── Player management ─────────────────────────────────────────────────────
 
-  public void addPlayer(Player player) {
-    if (roster.add(player)) {
+  /** Seat a player; false if their id is already seated or the table is full. */
+  public boolean addPlayer(Player player) {
+    boolean added = roster.add(player);
+    if (added) {
       version.incrementAndGet();
     }
+    return added;
   }
 
   public void processLeaveGame(String playerId) {
