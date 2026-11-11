@@ -11,6 +11,7 @@ import static com.adg.openapi.model.MoveType.SPLIT;
 import static com.adg.openapi.model.TempMessageType.CHECK_MOVE;
 import static com.adg.openapi.model.TempMessageType.MAKE_MOVE;
 
+import adg.keezen.Board;
 import adg.keezen.GameState;
 import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRejectionReason;
@@ -136,9 +137,13 @@ public class ProcessOnSplit {
 
   // ── Move validation ───────────────────────────────────────────────────────
 
+  /**
+   * Pawn 1 is checked on the board as it is; pawn 2 on the board as it will be once pawn 1 has
+   * moved — a what-if board, so the check never moves a pawn, not even for a moment. (It used to
+   * move pawn 1 there and back, and checks running side by side could each catch the other
+   * half-done, and put pawn 1 "back" on a tile it had only borrowed.)
+   */
   private boolean bothPawnMovesAreValid() {
-    Pawn backupPawn1 = createBackupOfPawn1();
-
     moveResponsePawn1 = new MoveResponse();
     ProcessOnMove.process(gs, moveMessagePawn1, moveResponsePawn1);
     if (moveResponsePawn1.getResult().equals(CANNOT_MAKE_MOVE)) {
@@ -148,11 +153,10 @@ public class ProcessOnSplit {
       return false;
     }
 
-    temporarilyMovePawn1ToCheckPosition();
+    Board afterPawn1 =
+        gs.board().withPawnMovedTo(pawn1, moveResponsePawn1.getMovePawn1().getLast());
     moveResponsePawn2 = new MoveResponse();
-    ProcessOnMove.process(gs, moveMessagePawn2, moveResponsePawn2);
-    restorePawn1(backupPawn1);
-
+    ProcessOnMove.check(gs, afterPawn1, moveMessagePawn2, moveResponsePawn2);
     if (moveResponsePawn2.getResult().equals(CANNOT_MAKE_MOVE)) {
       // Surface the reason the second pawn's part of the split could not be made.
       reject(response, moveResponsePawn2.getResult(),
@@ -161,30 +165,6 @@ public class ProcessOnSplit {
     }
 
     return true;
-  }
-
-  private Pawn createBackupOfPawn1() {
-    return new Pawn(
-        pawn1.getPlayerId(),
-        pawn1.getPawnId(),
-        gs.getPawn(moveMessagePawn1.getPawn1Id()).getCurrentTileId(),
-        pawn1.getNestTileId());
-  }
-
-  private void temporarilyMovePawn1ToCheckPosition() {
-    gs.movePawn(new Pawn(
-        pawn1.getPlayerId(),
-        pawn1.getPawnId(),
-        moveResponsePawn1.getMovePawn1().getLast(),
-        pawn1.getNestTileId()));
-  }
-
-  private void restorePawn1(Pawn backup) {
-    gs.movePawn(new Pawn(
-        pawn1.getPlayerId(),
-        pawn1.getPawnId(),
-        backup.getCurrentTileId(),
-        pawn1.getNestTileId()));
   }
 
   // ── Move execution ────────────────────────────────────────────────────────

@@ -146,16 +146,19 @@ public class MoveAvailabilityChecker {
    * Validates a split by checking each pawn independently via CHECK_MOVE, then verifying
    * that the two pawns do not land on the same tile.
    *
-   * <p>This deliberately avoids calling {@code processOnSplit}, which temporarily calls
-   * {@code gs.movePawn()} to place pawn1 at its destination before validating pawn2. That
-   * mutation is safe in a single-threaded call, but makes the checker unsafe if
-   * {@code buildPush()} is ever made concurrent. Two independent CHECK_MOVE calls carry no
-   * state side-effects at all.
-   *
-   * <p>The one scenario this approach cannot catch: pawn A's destination tile lies on
-   * pawn B's path (not B's destination), blocking B's route. This is an edge-case within
-   * an edge-case; if it occurs the player will find no split works and the 3-minute
-   * safety timer will eventually unblock them.
+   * <p>A real split ({@code ProcessOnSplit}) moves the first pawn and then checks the second on
+   * the board as it is after that, so checking both on the current board looks like it could
+   * disagree. Under the rules it does not:
+   * <ul>
+   *   <li>One pawn cannot block the other's path. On the normal board pawns jump each other and
+   *       only a blockade stops them — a pawn on its OWN start tile, which a 7 never puts it on:
+   *       pawns reach their start tile from the nest, and turn into the finish rather than pass it.
+   *       In the finish lane pawns cannot pass, but the player picks which pawn moves first, and
+   *       sending the one that goes deeper first always gets both through.
+   *   <li>The second pawn landing on the tile the first leaves is seen here as landing on an own
+   *       pawn. That only decides the answer when every other way to play the 7 is blocked — yet
+   *       the first pawn then ends where the second's full 7 would, so that split is blocked too.
+   * </ul>
    */
   private static boolean trySplit(
       GameState gs, String playerId, Card card, Pawn a, Pawn b, int stepsA, int stepsB) {
