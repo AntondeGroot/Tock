@@ -4,6 +4,7 @@ import static com.adg.openapi.model.MoveResult.CANNOT_MAKE_MOVE;
 import static com.adg.openapi.model.MoveResult.CAN_MAKE_MOVE;
 import static com.adg.openapi.model.MoveResult.PLAYER_DOES_NOT_HAVE_CARD;
 
+import adg.keezen.Board;
 import adg.keezen.GameState;
 import adg.util.Log;
 import com.adg.openapi.model.Card;
@@ -44,6 +45,22 @@ public final class MoveExecutor {
       MoveRequest moveMessage,
       MoveResponse response,
       boolean goToNextPlayer) {
+    execute(gs, gs.board(), pawn0, targetTileId, moveMessage, response, goToNextPlayer);
+  }
+
+  /**
+   * As above, reading where the pawns stand from {@code board}: for a CHECK_MOVE that is the board
+   * the move was checked on (a 7-split's what-if board for its second pawn). A MAKE_MOVE is only
+   * ever made on the real board.
+   */
+  static void execute(
+      GameState gs,
+      Board board,
+      Pawn pawn0,
+      PositionKey targetTileId,
+      MoveRequest moveMessage,
+      MoveResponse response,
+      boolean goToNextPlayer) {
 
     String playerId = moveMessage.getPlayerId();
     Card card = playableCard(gs, moveMessage);
@@ -51,12 +68,13 @@ public final class MoveExecutor {
       rejectMove(gs, response, PLAYER_DOES_NOT_HAVE_CARD);
       return;
     }
-    if (gs.cannotMoveToTileBecauseSamePlayer(pawn0, targetTileId)) {
+    if (board.cannotMoveToTileBecauseSamePlayer(pawn0, targetTileId)) {
       rejectMove(gs, response, CANNOT_MAKE_MOVE);
       return;
     }
 
-    handleKillIfPresent(gs, pawn0, targetTileId, moveMessage, response);
+    Pawn pawnOnTarget = board.getPawn(targetTileId);
+    handleKillIfPresent(gs, pawnOnTarget, pawn0, targetTileId, moveMessage, response);
 
     response.setPawn1(pawn0);
     if (gs.isMakeMove(moveMessage)) {
@@ -87,11 +105,11 @@ public final class MoveExecutor {
 
   private static void handleKillIfPresent(
       GameState gs,
+      Pawn pawnOnTarget,
       Pawn pawn0,
       PositionKey targetTileId,
       MoveRequest moveMessage,
       MoveResponse response) {
-    Pawn pawnOnTarget = gs.getPawn(targetTileId);
     if (pawnOnTarget == null) return;
     if (Objects.equals(pawnOnTarget.getPlayerId(), pawn0.getPlayerId())) return;
 

@@ -32,7 +32,7 @@ public final class GameState {
   private volatile boolean cannotMoveOutOfFinish = false;
   private volatile boolean twoPlayersOnFourSeats = false;
   private final TradeManager tradeManager;
-  private final TileReachability tileReachability;
+  private final PawnBoard board;
   private final PlayerRoster roster;
   private final PawnLocations pawnLocations;
   private final WinnerDetection winnerDetection;
@@ -54,7 +54,8 @@ public final class GameState {
     this.tradeManager =
         new TradeManager(
             cardsDeck, version, () -> hasStarted && teamPlay, this::teammateOf, this::isKingOrAce);
-    this.tileReachability = new TileReachability(this::getPawn, roster::previousPlayerId);
+    this.board =
+        new PawnBoard(pawnLocations::withId, pawnLocations::atTile, roster::previousPlayerId);
     this.winnerDetection =
         new WinnerDetection(
             players, leavers, roster, pawnLocations, cardsDeck, version, () -> teamPlay);
@@ -286,48 +287,53 @@ public final class GameState {
 
   // ── Board logic ───────────────────────────────────────────────────────────
 
+  /** The real board: where the pawns stand now, and what that allows a move to do. */
+  public Board board() {
+    return board;
+  }
+
   public boolean isPawnOnLastSection(String playerId, String sectionId) {
     return sectionId.equals(previousPlayerId(playerId));
   }
 
   public boolean isPawnLooselyClosedIn(Pawn pawn, PositionKey tileId) {
-    return tileReachability.isPawnLooselyClosedIn(pawn, tileId);
+    return board.isPawnLooselyClosedIn(pawn, tileId);
   }
 
   public boolean isPawnTightlyClosedIn(Pawn pawn, PositionKey tileId) {
-    return tileReachability.isPawnTightlyClosedIn(pawn, tileId);
+    return board.isPawnTightlyClosedIn(pawn, tileId);
   }
 
   public boolean canMoveToTile(Pawn selectedPawn, PositionKey nextTileId) {
-    return tileReachability.canMoveToTile(selectedPawn, nextTileId);
+    return board.canMoveToTile(selectedPawn, nextTileId);
   }
 
   public boolean cannotMoveToTileBecauseSamePlayer(Pawn selectedPawn, PositionKey nextTileId) {
-    return tileReachability.cannotMoveToTileBecauseSamePlayer(selectedPawn, nextTileId);
+    return board.cannotMoveToTileBecauseSamePlayer(selectedPawn, nextTileId);
   }
 
   public boolean canPassStartTile(Pawn selectedPawn, PositionKey tileId) {
-    return tileReachability.canPassStartTile(selectedPawn, tileId);
+    return board.canPassStartTile(selectedPawn, tileId);
   }
 
   public boolean tileIsABlockade(PositionKey selectedStartTile) {
-    return tileReachability.tileIsABlockade(selectedStartTile);
+    return board.tileIsABlockade(selectedStartTile);
   }
 
   public int checkHighestTileNrYouCanMoveTo(Pawn pawn, PositionKey tileId, int nrSteps) {
-    return tileReachability.checkHighestTileNrYouCanMoveTo(pawn, tileId, nrSteps);
+    return board.checkHighestTileNrYouCanMoveTo(pawn, tileId, nrSteps);
   }
 
   public ArrayList<PositionKey> pingpongMove(Pawn pawn, PositionKey tileId, int nrSteps) {
-    return tileReachability.pingpongMove(pawn, tileId, nrSteps);
+    return board.pingpongMove(pawn, tileId, nrSteps);
   }
 
   public PositionKey moveAndCheckEveryTile(Pawn pawn, PositionKey tileId, int nrSteps) {
-    return tileReachability.moveAndCheckEveryTile(pawn, tileId, nrSteps);
+    return board.moveAndCheckEveryTile(pawn, tileId, nrSteps);
   }
 
   public boolean moveBouncesOffWall(Pawn pawn, PositionKey tileId, int nrSteps) {
-    return tileReachability.moveBouncesOffWall(pawn, tileId, nrSteps);
+    return board.moveBouncesOffWall(pawn, tileId, nrSteps);
   }
 
   // ── Player navigation ─────────────────────────────────────────────────────

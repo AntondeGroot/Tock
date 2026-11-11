@@ -4,6 +4,7 @@ import static adg.util.BoardLogic.isPawnOnFinish;
 import static com.adg.openapi.model.MoveResult.CANNOT_MAKE_MOVE;
 import static com.adg.openapi.model.MoveType.MOVE;
 
+import adg.keezen.Board;
 import adg.keezen.GameState;
 import adg.util.Log;
 import com.adg.openapi.model.Card;
@@ -31,12 +32,24 @@ public class ProcessOnMove {
 
   public static void process(
       GameState gs, MoveRequest moveMessage, MoveResponse response, boolean goToNextPlayer) {
-    new ProcessOnMove(gs, moveMessage, response, goToNextPlayer).execute();
+    new ProcessOnMove(gs, gs.board(), moveMessage, response, goToNextPlayer).execute();
+  }
+
+  /**
+   * Check a move against {@code board} rather than the real one: the second pawn of a 7-split is
+   * checked on the board as it will be once the first pawn has moved. Only for a CHECK_MOVE — a
+   * move is carried out on the real board.
+   */
+  public static void check(
+      GameState gs, Board board, MoveRequest moveMessage, MoveResponse response) {
+    new ProcessOnMove(gs, board, moveMessage, response, true).execute();
   }
 
   // ── Instance state ────────────────────────────────────────────────────────
 
   private final GameState gs;
+  /** Where the pawns stand, as this move sees it: the real board, or a 7-split's what-if board. */
+  private final Board board;
   private final MoveRequest moveMessage;
   private final MoveResponse response;
   private final boolean goToNextPlayer;
@@ -51,8 +64,13 @@ public class ProcessOnMove {
   private final WaypointTrail trail = new WaypointTrail();
 
   private ProcessOnMove(
-      GameState gs, MoveRequest moveMessage, MoveResponse response, boolean goToNextPlayer) {
+      GameState gs,
+      Board board,
+      MoveRequest moveMessage,
+      MoveResponse response,
+      boolean goToNextPlayer) {
     this.gs = gs;
+    this.board = board;
     this.moveMessage = moveMessage;
     this.response = response;
     this.goToNextPlayer = goToNextPlayer;
@@ -71,7 +89,7 @@ public class ProcessOnMove {
   // ── Execution ─────────────────────────────────────────────────────────────
 
   private void execute() {
-    pawn1 = gs.getPawn(moveMessage.getPawn1Id());
+    pawn1 = board.getPawn(moveMessage.getPawn1Id());
     card = gs.getCard(moveMessage.getCardId(), moveMessage.getPlayerId());
 
     Optional<MovePreconditions.Refusal> refusal =
@@ -126,7 +144,7 @@ public class ProcessOnMove {
     Log.info("GameState: OnMove: normal route between 0,15 but could move to next section");
     addLandmarksToSectionEnd();
     PositionKey nextSectionStart = new PositionKey(gs.nextPlayerId(playerIdOfTile), START_TILE);
-    if (gs.canPassStartTile(pawn1, nextSectionStart)) {
+    if (board.canPassStartTile(pawn1, nextSectionStart)) {
       enterNextSection();
     } else {
       if (!reverseBackInCurrentSection()) return;
@@ -177,7 +195,7 @@ public class ProcessOnMove {
     Log.info("GameState: OnMove: pawn goes backwards");
     if (currentTileId.getTileNr() > 1) trail.add(playerIdOfTile, 1);
     PositionKey ownStartTile = new PositionKey(playerIdOfTile, START_TILE);
-    if (gs.canPassStartTile(pawn1, ownStartTile)) {
+    if (board.canPassStartTile(pawn1, ownStartTile)) {
       crossIntoPreviousSection();
     } else {
       if (!reverseForwardFromStartTile()) return;
@@ -207,7 +225,7 @@ public class ProcessOnMove {
     Log.info("GameState: OnMove: pawn ends exactly on start tile");
     if (currentTileId.getTileNr() > 1) trail.add(playerIdOfTile, 1);
     PositionKey startTile = new PositionKey(playerIdOfTile, START_TILE);
-    if (gs.canMoveToTile(pawn1, startTile)) {
+    if (board.canMoveToTile(pawn1, startTile)) {
       landOnTile(startTile);
     } else if (startTileIsBlockedByOwnPawn(startTile)) {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_OCCUPIED_BY_OWN_PAWN);
@@ -217,13 +235,13 @@ public class ProcessOnMove {
   }
 
   private boolean startTileIsBlockedByOwnPawn(PositionKey startTile) {
-    return !gs.tileIsABlockade(startTile)
-        && gs.cannotMoveToTileBecauseSamePlayer(pawn1, startTile);
+    return !board.tileIsABlockade(startTile)
+        && board.cannotMoveToTileBecauseSamePlayer(pawn1, startTile);
   }
 
   private void landBeyondBlockadedStartTile() {
     PositionKey tile2 = new PositionKey(playerIdOfTile, 2);
-    if (gs.canMoveToTile(pawn1, tile2)) {
+    if (board.canMoveToTile(pawn1, tile2)) {
       landOnTile(tile2);
     } else {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_PASS_START_TILE);
@@ -234,7 +252,7 @@ public class ProcessOnMove {
 
   private void routeAlreadyOnFinish() {
     Log.info("GameState: OnMove: pawn is already on the finish");
-    if (gs.isPawnTightlyClosedIn(pawn1, currentTileId)) {
+    if (board.isPawnTightlyClosedIn(pawn1, currentTileId)) {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
       return;
     }
@@ -246,7 +264,7 @@ public class ProcessOnMove {
       moveOnFinishExactly();
       return;
     }
-    if (gs.isPawnLooselyClosedIn(pawn1, currentTileId)) {
+    if (board.isPawnLooselyClosedIn(pawn1, currentTileId)) {
       executePingPongMove();
       return;
     }
@@ -262,7 +280,7 @@ public class ProcessOnMove {
   private boolean movesOutOfFinish() {
     return gs.isCannotMoveOutOfFinish()
         && nrSteps < 0
-        && gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps).getTileNr() <= LAST_TILE;
+        && board.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps).getTileNr() <= LAST_TILE;
   }
 
   /**
@@ -272,11 +290,11 @@ public class ProcessOnMove {
    * through.
    */
   private void moveOnFinishExactly() {
-    if (gs.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
+    if (board.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
       rejectBounceAsNotExact();
       return;
     }
-    landOnFinishTile(gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps));
+    landOnFinishTile(board.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps));
   }
 
   private void rejectBounceAsNotExact() {
@@ -285,20 +303,20 @@ public class ProcessOnMove {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.PAWN_CLOSED_IN_FINISH);
       return;
     }
-    int highestReachable = gs.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
+    int highestReachable = board.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
     reject(CANNOT_MAKE_MOVE, MoveRejectionReason.MUST_MOVE_EXACT_STEPS,
         highestReachable - currentTileId.getTileNr());
   }
 
   private void executePingPongMove() {
-    trail.replaceWith(gs.pingpongMove(pawn1, currentTileId, nrSteps));
+    trail.replaceWith(board.pingpongMove(pawn1, currentTileId, nrSteps));
     executeMoveAlongTrail(trail.last());
   }
 
   private void executeFinishMoveWithOvershootCheck() {
-    PositionKey targetTileId = gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps);
+    PositionKey targetTileId = board.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps);
     if (nrSteps > 0) {
-      int highestReachable = gs.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
+      int highestReachable = board.checkHighestTileNrYouCanMoveTo(pawn1, currentTileId, nrSteps);
       if (highestReachable > targetTileId.getTileNr()) {
         addFinishBounceWaypoint(highestReachable);
       }
@@ -328,11 +346,11 @@ public class ProcessOnMove {
   private void routeEnteringFinish() {
     Log.info("GameState: OnMove: pawn is on last section and goes into finish");
     addLandmarksToSectionEnd();
-    PositionKey targetTileId = gs.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps);
-    if (gs.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
+    PositionKey targetTileId = board.moveAndCheckEveryTile(pawn1, currentTileId, nrSteps);
+    if (board.moveBouncesOffWall(pawn1, currentTileId, nrSteps)) {
       if (!addEnteringFinishOvershootWaypoints(targetTileId, highestReachableFinishTile())) return;
     }
-    if (gs.cannotMoveToTileBecauseSamePlayer(pawn1, targetTileId)) {
+    if (board.cannotMoveToTileBecauseSamePlayer(pawn1, targetTileId)) {
       gs.clearResponse(response);
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_OCCUPIED_BY_OWN_PAWN);
       return;
@@ -348,7 +366,7 @@ public class ProcessOnMove {
    */
   private int highestReachableFinishTile() {
     int stepsIntoFinish = next - LAST_TILE;
-    return gs.checkHighestTileNrYouCanMoveTo(
+    return board.checkHighestTileNrYouCanMoveTo(
         pawn1, new PositionKey(gs.nextPlayerId(playerIdOfTile), LAST_TILE), stepsIntoFinish);
   }
 
@@ -373,7 +391,7 @@ public class ProcessOnMove {
 
   private void finalizeMoveToPosition(PositionKey nextTileId) {
     trail.add(nextTileId);
-    if (gs.canMoveToTile(pawn1, nextTileId)) {
+    if (board.canMoveToTile(pawn1, nextTileId)) {
       executeMoveAlongTrail(nextTileId);
     } else {
       reject(CANNOT_MAKE_MOVE, MoveRejectionReason.DESTINATION_BLOCKED);
@@ -389,6 +407,6 @@ public class ProcessOnMove {
   /** Publish the trail as this move's path and carry the move out, landing on {@code targetTile}. */
   private void executeMoveAlongTrail(PositionKey targetTile) {
     response.setMovePawn1(trail.toList());
-    MoveExecutor.execute(gs, pawn1, targetTile, moveMessage, response, goToNextPlayer);
+    MoveExecutor.execute(gs, board, pawn1, targetTile, moveMessage, response, goToNextPlayer);
   }
 }
