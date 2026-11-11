@@ -97,8 +97,18 @@
     font-size: 11pt;
   }
   .pawn-step-btn {
+    position: relative;
     width: 26px;
     height: 26px;
     font-size: 12pt;
+
+    // Touch target: an invisible 44px-tall hit area (WCAG 2.5.5) that doesn't grow the band.
+    // Sideways it reaches only half the 4px gap, so it never takes taps meant for the input.
+    // The inset counts from inside the 2px border, hence 2px more than the visible reach.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -11px -4px;
+    }
   }
 }
