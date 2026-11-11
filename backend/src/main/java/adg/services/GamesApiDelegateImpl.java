@@ -42,13 +42,10 @@ public class GamesApiDelegateImpl implements GamesApiDelegate {
     }
 
     String sessionID = UUID.randomUUID().toString();
-
-    if (GameRegistry.getGame(sessionID) != null) {
-      return new ResponseEntity<>(HttpStatus.CONFLICT);
-    }
-
     Integer maxPlayers = newGameRequest.getMaxPlayers();
-    GameRegistry.createNewGame(sessionID, roomName, maxPlayers);
+    if (!GameRegistry.createIfNameFree(sessionID, roomName, maxPlayers)) {
+      return new ResponseEntity<>(HttpStatus.CONFLICT); // a game waiting for players has that name
+    }
     KeezenGameOptions.apply(
         GameRegistry.getGameOrThrow(sessionID).getGameState(), newGameRequest.getGameOptions());
 
@@ -79,7 +76,9 @@ public class GamesApiDelegateImpl implements GamesApiDelegate {
       return new ResponseEntity<>(HttpStatus.CONFLICT);
     }
 
-    gameSession.getGameState().addPlayer(player);
+    if (!gameState.addPlayer(player)) {
+      return new ResponseEntity<>(HttpStatus.CONFLICT); // that id is already in the game
+    }
     log.info("Player joined: sessionId={} playerId={} name='{}'", sessionId, player.getId(), player.getName());
     return ResponseEntity.status(HttpStatus.CREATED).body(new PlayerAddedResponse(player.getId()));
   }

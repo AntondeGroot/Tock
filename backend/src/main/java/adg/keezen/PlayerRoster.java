@@ -29,12 +29,13 @@ class PlayerRoster {
   }
 
   /**
-   * Seat a new player, unless they are already seated or the table is full.
+   * Seat a new player, unless their id is already seated or the table is full. Only the id counts:
+   * seating sets fields on the stored player, so a repeated join no longer equals it in full.
    *
    * @return whether the roster actually changed, so the caller can bump the state version.
    */
   boolean add(Player player) {
-    if (players.contains(player) || players.size() >= MAX_PLAYERS) {
+    if (findById(player.getId()) != null || players.size() >= MAX_PLAYERS) {
       return false;
     }
     PlayerStatus.setActive(player);

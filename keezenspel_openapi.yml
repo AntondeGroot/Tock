@@ -53,7 +53,7 @@ paths:
         '400':
           description: Invalid request (e.g. room name missing or shorter than 3 characters)
         '409':
-          description: Game already exists with that name
+          description: A game that is still waiting for players already has that name
 
   /games/{sessionId}:
     post:

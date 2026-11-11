@@ -15,6 +15,8 @@ public class GameRegistry {
 
   // All running games (key = gameId)
   private static final Map<String, GameSession> games = new ConcurrentHashMap<>();
+  /** Held while a game is created under a free room name; private, so no other code can take it. */
+  private static final Object CREATE_BY_NAME_LOCK = new Object();
 
   // Create a new game, returns the new game ID
   public static String createNewGame() {
@@ -41,6 +43,29 @@ public class GameRegistry {
   public static String createNewGame(String sessionID, String roomName, Integer maxPlayers) {
     games.put(sessionID, new GameSession(sessionID, roomName, maxPlayers));
     return sessionID;
+  }
+
+  /**
+   * Create a game under a room name that no game still waiting for players uses — a room name is
+   * how players find each other's game to join. A game that has started no longer holds its name:
+   * the next game may be started under it while someone still has the old one open. Checking and
+   * creating happen as one step, so two creates of the same name at once (a double-clicked
+   * "create") cannot both find it free.
+   *
+   * @return whether the game was created; false if the name is taken
+   */
+  public static boolean createIfNameFree(String sessionID, String roomName, Integer maxPlayers) {
+    synchronized (CREATE_BY_NAME_LOCK) {
+      if (games.values().stream().anyMatch(game -> isWaitingUnder(game, roomName))) {
+        return false;
+      }
+      games.put(sessionID, new GameSession(sessionID, roomName, maxPlayers));
+      return true;
+    }
+  }
+
+  private static boolean isWaitingUnder(GameSession game, String roomName) {
+    return roomName.equals(game.getRoomName()) && !game.getGameState().hasStarted();
   }
 
   public static String createTestGame(String sessionID) {

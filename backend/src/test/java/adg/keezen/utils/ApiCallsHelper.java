@@ -2,8 +2,10 @@ package adg.keezen.utils;
 
 import com.adg.openapi.model.NewGameRequest;
 import com.adg.openapi.model.Player;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
@@ -140,6 +142,16 @@ public class ApiCallsHelper {
         baseUrl + "/test/set-only-card/" + sessionId + "/" + playerId + "/" + cardValue, null, Void.class);
   }
 
+  /** Replaces the player's whole hand with these card values; each card's uuid is its value. */
+  public void setHandForPlayer(String sessionId, String playerId, int... cardValues) {
+    String values =
+        Arrays.stream(cardValues)
+            .mapToObj(String::valueOf)
+            .collect(Collectors.joining(","));
+    restTemplate.postForEntity(
+        baseUrl + "/test/set-hand/" + sessionId + "/" + playerId + "/" + values, null, Void.class);
+  }
+
   public void simulateMustPlayTimeout(String sessionId) {
     restTemplate.postForEntity(
         baseUrl + "/test/simulate-must-play-timeout/" + sessionId, null, Void.class);
@@ -149,6 +161,15 @@ public class ApiCallsHelper {
     restTemplate.postForEntity(
         baseUrl + "/test/set-pawn/" + sessionId + "/" + playerId + "/" + pawnNr + "/" + sectionOwnerId + "/" + tileNr,
         null, Void.class);
+  }
+
+  // ---------- TRADE ----------
+  /** Posts a team trade action (a TradeAction as JSON); throws on a refused action. */
+  public void teamTrade(String sessionId, String tradeActionJson) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    restTemplate.postForEntity(
+        baseUrl + "/trade/" + sessionId, new HttpEntity<>(tradeActionJson, headers), Void.class);
   }
 
   // ---------- GAME STATES ----------
