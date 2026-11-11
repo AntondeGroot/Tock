@@ -49,6 +49,14 @@
     padding: 0;
     border-radius: 9px;
     gap: 0;
+
+    // Touch target: an invisible 44×44 hit area (WCAG 2.5.5) around the 40px icon. The inset
+    // counts from inside the 1px border.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+    }
   }
   .settings-icon {
     width: 22px;
