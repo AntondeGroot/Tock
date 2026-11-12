@@ -2,6 +2,7 @@ package adg.services;
 
 import adg.keezen.GameSession;
 import jakarta.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SseEmitterService {
 
   private static final Logger log = LoggerFactory.getLogger(SseEmitterService.class);
+
+  /** The event that tells a board its game is gone, so it stops listening for good. */
+  private static final String GAME_ENDED_EVENT = "gameended";
 
   /**
    * Bound on how many state snapshots may queue for one slow client before the oldest are
@@ -63,7 +67,31 @@ public class SseEmitterService {
   public void closeStreams(String sessionId) {
     CopyOnWriteArrayList<PlayerEmitter> list = emittersBySession.remove(sessionId);
     if (list == null) return;
-    list.forEach(pe -> drop(list, pe));
+    list.forEach(pe -> endAsync(list, pe));
+  }
+
+  /**
+   * A stream for a game that does not exist (any more): it only says so, and ends. It is never
+   * registered, as nothing will ever be pushed to it.
+   */
+  public static SseEmitter gameEndedStream() {
+    SseEmitter emitter = new SseEmitter();
+    try {
+      emitter.send(gameEndedEvent());
+      emitter.complete();
+    } catch (IOException e) {
+      emitter.completeWithError(e);
+    }
+    return emitter;
+  }
+
+  /**
+   * Tells the board its game has ended, so it stops instead of reconnecting: a stream that just
+   * ends looks like a dropped connection to the browser. The data is there because the browser's
+   * EventSource drops an event without any.
+   */
+  private static SseEmitter.SseEventBuilder gameEndedEvent() {
+    return SseEmitter.event().name(GAME_ENDED_EVENT).data("ended");
   }
 
   /**
@@ -131,6 +159,26 @@ public class SseEmitterService {
       });
     } catch (RejectedExecutionException e) {
       // Sender already shut down (emitter is being cleaned up) — nothing to send.
+    }
+  }
+
+  /**
+   * Sends the game-ended event and then closes the stream, both on its sender, so the event goes
+   * out after any game states still queued, and isn't lost to the close.
+   */
+  private void endAsync(CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe) {
+    try {
+      pe.sender().execute(() -> {
+        try {
+          pe.emitter().send(gameEndedEvent());
+        } catch (Exception e) {
+          // The client is gone already; the stream is closed below all the same.
+        } finally {
+          drop(list, pe);
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      drop(list, pe); // sender already shut down: just close the stream
     }
   }
 

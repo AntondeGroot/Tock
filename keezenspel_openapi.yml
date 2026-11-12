@@ -349,8 +349,17 @@ paths:
         This is a long-lived streaming endpoint — consume it with an `EventSource`
         client, not a generated request/response client. OpenAPI cannot express SSE
         framing, so the schema below describes the payload of a single `gamestate`
-        event, not the stream as a whole. If the game does not exist the stream opens
-        and completes immediately rather than returning an error.
+        event, not the stream as a whole.
+
+        When the game ends (it is stopped, or its last player leaves) the server sends
+        one `gameended` event, whose `data` is the plain text `ended`, and then closes
+        the stream. A client should stop on `gameended` rather than reconnect: to an
+        `EventSource` the close alone looks like a dropped connection. A stream for a
+        game that does not exist sends `gameended` and closes straight away, rather
+        than returning an error.
+
+        Between events the server writes an SSE comment every 15 seconds, which an
+        `EventSource` ignores; it lets the server notice clients that have gone away.
       operationId: streamGameState
       # x-internal makes openapi-generator SKIP this operation: it is hand-implemented
       # by adg.services.SseController (returns an SseEmitter, which the generator cannot
