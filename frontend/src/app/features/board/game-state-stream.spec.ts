@@ -89,6 +89,20 @@ describe('GameStateStream', () => {
     expect(FakeEventSource.instances).toHaveLength(1);
   });
 
+  // The server sends gameended just before it ends the stream of a game that is gone. The end
+  // itself looks like a dropped connection, so without this the board would reconnect forever.
+  it('closes for good on gameended, so the end of the stream does not reconnect it', () => {
+    new GameStateStream(URL, vi.fn(), undefined, 2000).start();
+    const source = last();
+
+    source.emit('gameended', {});
+    expect(source.closed).toBe(true);
+
+    source.fail(FakeEventSource.CLOSED); // the server then ends the stream
+    vi.advanceTimersByTime(5000);
+    expect(FakeEventSource.instances).toHaveLength(1);
+  });
+
   it('closes the source and does not reconnect after stop()', () => {
     const stream = new GameStateStream(URL, vi.fn(), undefined, 2000);
     stream.start();

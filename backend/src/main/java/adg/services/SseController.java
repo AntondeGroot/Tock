@@ -23,11 +23,10 @@ public class SseController {
       HttpServletResponse response) {
     response.setHeader("X-Accel-Buffering", "no");
     GameSession session = GameRegistry.getGame(sessionId);
-    SseEmitter emitter = sseEmitterService.subscribe(sessionId, playerId);
     if (session == null) {
-      emitter.complete();
-      return emitter;
+      return SseEmitterService.gameEndedStream();
     }
+    SseEmitter emitter = sseEmitterService.subscribe(sessionId, playerId);
     try {
       GameStatePush initial = sseEmitterService.buildPush(session, playerId, true);
       emitter.send(SseEmitter.event().name("gamestate").data(initial, MediaType.APPLICATION_JSON));
