@@ -103,6 +103,17 @@ describe('GameStateStream', () => {
     expect(FakeEventSource.instances).toHaveLength(1);
   });
 
+  // Stopping alone would leave the player on a frozen board: the caller is told, so it can say
+  // the game was ended and take the player back to the game room.
+  it('tells the caller on gameended, once', () => {
+    const onEnded = vi.fn();
+    new GameStateStream(URL, vi.fn(), { reconnectMs: 2000, onEnded }).start();
+
+    last().emit('gameended', {});
+
+    expect(onEnded).toHaveBeenCalledTimes(1);
+  });
+
   it('closes the source and does not reconnect after stop()', () => {
     const stream = new GameStateStream(URL, vi.fn(), { reconnectMs: 2000 });
     stream.start();

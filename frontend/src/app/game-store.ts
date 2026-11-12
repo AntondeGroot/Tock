@@ -37,4 +37,7 @@ export class GameStore {
 
   /** Every seated player has finished or left: no more turns, time to go back to the game room. */
   readonly gameOver = signal(false);
+
+  /** The game is gone before it was over (the host ended it): back to the game room. */
+  readonly gameEnded = signal(false);
 }

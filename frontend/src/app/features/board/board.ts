@@ -80,6 +80,7 @@ export class Board implements OnInit, OnDestroy {
         this.roundCards.reset();
         this.pileStale = true;
       },
+      onEnded: () => this.gameStore.gameEnded.set(true),
     });
     this.stream.start();
     this.phoneLayout.addEventListener('change', this.onLayoutChange);

@@ -12,6 +12,8 @@ export interface GameStateStreamOptions {
   onReconnect?: () => void;
   /** How long to wait before re-opening a stream the browser gave up on. */
   reconnectMs?: number;
+  /** Fires once when the server says the game is gone; the stream has stopped for good by then. */
+  onEnded?: () => void;
 }
 
 /**
@@ -48,7 +50,10 @@ export class GameStateStream {
       this.onState(JSON.parse(event.data) as GameStatePush),
     );
     // The game is gone: the stream that ends next would look like a drop, so stop for good first.
-    es.addEventListener('gameended', () => this.stop());
+    es.addEventListener('gameended', () => {
+      this.stop();
+      this.options.onEnded?.();
+    });
     es.onerror = () => {
       // CONNECTING → the browser is auto-retrying, leave it. CLOSED → it gave up, so re-open.
       if (es.readyState === EventSource.CLOSED) {

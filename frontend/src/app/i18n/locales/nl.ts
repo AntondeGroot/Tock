@@ -29,6 +29,7 @@ export const nl: Dictionary = {
   rulesClickToClose: 'Klik ergens om te sluiten',
   rosterTeams: 'Teams',
   gameOverTitle: 'Spel afgelopen',
+  gameEndedTitle: 'Het spel is beëindigd',
   gameOverCountdown: 'Over %s s terug naar de spelkamer',
   gameOverBack: 'Terug naar de spelkamer',
   rulesMoving: 'Over het bord bewegen',

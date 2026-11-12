@@ -29,6 +29,7 @@ export const de: Dictionary = {
   rulesClickToClose: 'Klicke irgendwo zum Schließen',
   rosterTeams: 'Teams',
   gameOverTitle: 'Spiel vorbei',
+  gameEndedTitle: 'Das Spiel wurde beendet',
   gameOverCountdown: 'In %s s zurück zum Spielraum',
   gameOverBack: 'Zurück zum Spielraum',
   rulesMoving: 'Auf dem Spielfeld ziehen',
