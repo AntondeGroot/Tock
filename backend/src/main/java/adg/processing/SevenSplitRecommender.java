@@ -27,11 +27,11 @@ import java.util.function.ToIntFunction;
  * is chosen, and only valid splits are suggested (else {@code null}, keeping the client's 0/7
  * default), so the suggestion can never produce an unplayable selection.
  *
- * <p>Each candidate move is evaluated with a non-mutating {@link ProcessOnMove} CHECK (deliberately
- * NOT {@code ProcessOnSplit}, which temporarily mutates the shared game state). Only the one chosen
- * split is then confirmed through {@code ProcessOnSplit}, the same CHECK the preview already runs. A pawn's furthest
- * forward reach is the step count whose landing tile has the highest forward position along the
- * pawn's path to its finish; overshooting a wall bounces the pawn back to a lower position.
+ * <p>Each pawn's reach is worked out on its own, one {@link ProcessOnMove} CHECK per step count.
+ * Only the one chosen split is then confirmed through {@link ProcessOnSplit}, the same CHECK the
+ * preview runs; like every CHECK, neither moves a pawn. A pawn's furthest forward reach is the step
+ * count whose landing tile has the highest forward position along the pawn's path to its finish;
+ * overshooting a wall bounces the pawn back to a lower position.
  */
 public final class SevenSplitRecommender {
 
