@@ -607,8 +607,9 @@ components:
           description: >
             Whether this player may open a team card trade right now — drives the "ask for a
             King/Ace" button. True only in a started team game with the trade option on, no trade
-            pending, when the player has a teammate and cards and has not yet played a card this
-            round (the trade window closes on your first play).
+            pending, when the player has a teammate and cards, their team has not traded yet this
+            round (a team trades once per round), and they have not yet played a card this round
+            (the trade window closes on your first play).
         teamCardTrade:
           type: boolean
           description: Whether the King/Ace team trade sub-option is enabled (drives the Ask button)

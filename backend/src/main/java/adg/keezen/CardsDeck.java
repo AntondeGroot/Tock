@@ -24,6 +24,9 @@ public class CardsDeck implements CardsDeckInterface {
   // trade (asking a teammate for a King/Ace) is only allowed until you play your first card, so
   // this resets on every deal and grows as players play.
   private final Set<String> playedSinceDeal = new HashSet<>();
+  // Players who have taken part in a team card trade since the current round was dealt: a team
+  // trades once per round, so it cannot pass cards back and forth. Resets on every deal.
+  private final Set<String> tradedSinceDeal = new HashSet<>();
   private GameState gameState;
 
   public CardsDeck() {}
@@ -80,6 +83,14 @@ public class CardsDeck implements CardsDeckInterface {
     return playedSinceDeal.contains(playerId);
   }
 
+  public void recordTradeSinceDeal(String playerId) {
+    tradedSinceDeal.add(playerId);
+  }
+
+  public boolean hasTradedSinceDeal(String playerId) {
+    return tradedSinceDeal.contains(playerId);
+  }
+
   public boolean playerHasCardsLeft(String playerId) {
     return hands.hasCardsLeft(playerId);
   }
@@ -101,6 +112,7 @@ public class CardsDeck implements CardsDeckInterface {
   public void dealCards() {
     int nrCards = roundNr == 0 ? CARDS_DEALT_FIRST_ROUND : CARDS_DEALT_LATER_ROUNDS;
     playedSinceDeal.clear(); // fresh hands → everyone may trade again this round
+    tradedSinceDeal.clear();
     if (roundNr == 0) {
       // A reshuffle resets the pile — once the next card is played, so the push of this very
       // request still shows the card that ended the round.
@@ -140,6 +152,7 @@ public class CardsDeck implements CardsDeckInterface {
     cardsDeque.clear();
     hands.reset();
     playedSinceDeal.clear();
+    tradedSinceDeal.clear();
   }
 
   public ArrayList<Card> getPlayedCards() {

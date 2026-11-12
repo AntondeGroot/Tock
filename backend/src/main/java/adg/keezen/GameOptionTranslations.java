@@ -143,16 +143,21 @@ public final class GameOptionTranslations {
           "it", "Chiedi al compagno un Re o un Asso")),
       Map.entry("gameOption.teamCardTrade.description", Map.of(
           "nl", "Alleen bij teamspel: bied een kaart aan je teamgenoot aan en vraag om een Heer "
-              + "of Aas om een pion op het bord te krijgen. Zij geven er een (een ruil) of weigeren.",
+              + "of Aas om een pion op het bord te krijgen. Zij geven er een (een ruil) of "
+              + "weigeren. Eén keer per team per ronde, voordat je je eerste kaart speelt.",
           "de", "Nur im Teamspiel: biete deinem Teamkollegen eine Karte an und bitte um einen "
               + "König oder ein Ass, um eine Figur aufs Brett zu bekommen. Er gibt einen her (ein "
-              + "Tausch) oder lehnt ab.",
+              + "Tausch) oder lehnt ab. Einmal pro Team und Runde, bevor du deine erste Karte "
+              + "spielst.",
           "fr", "En jeu en équipe seulement : propose une carte à ton coéquipier et demande un "
-              + "Roi ou un As pour sortir un pion. Il t'en donne un (un échange) ou refuse.",
+              + "Roi ou un As pour sortir un pion. Il t'en donne un (un échange) ou refuse. "
+              + "Une fois par équipe et par manche, avant de jouer ta première carte.",
           "nb", "Bare i lagspill: tilby et kort til lagkameraten og be om en Konge eller Ess for "
-              + "å få en brikke på brettet. Han gir deg ett (et bytte) eller takker nei.",
+              + "å få en brikke på brettet. Han gir deg ett (et bytte) eller takker nei. "
+              + "Én gang per lag per runde, før du spiller ditt første kort.",
           "it", "Solo nel gioco a squadre: offri una carta al compagno e chiedi un Re o un Asso "
-              + "per portare una pedina in gioco. Lui te ne dà uno (uno scambio) o rifiuta.")));
+              + "per portare una pedina in gioco. Lui te ne dà uno (uno scambio) o rifiuta. "
+              + "Una volta per squadra in ogni mano, prima di giocare la tua prima carta.")));
 
   /**
    * The localized string for a {@code labelKey}/{@code descriptionKey}, or {@code

@@ -17,6 +17,7 @@ public class CardsDeckMock implements CardsDeckInterface {
   private int roundNr;
   private final PlayerHands hands = new PlayerHands();
   private final Set<String> playedSinceDeal = new HashSet<>();
+  private final Set<String> tradedSinceDeal = new HashSet<>();
   private GameState gameState;
   private final ArrayList<Card> allCardsFromAceToKing = all13Cards();
 
@@ -63,6 +64,14 @@ public class CardsDeckMock implements CardsDeckInterface {
     return playedSinceDeal.contains(playerId);
   }
 
+  public void recordTradeSinceDeal(String playerId) {
+    tradedSinceDeal.add(playerId);
+  }
+
+  public boolean hasTradedSinceDeal(String playerId) {
+    return tradedSinceDeal.contains(playerId);
+  }
+
   public void giveCardToPlayerForTesting(String playerId, Card card) {
     hands.replaceFirstCard(playerId, card);
   }
@@ -77,6 +86,7 @@ public class CardsDeckMock implements CardsDeckInterface {
 
   public void dealCards() {
     playedSinceDeal.clear();
+    tradedSinceDeal.clear();
     hands.clearPileOnNextPlay();
     hands.dropAllHands();
     for (Player player : gameState.getPlayers()) {
@@ -101,6 +111,7 @@ public class CardsDeckMock implements CardsDeckInterface {
     roundNr = 0;
     hands.reset();
     playedSinceDeal.clear();
+    tradedSinceDeal.clear();
   }
 
   public ArrayList<Card> getPlayedCards() {
