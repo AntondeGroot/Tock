@@ -73,7 +73,8 @@ public class KeezenGameOptions {
             "teamCardTrade",
             "Ask teammate for a King or Ace",
             "Team play only: offer a card to your teammate and ask for a King or Ace to get a "
-                + "pawn on the board. They hand one over (a two-way swap) or decline.",
+                + "pawn on the board. They hand one over (a two-way swap) or decline. Once per "
+                + "team per round, before you play your first card.",
             TypeEnum.BOOLEAN,
             "true")
             .labelKey("gameOption.teamCardTrade.label")

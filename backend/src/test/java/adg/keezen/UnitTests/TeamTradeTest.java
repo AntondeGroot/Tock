@@ -123,6 +123,73 @@ class TeamTradeTest {
     assertFalse(gs.requestTrade("0"), "a second request is refused while one is pending");
   }
 
+  // One trade per team per round. Otherwise teammates can pass cards back and forth as often as
+  // they like: A gives B a card for B's King, then B asks A for it back, and so on.
+  @Test
+  void afterATrade_theTeammateCannotTradeBackThisRound() {
+    armStandardTrade();
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
+    assertTrue(gs.acceptTrade("2", KING));
+
+    assertFalse(gs.canRequestTrade("2"), "the team has had its trade this round");
+    assertFalse(gs.requestTrade("2"), "a trade back is refused");
+  }
+
+  // The limit is the team's, not the asker's: the player who asked cannot simply ask again.
+  @Test
+  void afterATrade_theRequesterCannotAskAgainThisRound() {
+    armStandardTrade();
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
+    assertTrue(gs.acceptTrade("2", KING));
+
+    assertFalse(gs.canRequestTrade("0"), "the team has had its trade this round");
+    assertFalse(gs.requestTrade("0"), "a second ask is refused");
+  }
+
+  // Only a swap uses up the team's trade. An ask that is declined or withdrawn moved no cards, so
+  // the team may still ask — the teammate may not have had a King yet, or the asker misclicked.
+  @Test
+  void anAskThatIsDeclinedOrWithdrawn_doesNotUseUpTheTeamsTrade() {
+    armStandardTrade();
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.rejectTrade("2"));
+    assertTrue(gs.requestTrade("0"), "asking again after a decline is allowed");
+    assertTrue(gs.cancelTrade("0"));
+
+    assertTrue(gs.canRequestTrade("2"), "the team has not traded yet this round");
+    assertTrue(gs.requestTrade("2"), "the teammate may ask too");
+  }
+
+  // The limit is per round: fresh hands give the team a fresh trade. Every round is dealt through
+  // the deck's dealCards, so that is where the new round starts here too.
+  @Test
+  void afterTheNextDeal_theTeamMayTradeAgain() {
+    armStandardTrade();
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
+    assertTrue(gs.acceptTrade("2", KING));
+
+    deck.dealCards();
+
+    assertTrue(gs.canRequestTrade("0"), "the requester may trade again in the new round");
+    assertTrue(gs.canRequestTrade("2"), "and so may the teammate");
+  }
+
+  // One team using its trade leaves every other team's trade untouched.
+  @Test
+  void afterATrade_anotherTeamMayStillTrade() {
+    // Teams are opposite seats: team A = players 0 & 2, team B = players 1 & 3.
+    armStandardTrade();
+    assertTrue(gs.requestTrade("0"));
+    assertTrue(gs.offerTradeCard("0", OFFERED));
+    assertTrue(gs.acceptTrade("2", KING));
+
+    assertTrue(gs.canRequestTrade("1"), "team B has not traded yet this round");
+    assertTrue(gs.canRequestTrade("3"), "team B has not traded yet this round");
+  }
+
   @Test
   void eachTeamTradesIndependently() {
     // Teams are opposite seats: team A = players 0 & 2, team B = players 1 & 3.

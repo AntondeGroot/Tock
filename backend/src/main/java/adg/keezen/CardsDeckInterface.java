@@ -26,6 +26,12 @@ public interface CardsDeckInterface {
    *  window — a team card trade is only allowed before you play your first card of the round). */
   boolean hasPlayedSinceDeal(String playerId);
 
+  /** Record that the player took part in a team card trade: a team trades once per round. */
+  void recordTradeSinceDeal(String playerId);
+
+  /** Whether the player has taken part in a team card trade since the current round was dealt. */
+  boolean hasTradedSinceDeal(String playerId);
+
   void giveCardToPlayerForTesting(String playerId, Card card);
 
   /**

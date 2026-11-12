@@ -64,8 +64,9 @@ class TradeManager {
 
   /**
    * Whether `playerId` may open a trade right now: a started team game with the trade sub-option
-   * on, no trade already pending for their team, the player has a teammate and cards, and — the
-   * round's trade window — they have not yet played a card since the deal. (Independent of the
+   * on, no trade already pending for their team, the player has a teammate and cards, their team
+   * has not traded yet this round, and — the round's trade window — they have not yet played a
+   * card since the deal. (Independent of the
    * specific card they would offer, so the UI can enable/disable the "ask for a King/Ace" button.)
    */
   boolean canRequest(String playerId) {
@@ -74,6 +75,7 @@ class TradeManager {
         && enabled
         && key != null // has a teammate
         && !pendingByTeam.containsKey(key) // this team has no trade pending
+        && !cardsDeck.hasTradedSinceDeal(playerId) // one trade per team per round
         && cardsDeck.playerHasCardsLeft(playerId)
         && !cardsDeck.hasPlayedSinceDeal(playerId);
   }
@@ -163,6 +165,9 @@ class TradeManager {
     }
     cardsDeck.moveCardBetweenHands(requesterId, teammateId, offered);
     cardsDeck.moveCardBetweenHands(teammateId, requesterId, answered);
+    // Both are marked, so neither can open another trade this round: no trading cards back.
+    cardsDeck.recordTradeSinceDeal(requesterId);
+    cardsDeck.recordTradeSinceDeal(teammateId);
     pendingByTeam.remove(key);
     version.incrementAndGet();
     return true;
