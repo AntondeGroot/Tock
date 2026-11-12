@@ -382,4 +382,73 @@ class MoveAvailabilityCheckerTest {
 
     assertTrue(MoveAvailabilityChecker.hasAvailableMove(gameState, "0", List.of(card)));
   }
+
+  /**
+   * Both pawns can only use the 7 by going into the finish, where pawns cannot pass each other —
+   * so which pawn moves first decides whether a split gets through. The player picks the order,
+   * so the 7 is playable: send the pawn that goes deeper first.
+   *
+   * <p>Setup (8-player game, exactMoveRequired=true so nothing bounces back):
+   *   pawnA at (7,15), pawnB at (7,14), on player "0"'s last section before the finish.
+   *   Single 7: A → 22, B → 21, both past finish tile 19 → CANNOT_MAKE_MOVE.
+   *   Split A=2, B=5: A → (0,17), B → (0,19) — only B first, or B would have to pass A.
+   *   Split A=3, B=4: both → (0,18) → CANNOT (same tile).
+   *   Split A=4, B=3: A → (0,19), B → (0,17) — only A first.
+   */
+  @Test
+  void seven_bothPawnsIntoTheFinish_splitWorksWhenTheDeeperPawnGoesFirst_hasMoveAvailable() {
+    gameState.setExactMoveRequired(true);
+    Card card = givePlayerCard(cardsDeck, 0, 7);
+    placePawnOnBoard(gameState, new PawnId("0", 0), new PositionKey("7", 15));
+    placePawnOnBoard(gameState, new PawnId("0", 1), new PositionKey("7", 14));
+
+    assertTrue(MoveAvailabilityChecker.hasAvailableMove(gameState, "0", List.of(card)));
+  }
+
+  /**
+   * The only split that keeps both pawns inside the finish puts them on the same tile, and two
+   * own pawns cannot share a tile — so the 7 cannot be played, and the player may forfeit.
+   *
+   * <p>Setup (8-player game, exactMoveRequired=true so nothing bounces back):
+   *   pawnA at (7,15), pawnB at (7,14), and a third own pawn already on finish tile (0,19).
+   *   Single 7: A → 22, B → 21 → CANNOT_MAKE_MOVE.
+   *   A can reach finish tiles 16-18 (n = 1-3); B can reach them only with 4 steps or fewer (n ≥ 3).
+   *   Split A=3, B=4: both → (0,18) → CANNOT (same tile). Every other split leaves a pawn short.
+   */
+  @Test
+  void seven_onlySplitThatFitsPutsBothPawnsOnTheSameTile_noMoveAvailable() {
+    gameState.setExactMoveRequired(true);
+    Card card = givePlayerCard(cardsDeck, 0, 7);
+    placePawnOnBoard(gameState, new PawnId("0", 0), new PositionKey("7", 15));
+    placePawnOnBoard(gameState, new PawnId("0", 1), new PositionKey("7", 14));
+    placePawnOnBoard(gameState, new PawnId("0", 2), new PositionKey("0", 19));
+
+    assertFalse(MoveAvailabilityChecker.hasAvailableMove(gameState, "0", List.of(card)));
+  }
+
+  /**
+   * Every split that gets both pawns through sends an opponent home — and that still counts as a
+   * playable 7. On the board as it is once the first pawn has moved, the tile it took from the
+   * opponent holds the first pawn, not the opponent.
+   *
+   * <p>Setup (8-player game, exactMoveRequired=true so nothing bounces back):
+   *   pawnA at (0,12), pawnB at (0,9), player "1"'s pawn on its start tile (1,0) [blockade],
+   *   player "2"'s pawn on (0,15).
+   *   Single 7: A → 19, B → 16, both past the blockade → CANNOT_MAKE_MOVE.
+   *   Split A=1, B=6: A → (0,13), B → (0,15), sending player "2" home.
+   *   Split A=2, B=5: both → (0,14) → CANNOT (same tile).
+   *   Split A=3, B=4: A → (0,15), sending player "2" home, B → (0,13).
+   *   A larger share for A crosses the blockade.
+   */
+  @Test
+  void seven_everySplitThatFitsSendsAnOpponentHome_hasMoveAvailable() {
+    gameState.setExactMoveRequired(true);
+    Card card = givePlayerCard(cardsDeck, 0, 7);
+    placePawnOnBoard(gameState, new PawnId("0", 0), new PositionKey("0", 12));
+    placePawnOnBoard(gameState, new PawnId("0", 1), new PositionKey("0", 9));
+    placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 0)); // blockade
+    placePawnOnBoard(gameState, new PawnId("2", 0), new PositionKey("0", 15));
+
+    assertTrue(MoveAvailabilityChecker.hasAvailableMove(gameState, "0", List.of(card)));
+  }
 }

@@ -3,6 +3,7 @@ package adg.processing;
 import static adg.util.BoardLogic.isPawnOnNest;
 import static adg.util.BoardLogic.pawnIsOnNormalBoard;
 import static com.adg.openapi.model.MoveResult.CAN_MAKE_MOVE;
+import static com.adg.openapi.model.MoveType.SPLIT;
 import static com.adg.openapi.model.MoveType.SWITCH;
 import static com.adg.openapi.model.TempMessageType.CHECK_MOVE;
 
@@ -11,7 +12,6 @@ import com.adg.openapi.model.Card;
 import com.adg.openapi.model.MoveRequest;
 import com.adg.openapi.model.MoveResponse;
 import com.adg.openapi.model.Pawn;
-import com.adg.openapi.model.PositionKey;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,12 +91,12 @@ public class MoveAvailabilityChecker {
         for (Pawn pawn : boardPawns) {
           if (tryMove(gs, playerId, card, pawn, 7)) return true;
         }
-        for (int i = 0; i < boardPawns.size(); i++) {
-          for (int j = i + 1; j < boardPawns.size(); j++) {
-            Pawn a = boardPawns.get(i);
-            Pawn b = boardPawns.get(j);
+        // Both orders of each pair: which pawn moves first can decide whether both get through.
+        for (Pawn first : boardPawns) {
+          for (Pawn second : boardPawns) {
+            if (first == second) continue;
             for (int n = 1; n <= 6; n++) {
-              if (trySplit(gs, playerId, card, a, b, n, 7 - n)) return true;
+              if (trySplit(gs, playerId, card, first, second, n)) return true;
             }
           }
         }
@@ -143,46 +143,24 @@ public class MoveAvailabilityChecker {
   }
 
   /**
-   * Validates a split by checking each pawn independently via CHECK_MOVE, then verifying
-   * that the two pawns do not land on the same tile.
-   *
-   * <p>A real split ({@code ProcessOnSplit}) moves the first pawn and then checks the second on
-   * the board as it is after that, so checking both on the current board looks like it could
-   * disagree. Under the rules it does not:
-   * <ul>
-   *   <li>One pawn cannot block the other's path. On the normal board pawns jump each other and
-   *       only a blockade stops them — a pawn on its OWN start tile, which a 7 never puts it on:
-   *       pawns reach their start tile from the nest, and turn into the finish rather than pass it.
-   *       In the finish lane pawns cannot pass, but the player picks which pawn moves first, and
-   *       sending the one that goes deeper first always gets both through.
-   *   <li>The second pawn landing on the tile the first leaves is seen here as landing on an own
-   *       pawn. That only decides the answer when every other way to play the 7 is blocked — yet
-   *       the first pawn then ends where the second's full 7 would, so that split is blocked too.
-   * </ul>
+   * A split of the 7 that moves {@code first} by {@code stepsFirst} and then {@code second} by the
+   * rest, checked as the split itself is: the second pawn on the board as it is once the first
+   * has moved.
    */
   private static boolean trySplit(
-      GameState gs, String playerId, Card card, Pawn a, Pawn b, int stepsA, int stepsB) {
-    MoveResponse respA = checkMoveResponse(gs, playerId, card, a, stepsA);
-    if (!CAN_MAKE_MOVE.equals(respA.getResult())) return false;
-
-    MoveResponse respB = checkMoveResponse(gs, playerId, card, b, stepsB);
-    if (!CAN_MAKE_MOVE.equals(respB.getResult())) return false;
-
-    // Both individual moves are valid; additionally verify the two pawns do not land on
-    // the same tile (an own pawn cannot share a tile with another own pawn).
-    PositionKey destA = lastTile(respA);
-    PositionKey destB = lastTile(respB);
-    return destA == null || destB == null || !destA.equals(destB);
+      GameState gs, String playerId, Card card, Pawn first, Pawn second, int stepsFirst) {
+    MoveRequest req = checkRequest(playerId, card, first);
+    req.setPawn2Id(second.getPawnId());
+    req.setStepsPawn1(stepsFirst);
+    req.setStepsPawn2(7 - stepsFirst);
+    req.setMoveType(SPLIT);
+    MoveResponse resp = new MoveResponse();
+    ProcessOnSplit.process(gs, req, resp);
+    return CAN_MAKE_MOVE.equals(resp.getResult());
   }
 
   private static MoveResponse checkMoveResponse(
       GameState gs, String playerId, Card card, Pawn pawn, int steps) {
     return MoveChecks.checkMove(gs, playerId, card.getUuid(), pawn.getPawnId(), steps);
-  }
-
-  private static PositionKey lastTile(MoveResponse resp) {
-    return (resp.getMovePawn1() != null && !resp.getMovePawn1().isEmpty())
-        ? resp.getMovePawn1().getLast()
-        : null;
   }
 }
