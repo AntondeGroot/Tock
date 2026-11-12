@@ -1,5 +1,19 @@
 import { GameStatePush } from '../../api';
 
+/** How long a stream the browser gave up on waits before it opens again. */
+const DEFAULT_RECONNECT_MS = 2000;
+
+/** The optional settings of a {@link GameStateStream}, named, so a caller sets only what it needs. */
+export interface GameStateStreamOptions {
+  /**
+   * Fires on each (re)connect, so the caller can drop any per-stream baseline: the reconnect
+   * snapshot must not be mistaken for a new move or deal.
+   */
+  onReconnect?: () => void;
+  /** How long to wait before re-opening a stream the browser gave up on. */
+  reconnectMs?: number;
+}
+
 /**
  * Manages the game-state SSE connection: it opens an `EventSource`, parses each `gamestate` event
  * into a {@link GameStatePush} for the caller, and — because the server sends a fresh personalized
@@ -9,8 +23,7 @@ import { GameStatePush } from '../../api';
  * The one end it accepts is a `gameended` event: then the game is gone, and it stops for good.
  *
  * Pure transport: the caller supplies the URL and handles the domain diffing in {@link onState};
- * {@link onReconnect} fires on each (re)connect so it can drop any per-stream baseline (so the
- * reconnect snapshot isn't mistaken for a new move/deal).
+ * see {@link GameStateStreamOptions} for the optional settings.
  */
 export class GameStateStream {
   private source?: EventSource;
@@ -20,15 +33,14 @@ export class GameStateStream {
   constructor(
     private readonly url: string,
     private readonly onState: (push: GameStatePush) => void,
-    private readonly onReconnect?: () => void,
-    private readonly reconnectMs = 2000,
+    private readonly options: GameStateStreamOptions = {},
   ) {}
 
   /** Open the stream (idempotent re-open); a CLOSED stream auto-reconnects after the backoff. */
   start(): void {
     if (this.stopped) return;
     this.source?.close();
-    this.onReconnect?.();
+    this.options.onReconnect?.();
 
     const es = new EventSource(this.url);
     this.source = es;
@@ -41,7 +53,10 @@ export class GameStateStream {
       // CONNECTING → the browser is auto-retrying, leave it. CLOSED → it gave up, so re-open.
       if (es.readyState === EventSource.CLOSED) {
         clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = setTimeout(() => this.start(), this.reconnectMs);
+        this.reconnectTimer = setTimeout(
+          () => this.start(),
+          this.options.reconnectMs ?? DEFAULT_RECONNECT_MS,
+        );
       }
     };
   }

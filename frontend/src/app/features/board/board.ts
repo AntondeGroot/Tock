@@ -71,18 +71,16 @@ export class Board implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (!this.sessionId) return;
-    this.stream = new GameStateStream(
-      this.streamUrl,
-      (push) => this.handleGameState(push),
+    this.stream = new GameStateStream(this.streamUrl, (push) => this.handleGameState(push), {
       // Each (re)connect gets a fresh baseline snapshot — clear the animation baselines so it
       // isn't mistaken for a new move/deal, and rebuild the locally-accumulated discard pile from
       // that snapshot: after a refresh or drop it's empty or stale, and the snapshot is authoritative.
-      () => {
+      onReconnect: () => {
         this.prevMoveKey = undefined;
         this.roundCards.reset();
         this.pileStale = true;
       },
-    );
+    });
     this.stream.start();
     this.phoneLayout.addEventListener('change', this.onLayoutChange);
   }
