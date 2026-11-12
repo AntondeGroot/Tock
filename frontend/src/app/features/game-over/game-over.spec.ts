@@ -48,4 +48,21 @@ describe('GameOver', () => {
     vi.advanceTimersByTime(1_000);
     expect(leave).toHaveBeenCalledTimes(1);
   });
+
+  // The host can end a game from the game room while everyone is still playing. Then there is no
+  // winner to celebrate, so the panel says at once that the game was ended, and still counts down
+  // before taking the player back, so they see why their board stopped.
+  it('says at once that the game was ended, then leaves when the countdown ends', () => {
+    store.gameEnded.set(true);
+    fixture.detectChanges();
+    expect(panel(), 'the panel should open at once').not.toBeNull();
+    expect(panel()?.textContent).toContain('The game has been ended');
+    expect(panel()?.textContent).toContain('Back to the game room in 10 s');
+
+    vi.advanceTimersByTime(9_999);
+    expect(leave).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(leave).toHaveBeenCalledTimes(1);
+  });
 });

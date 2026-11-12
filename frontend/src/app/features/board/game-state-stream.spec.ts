@@ -71,7 +71,7 @@ describe('GameStateStream', () => {
 
   it('fires onReconnect on each (re)connect so the caller can drop its baseline', () => {
     const onReconnect = vi.fn();
-    const stream = new GameStateStream(URL, vi.fn(), onReconnect, 2000);
+    const stream = new GameStateStream(URL, vi.fn(), { onReconnect, reconnectMs: 2000 });
     stream.start();
     expect(onReconnect).toHaveBeenCalledTimes(1);
 
@@ -82,7 +82,7 @@ describe('GameStateStream', () => {
   });
 
   it('reconnects only when the stream is CLOSED, not while the browser is retrying', () => {
-    new GameStateStream(URL, vi.fn(), undefined, 2000).start();
+    new GameStateStream(URL, vi.fn(), { reconnectMs: 2000 }).start();
 
     last().fail(0); // CONNECTING — browser auto-retries, we leave it
     vi.advanceTimersByTime(5000);
@@ -92,7 +92,7 @@ describe('GameStateStream', () => {
   // The server sends gameended just before it ends the stream of a game that is gone. The end
   // itself looks like a dropped connection, so without this the board would reconnect forever.
   it('closes for good on gameended, so the end of the stream does not reconnect it', () => {
-    new GameStateStream(URL, vi.fn(), undefined, 2000).start();
+    new GameStateStream(URL, vi.fn(), { reconnectMs: 2000 }).start();
     const source = last();
 
     source.emit('gameended', {});
@@ -103,8 +103,19 @@ describe('GameStateStream', () => {
     expect(FakeEventSource.instances).toHaveLength(1);
   });
 
+  // Stopping alone would leave the player on a frozen board: the caller is told, so it can say
+  // the game was ended and take the player back to the game room.
+  it('tells the caller on gameended, once', () => {
+    const onEnded = vi.fn();
+    new GameStateStream(URL, vi.fn(), { reconnectMs: 2000, onEnded }).start();
+
+    last().emit('gameended', {});
+
+    expect(onEnded).toHaveBeenCalledTimes(1);
+  });
+
   it('closes the source and does not reconnect after stop()', () => {
-    const stream = new GameStateStream(URL, vi.fn(), undefined, 2000);
+    const stream = new GameStateStream(URL, vi.fn(), { reconnectMs: 2000 });
     stream.start();
     const first = last();
 

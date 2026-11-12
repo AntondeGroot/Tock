@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
 import { GameStore } from '../../game-store';
+import { TranslationKey } from '../../i18n/keys';
 import { Translations } from '../../i18n/translations.service';
 import { GameExit } from '../nav/leave-game/game-exit';
 import { WINNER_BANNER_MS } from '../winner-banner/winner-banner';
@@ -20,7 +21,8 @@ interface Standing {
  * The end of the game. Once nobody is left to play, the last winner first gets their moment (the
  * pawn lands, the banner runs); then this panel shows the final standings and counts down before
  * taking the player back to the game room. The button goes there at once. Nobody is sent away
- * without seeing why.
+ * without seeing why. A game the host ended has no winner to wait for: the panel then opens at
+ * once and says the game was ended.
  */
 @Component({
   selector: 'app-game-over',
@@ -36,6 +38,9 @@ export class GameOver implements OnDestroy {
   protected readonly secondsLeft = signal(GAME_OVER_COUNTDOWN_S);
 
   protected readonly standings = computed(() => standingsOf(this.store.players()));
+  protected readonly title = computed<TranslationKey>(() =>
+    this.store.gameEnded() ? 'gameEndedTitle' : 'gameOverTitle',
+  );
 
   private showTimer: ReturnType<typeof setTimeout> | undefined;
   private tick: ReturnType<typeof setInterval> | undefined;
@@ -45,6 +50,9 @@ export class GameOver implements OnDestroy {
       if (!this.store.gameOver() || this.showTimer !== undefined) return;
       const celebrationMs = untracked(this.store.pawnsSettleMs) + WINNER_BANNER_MS;
       this.showTimer = setTimeout(() => this.show(), celebrationMs);
+    });
+    effect(() => {
+      if (this.store.gameEnded()) untracked(() => this.show());
     });
   }
 
@@ -59,6 +67,8 @@ export class GameOver implements OnDestroy {
   }
 
   private show(): void {
+    if (this.open()) return; // already counting down
+    clearTimeout(this.showTimer);
     this.open.set(true);
     this.tick = setInterval(() => {
       this.secondsLeft.update((s) => s - 1);

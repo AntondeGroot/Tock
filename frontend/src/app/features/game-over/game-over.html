@@ -7,7 +7,7 @@
       aria-labelledby="game-over-title"
       data-testid="game-over"
     >
-      <h2 id="game-over-title" class="game-over__title">{{ i18n.t('gameOverTitle') }}</h2>
+      <h2 id="game-over-title" class="game-over__title">{{ i18n.t(title()) }}</h2>
       <ol class="game-over__standings">
         @for (s of standings(); track s.place) {
           <li class="game-over__row">

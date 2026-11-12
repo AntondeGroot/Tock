@@ -30,6 +30,7 @@ export const en: Dictionary = {
   rulesClickToClose: 'Click anywhere to close',
   rosterTeams: 'Teams',
   gameOverTitle: 'Game over',
+  gameEndedTitle: 'The game has been ended',
   gameOverCountdown: 'Back to the game room in %s s',
   gameOverBack: 'Back to the game room',
   rulesMoving: 'Moving on the board',

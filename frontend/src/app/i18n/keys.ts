@@ -40,6 +40,7 @@ export type TranslationKey =
   | 'rulesClickToClose'
   | 'rosterTeams'
   | 'gameOverTitle'
+  | 'gameEndedTitle'
   | 'gameOverCountdown'
   | 'gameOverBack'
   | 'rulesMoving'

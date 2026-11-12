@@ -29,6 +29,7 @@ export const nb: Dictionary = {
   rulesClickToClose: 'Klikk hvor som helst for å lukke',
   rosterTeams: 'Lag',
   gameOverTitle: 'Spillet er over',
+  gameEndedTitle: 'Spillet er avsluttet',
   gameOverCountdown: 'Tilbake til spillrommet om %s s',
   gameOverBack: 'Tilbake til spillrommet',
   rulesMoving: 'Flytte på brettet',

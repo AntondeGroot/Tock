@@ -30,6 +30,7 @@ export const it: Dictionary = {
   rulesClickToClose: 'Clicca ovunque per chiudere',
   rosterTeams: 'Squadre',
   gameOverTitle: 'Partita finita',
+  gameEndedTitle: 'La partita è stata interrotta',
   gameOverCountdown: 'Ritorno alla sala giochi tra %s s',
   gameOverBack: 'Torna alla sala giochi',
   rulesMoving: 'Muoversi sul tabellone',
