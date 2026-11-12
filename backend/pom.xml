@@ -21,6 +21,20 @@
     <maven.compiler.release>21</maven.compiler.release>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Gatling 3.16 needs Netty 4.2, the Spring Boot BOM pins 4.1. Only Gatling uses Netty here
+           (test scope), so this changes nothing for the app itself. -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>4.2.18.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- Spring Boot backend -->
     <dependency>
@@ -123,6 +137,13 @@
       <version>5.24.0</version>
       <scope>test</scope>
     </dependency>
+    <!-- Gatling load tests (src/test/java/adg/performance), run with: mvn gatling:test -->
+    <dependency>
+      <groupId>io.gatling.highcharts</groupId>
+      <artifactId>gatling-charts-highcharts</artifactId>
+      <version>3.16.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -200,6 +221,13 @@
             <arg>-Werror</arg>
           </compilerArgs>
         </configuration>
+      </plugin>
+
+      <!-- Gatling load tests: only run on demand via mvn gatling:test, never in the normal build -->
+      <plugin>
+        <groupId>io.gatling</groupId>
+        <artifactId>gatling-maven-plugin</artifactId>
+        <version>4.21.12</version>
       </plugin>
 
       <!-- OpenAPI generator -->
