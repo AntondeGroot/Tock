@@ -1,13 +1,7 @@
 package adg.services;
 
 import adg.keezen.GameSession;
-import adg.keezen.GameState;
-import adg.keezen.TradeRequest;
-import adg.processing.MoveAvailabilityChecker;
-import com.adg.openapi.model.Card;
-import com.adg.openapi.model.Trade;
 import jakarta.annotation.PreDestroy;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +56,26 @@ public class SseEmitterService {
     return emitter;
   }
 
+  /**
+   * Ends every stream of a game that is gone. Nothing is sent on them again, so a client that left
+   * would never be noticed, and each stream would keep its sender thread for good.
+   */
+  public void closeStreams(String sessionId) {
+    CopyOnWriteArrayList<PlayerEmitter> list = emittersBySession.remove(sessionId);
+    if (list == null) return;
+    list.forEach(pe -> drop(list, pe));
+  }
+
+  /**
+   * Writes an SSE comment on every open stream. A client that went away without closing its stream
+   * (a phone that lost its connection) is only noticed when a write to it fails, and in a game
+   * where nobody moves nothing else is written. The browser's EventSource ignores comments.
+   */
+  public void sendHeartbeats() {
+    emittersBySession.values().forEach(list ->
+        list.forEach(pe -> sendAsync(list, pe, SseEmitter.event().comment("heartbeat"))));
+  }
+
   private static ExecutorService newSenderExecutor(String playerId) {
     return new ThreadPoolExecutor(
         1, 1, 0L, TimeUnit.MILLISECONDS,
@@ -93,7 +107,8 @@ public class SseEmitterService {
             pe.playerId(), sessionId, e);
         continue;
       }
-      sendAsync(list, pe, snapshot);
+      sendAsync(list, pe,
+          SseEmitter.event().name("gamestate").data(snapshot, MediaType.APPLICATION_JSON));
     }
   }
 
@@ -105,12 +120,11 @@ public class SseEmitterService {
    * connection causes the emitter to be removed.
    */
   private void sendAsync(
-      CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe, GameStatePush snapshot) {
+      CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe, SseEmitter.SseEventBuilder event) {
     try {
       pe.sender().execute(() -> {
         try {
-          pe.emitter().send(
-              SseEmitter.event().name("gamestate").data(snapshot, MediaType.APPLICATION_JSON));
+          pe.emitter().send(event);
         } catch (Exception e) {
           drop(list, pe);
         }
@@ -140,68 +154,8 @@ public class SseEmitterService {
     }
   }
 
+  /** The game state as this player sees it. push() builds through here, so tests can stub it. */
   public GameStatePush buildPush(GameSession session, String playerId, boolean omitLastMove) {
-    GameState gs = session.getGameState();
-    GameStatePush push = new GameStatePush();
-    addCoreState(push, gs, session, omitLastMove);
-    addPublicCardData(push, session);
-    addPrivateHandAndForfeit(push, gs, session, playerId);
-    addPendingTrade(push, gs, playerId);
-    return push;
-  }
-
-  private void addCoreState(
-      GameStatePush push, GameState gs, GameSession session, boolean omitLastMove) {
-    push.setCurrentPlayerId(gs.getPlayerIdTurn());
-    push.setPawns(gs.getPawns());
-    push.setPlayers(gs.getPlayers());
-    push.setWinners(gs.getWinners());
-    push.setVersion(gs.getVersion());
-    push.setExactMoveRequired(gs.isExactMoveRequired());
-    push.setGameOver(gs.isGameOver());
-    push.setLastMoveResponse(omitLastMove ? null : session.getLastMoveResponse());
-  }
-
-  private void addPublicCardData(GameStatePush push, GameSession session) {
-    push.setPlayedCards(PublicCards.playedIds(session.getCardsDeck()));
-    push.setNrOfCardsPerPlayer(session.getCardsDeck().getNrOfCardsPerPlayer());
-  }
-
-  /**
-   * This player's private hand and whether they may forfeit. With "must play if possible" on, the
-   * player on turn can't forfeit while a legal move exists — and the moment they're first blocked
-   * is recorded here (it starts the safety timeout that eventually lets them forfeit anyway).
-   */
-  private void addPrivateHandAndForfeit(
-      GameStatePush push, GameState gs, GameSession session, String playerId) {
-    List<Card> hand = session.getCardsDeck().getCardsForPlayer(playerId);
-    List<Card> safeHand = hand != null ? hand : List.of();
-    push.setPlayerCards(safeHand);
-
-    boolean canForfeit = !gs.isMustPlayIfPossible()
-        || !MoveAvailabilityChecker.hasAvailableMove(gs, playerId, safeHand);
-    push.setCanForfeit(canForfeit);
-
-    // The team card trade is only offerable before you play your first card of the round.
-    push.setCanRequestTrade(gs.canRequestTrade(playerId));
-
-    if (playerId.equals(gs.getPlayerIdTurn()) && !canForfeit) {
-      gs.recordMustPlayBlocked();
-    }
-  }
-
-  private void addPendingTrade(GameStatePush push, GameState gs, String playerId) {
-    push.setTeamCardTrade(gs.isTeamCardTrade());
-
-    // Only the viewer's own team's pending trade (both teammates act on it); other teams' trades
-    // are invisible here, so one team asking never shows up for — or blocks — another.
-    TradeRequest pending = gs.getPendingTradeFor(playerId);
-    if (pending != null) {
-      push.setTrade(new Trade()
-          .requesterId(pending.getRequesterId())
-          .teammateId(pending.getTeammateId())
-          .offeredCard(pending.getOfferedCard())
-          .answeredCard(pending.getAnsweredCard()));
-    }
+    return GameStatePushes.forPlayer(session, playerId, omitLastMove);
   }
 }

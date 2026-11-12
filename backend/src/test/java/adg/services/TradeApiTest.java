@@ -52,13 +52,13 @@ class TradeApiTest {
     var response = delegate.teamTrade("trade-req", action(TradeAction.ActionEnum.REQUEST, "0", null));
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    var push = new SseEmitterService().buildPush(session, "2", false);
+    var push = GameStatePushes.forPlayer(session, "2", false);
     assertNotNull(push.getTrade(), "the teammate's snapshot shows the pending trade");
     assertEquals("0", push.getTrade().getRequesterId());
     assertEquals("2", push.getTrade().getTeammateId());
 
     // The other team (players 1 & 3) neither sees this trade nor is blocked from opening their own.
-    var otherTeamPush = new SseEmitterService().buildPush(session, "1", false);
+    var otherTeamPush = GameStatePushes.forPlayer(session, "1", false);
     assertNull(otherTeamPush.getTrade(), "the other team does not see team A's trade");
     assertTrue(otherTeamPush.isCanRequestTrade(), "the other team is not blocked from trading");
     GameRegistry.removeGame("trade-req");
