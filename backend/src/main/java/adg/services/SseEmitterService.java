@@ -62,6 +62,26 @@ public class SseEmitterService {
     return emitter;
   }
 
+  /**
+   * Ends every stream of a game that is gone. Nothing is sent on them again, so a client that left
+   * would never be noticed, and each stream would keep its sender thread for good.
+   */
+  public void closeStreams(String sessionId) {
+    CopyOnWriteArrayList<PlayerEmitter> list = emittersBySession.remove(sessionId);
+    if (list == null) return;
+    list.forEach(pe -> drop(list, pe));
+  }
+
+  /**
+   * Writes an SSE comment on every open stream. A client that went away without closing its stream
+   * (a phone that lost its connection) is only noticed when a write to it fails, and in a game
+   * where nobody moves nothing else is written. The browser's EventSource ignores comments.
+   */
+  public void sendHeartbeats() {
+    emittersBySession.values().forEach(list ->
+        list.forEach(pe -> sendAsync(list, pe, SseEmitter.event().comment("heartbeat"))));
+  }
+
   private static ExecutorService newSenderExecutor(String playerId) {
     return new ThreadPoolExecutor(
         1, 1, 0L, TimeUnit.MILLISECONDS,
@@ -93,7 +113,8 @@ public class SseEmitterService {
             pe.playerId(), sessionId, e);
         continue;
       }
-      sendAsync(list, pe, snapshot);
+      sendAsync(list, pe,
+          SseEmitter.event().name("gamestate").data(snapshot, MediaType.APPLICATION_JSON));
     }
   }
 
@@ -105,12 +126,11 @@ public class SseEmitterService {
    * connection causes the emitter to be removed.
    */
   private void sendAsync(
-      CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe, GameStatePush snapshot) {
+      CopyOnWriteArrayList<PlayerEmitter> list, PlayerEmitter pe, SseEmitter.SseEventBuilder event) {
     try {
       pe.sender().execute(() -> {
         try {
-          pe.emitter().send(
-              SseEmitter.event().name("gamestate").data(snapshot, MediaType.APPLICATION_JSON));
+          pe.emitter().send(event);
         } catch (Exception e) {
           drop(list, pe);
         }

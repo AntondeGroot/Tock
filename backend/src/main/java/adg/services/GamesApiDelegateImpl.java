@@ -103,7 +103,7 @@ public class GamesApiDelegateImpl implements GamesApiDelegate {
     gameState.processLeaveGame(playerId);
     gameSession.setLastMoveResponse(null);
     if (gameState.allPlayersHaveLeft()) {
-      GameRegistry.removeGame(sessionId);
+      removeGame(sessionId);
       log.info("Game removed (all players left): sessionId={}", sessionId);
     } else {
       sseEmitterService.push(sessionId, gameSession);
@@ -116,8 +116,14 @@ public class GamesApiDelegateImpl implements GamesApiDelegate {
   public ResponseEntity<Void> stopGame(String sessionId) {
     GameSession gameSession = Games.require(sessionId);
     gameSession.getGameState().stop();
-    GameRegistry.removeGame(sessionId);
+    removeGame(sessionId);
     return ResponseEntity.status(204).build();
+  }
+
+  /** Forgets the game and ends its players' streams, which would otherwise never close. */
+  private void removeGame(String sessionId) {
+    GameRegistry.removeGame(sessionId);
+    sseEmitterService.closeStreams(sessionId);
   }
 
   @Override
