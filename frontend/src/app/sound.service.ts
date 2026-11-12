@@ -21,9 +21,15 @@ const FILES: Record<SoundName, string> = {
     'zapsplat_multimedia_game_sound_fanfare_trumpets_staccato_finish_complete_109640.mp3',
   chatMessage: 'zapsplat_multimedia_pop_up_pop_002_91296.mp3',
 };
-// Per-sound base volume — the arcade "up" is loud, so the GWT played it at 0.1. Scaled by the
-// user's master volume.
-const BASE_VOLUME: Partial<Record<SoundName, number>> = { pawnOnBoard: 0.1 };
+// Per-sound base volume, scaled by the user's master volume. The clips are mastered at very
+// different levels, so these (set by ear) bring the fanfares and the arcade sounds down to sit
+// near the quiet turn-change click.
+const BASE_VOLUME: Partial<Record<SoundName, number>> = {
+  pawnHome: 0.31,
+  medalAwarded: 0.56,
+  pawnOnBoard: 0.12,
+  pawnKilled: 0.45,
+};
 
 const STORAGE_KEY = 'keezen.volume';
 
