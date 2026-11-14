@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { Pt } from '../geometry/board-geometry';
 
 /** One pawn's leg of a move: the waypoints to walk, optionally held back by `delayMs`. */
@@ -81,6 +81,9 @@ function positionAt(walk: TimedWalk, nowMs: number): Pt {
  */
 export class PawnAnimator {
   readonly positions = signal<ReadonlyMap<string, Pt>>(new Map());
+
+  /** Whether any pawn is moving or waiting its turn to — true from enqueue until all settle. */
+  readonly moving = computed(() => this.positions().size > 0);
 
   /** When the queue runs dry (performance.now ms) — the next group starts no sooner. */
   private busyUntil = 0;

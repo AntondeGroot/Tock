@@ -392,8 +392,14 @@ export class Board implements OnInit, OnDestroy {
   // same move again, and the two ran side by side on the server and broke the player's hand.
   private readonly moveInFlight = signal(false);
 
+  // Held shut while pawns are still moving: a player who plays straight away has not yet seen where
+  // the last move left the pawns — a pawn that was just switched or sent home, say.
   protected readonly canPlay = computed(
-    () => this.isMyTurn() && this.selection.isComplete() && !this.moveInFlight(),
+    () =>
+      this.isMyTurn() &&
+      this.selection.isComplete() &&
+      !this.moveInFlight() &&
+      !this.pawnAnimator.moving(),
   );
 
   // The backend allows a forfeit only when the player has no legal move; when they
