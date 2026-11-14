@@ -275,6 +275,47 @@ describe('Board', () => {
     expect(c.canPlay()).toBe(false);
   });
 
+  // Playing straight away, a player can pick a pawn before seeing where the last move left it — one
+  // just switched by a Jack or sent home, say — so the play button waits for the pawns to settle.
+  // Synchronous on purpose: `whenStable()` awaits promises, which a fake clock can stall.
+  it('disables the play button until the pawns of the last move have settled', () => {
+    vi.useFakeTimers();
+    const c = component as unknown as {
+      handleGameState: (push: unknown) => void;
+      selection: {
+        selectCard: (uuid: number) => void;
+        selectPawn: (id: string) => void;
+      };
+      canPlay: () => boolean;
+    };
+    const tile = (tileNr: number) => ({ playerId: '2', tileNr });
+    const push = (lastMoveResponse?: unknown) => ({
+      players: teamPlayers,
+      pawns: [pawnOn('1', 0, 5), pawnOn('2', 0, 6)],
+      winners: [],
+      playerCards: [{ uuid: 7, suit: 0, value: 5 }],
+      currentPlayerId: '1',
+      lastMoveResponse,
+    });
+
+    // GIVEN the viewer on turn with a complete move selected
+    c.handleGameState(push());
+    fixture.detectChanges(); // runs the effect that hands the pushed state to the selection
+    c.selection.selectCard(7);
+    c.selection.selectPawn('1:0');
+    expect(c.canPlay()).toBe(true);
+
+    // WHEN the teammate's pawn walks in from an earlier move
+    c.handleGameState(
+      push({ pawn1: pawnOn('2', 0, 6), movePawn1: [tile(3), tile(6)], moveType: 'move' }),
+    );
+
+    // THEN play waits for it to arrive
+    expect(c.canPlay()).toBe(false);
+    vi.advanceTimersByTime(10_000);
+    expect(c.canPlay()).toBe(true);
+  });
+
   // Forfeit has its own server-sent permission (`canForfeit`), and it stays true for a player who
   // has no legal move — so the turn check has to be an extra gate on top of it, not a substitute.
   it('disables the forfeit button off-turn even when the server allows a forfeit', async () => {
