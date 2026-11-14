@@ -1,5 +1,5 @@
 import { Pt } from '../../geometry/board-geometry';
-import { pathLength } from '../pawn-animator';
+import { pointAlong } from '../pawn-animator';
 import { PawnTrail } from './pawn-trail';
 
 // What a trail looks like at a given moment, as plain numbers: no canvas here, so the timing can be
@@ -27,18 +27,8 @@ const endOf = (trail: PawnTrail) => trail.startMs + trail.durationMs;
 
 /** Where the pawn is at this moment. */
 export function pointAt(trail: PawnTrail, nowMs: number): Pt {
-  const progress = trail.durationMs > 0 ? clamp01((nowMs - trail.startMs) / trail.durationMs) : 1;
-  let remaining = progress * pathLength(trail.points);
-  for (let i = 1; i < trail.points.length; i++) {
-    const [a, b] = [trail.points[i - 1], trail.points[i]];
-    const length = Math.hypot(b.x - a.x, b.y - a.y);
-    if (remaining <= length && length > 0) {
-      const share = remaining / length;
-      return { x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share };
-    }
-    remaining -= length;
-  }
-  return trail.points[trail.points.length - 1];
+  const progress = trail.durationMs > 0 ? (nowMs - trail.startMs) / trail.durationMs : 1;
+  return pointAlong(trail.points, progress);
 }
 
 /** One stroke of the streak; `strength` runs from 0 (the far tip) towards 1 (at the pawn). */

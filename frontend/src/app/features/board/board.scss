@@ -150,11 +150,8 @@
   transform: translate(-50%, -80%);
   box-sizing: border-box;
   cursor: pointer;
-  // filter = hover; left/top animate a move step (--move-ms set per pawn, 0 when idle)
-  transition:
-    filter 0.12s ease,
-    left var(--move-ms, 0ms) linear,
-    top var(--move-ms, 0ms) linear;
+  // filter = hover. A moving pawn is placed every frame by the PawnAnimator, so left/top don't transition.
+  transition: filter 0.12s ease;
 }
 
 // Hover feedback — a subtle brighten + shadow so it reads as clickable, with no

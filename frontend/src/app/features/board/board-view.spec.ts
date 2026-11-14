@@ -67,16 +67,14 @@ describe('projectPawns', () => {
     expect(vm.color).toBe(seatColor(1));
     expect(vm.teamId).toBe(2);
     expect(vm.zIndex).toBe(Math.round(vm.y));
-    expect(vm.moveMs).toBe(0);
   });
 
-  it('uses the animation override (position + duration) while a pawn is moving', () => {
+  it('uses the animation override position while a pawn is moving', () => {
     const pawn = nestPawn('0', 0);
-    const anim = new Map([[pawnKey(pawn.pawnId), { x: 12, y: 34, ms: 300 }]]);
+    const anim = new Map([[pawnKey(pawn.pawnId), { x: 12, y: 34 }]]);
     const [vm] = projectPawns(geo(), [pawn], PLAYERS, anim);
     expect(vm.x).toBe(12);
     expect(vm.y).toBe(34);
-    expect(vm.moveMs).toBe(300);
   });
 
   it('drops a pawn whose tile has no geometry', () => {
