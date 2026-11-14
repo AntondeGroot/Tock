@@ -1,7 +1,6 @@
 import { Pawn as ApiPawn, Player } from '../../api';
 import { seatColor } from '../../player-colors';
-import { BoardGeometry, Tile } from './geometry/board-geometry';
-import { PawnPos } from './pawn/pawn-animator';
+import { BoardGeometry, Pt, Tile } from './geometry/board-geometry';
 import { pawnKey } from './pawn/pawn-key';
 
 // Pure projections from (board geometry + server state) to the view models the board renders.
@@ -14,7 +13,7 @@ export interface TileVM extends Tile {
   color: string;
 }
 
-/** A pawn placed for rendering: pixel position, stacking, seat colour, team + move duration. */
+/** A pawn placed for rendering: pixel position, stacking, seat colour and team. */
 export interface PawnVM {
   id: string;
   x: number;
@@ -22,7 +21,6 @@ export interface PawnVM {
   zIndex: number;
   color: string;
   teamId: number | null;
-  moveMs: number;
 }
 
 /** Colour each player's home/finish tiles by seat; the shared track stays neutral. */
@@ -48,14 +46,14 @@ export function projectTiles(g: BoardGeometry, players: Player[]): TileVM[] {
 }
 
 /**
- * Place each pawn: while it's moving, its position (and step duration) comes from the `anim`
+ * Place each pawn: while it's moving, its position comes from the `anim`
  * override instead of the server's already-final tile. Pawns whose tile has no geometry drop out.
  */
 export function projectPawns(
   g: BoardGeometry,
   pawns: ApiPawn[],
   players: Player[],
-  anim: Map<string, PawnPos>,
+  anim: ReadonlyMap<string, Pt>,
 ): PawnVM[] {
   const playerOf = (playerId: string) => players.find((p) => p.id === playerId);
   const colorOf = (playerId: string) => seatColor(playerOf(playerId)?.playerInt);
@@ -82,7 +80,6 @@ export function projectPawns(
         zIndex: Math.round(y),
         color: colorOf(pawn.playerId),
         teamId: teamOf(pawn.playerId),
-        moveMs: a?.ms ?? 0,
       };
     })
     .filter((p): p is PawnVM => p !== null);

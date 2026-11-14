@@ -46,8 +46,8 @@ export class PawnTrails implements OnDestroy {
     if (this.frameId !== undefined) cancelAnimationFrame(this.frameId);
   }
 
-  private readonly onFrame = (): void => {
-    const now = performance.now();
+  /** Uses the frame's own timestamp, as the pawn animator does, so a trail stays under its pawn. */
+  private readonly onFrame = (now: number): void => {
     this.trails = this.trails.filter((trail) => !isTrailOver(trail, now));
     this.paint(now);
     this.frameId = this.trails.length > 0 ? requestAnimationFrame(this.onFrame) : undefined;
