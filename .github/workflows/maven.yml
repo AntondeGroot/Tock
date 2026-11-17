@@ -141,6 +141,72 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # ── Lighthouse (performance, accessibility, best practices) ──────────
+  # Audits a seeded game board as production serves it: the Angular build inside the WAR, not
+  # ng serve's development build. Thresholds are in frontend/lighthouserc.cjs.
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '25.0.5+8.0.LTS'
+          distribution: 'temurin'
+          cache: maven
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Cache OpenAPI generator jar
+        uses: actions/cache@v6
+        with:
+          path: frontend/.openapi-generator-cli
+          key: openapi-generator-cli-${{ hashFiles('frontend/openapitools.json') }}
+      - name: Ensure OpenAPI generator jar
+        working-directory: frontend
+        run: |
+          ver=$(node -p "require('./openapitools.json')['generator-cli'].version")
+          jar=".openapi-generator-cli/${ver}.jar"
+          if [ ! -f "$jar" ]; then
+            mkdir -p .openapi-generator-cli
+            for i in 1 2 3; do
+              curl -fsSL -o "$jar" \
+                "https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/${ver}/openapi-generator-cli-${ver}.jar" && break
+              echo "download attempt $i failed; retrying..."; sleep 5
+            done
+          fi
+      # postinstall generates the OpenAPI client, so npm ci produces src/app/api
+      - name: Build the Angular app
+        working-directory: frontend
+        run: npm ci && npm run build
+      - name: Package it into the WAR
+        run: mvn -B -pl backend -am -Penv-angular -DskipTests package
+      - name: Boot the WAR (:4200) and run Lighthouse
+        working-directory: frontend
+        env:
+          LHCI_API_URL: http://localhost:4200
+        run: |
+          # The `test` profile enables the /test seeding hooks the audit uses to start a game.
+          nohup java -jar ../backend/target/tock-exec.war --server.port=4200 \
+            --spring.profiles.active=test > "$RUNNER_TEMP/backend.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:4200/game-options >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -sf http://localhost:4200/game-options >/dev/null 2>&1 || {
+            echo "::error::Backend failed to start"; tail -n 150 "$RUNNER_TEMP/backend.log"; exit 1; }
+          npm run lighthouse
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-reports
+          path: frontend/.lighthouseci/reports
+          retention-days: 7
+          if-no-files-found: ignore
+
   # ── Backend (server) unit tests ──────────────────────────────────────
   backend:
     name: Backend unit tests
@@ -191,7 +257,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [openapi-lint, angular, e2e, backend, mutation]
+    needs: [openapi-lint, angular, e2e, lighthouse, backend, mutation]
     runs-on: ubuntu-latest
     steps:
       - name: All CI jobs passed
