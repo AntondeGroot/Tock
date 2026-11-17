@@ -20,8 +20,10 @@ export interface DisplayMessage {
 
 /** How long a broken stream may take to deliver again before the chat counts as down. */
 const OFFLINE_GRACE_MS = 10_000;
-/** How soon to reopen a stream the browser has given up on. */
+/** How soon to reopen a stream the browser has given up on. Each failed reopen waits twice as long. */
 const RECONNECT_MS = 2_000;
+/** The longest wait between reopens, so a chat server that comes back is found within a minute. */
+const MAX_RECONNECT_MS = 60_000;
 
 /**
  * Talks to the external chat server via the keezen backend's `/chat/**` proxy — a port
@@ -30,6 +32,7 @@ const RECONNECT_MS = 2_000;
  * it's down, because streams get dropped and reopened all the time and the reopened one delivers
  * the messages again: only when none arrive within a grace period does `available` go false.
  * The UI uses `available` to show/hide itself, so the chat stays put through a reconnect.
+ * While the chat server stays down, the stream is reopened less and less often (up to a minute).
  */
 @Injectable({ providedIn: 'root' })
 export class ChatService {
@@ -39,6 +42,7 @@ export class ChatService {
   private source?: EventSource;
   private offlineTimer?: ReturnType<typeof setTimeout>;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
+  private reconnectMs = RECONNECT_MS;
 
   private readonly _available = signal(false);
   private readonly _raw = signal<WireMessage[]>([]);
@@ -78,7 +82,8 @@ export class ChatService {
     // CONNECTING → the browser is retrying by itself. CLOSED → it gave up, so reopen it ourselves.
     if (source.readyState === EventSource.CLOSED) {
       clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = setTimeout(() => this.openStream(sessionId), RECONNECT_MS);
+      this.reconnectTimer = setTimeout(() => this.openStream(sessionId), this.reconnectMs);
+      this.reconnectMs = Math.min(this.reconnectMs * 2, MAX_RECONNECT_MS);
     }
   }
 
@@ -92,6 +97,7 @@ export class ChatService {
     }
     if (!Array.isArray(parsed)) return;
     this.cancelOfflineTimer();
+    this.reconnectMs = RECONNECT_MS;
     this._available.set(true);
     this._raw.set(parsed as WireMessage[]);
   }
@@ -111,6 +117,7 @@ export class ChatService {
   disconnect(): void {
     this.cancelOfflineTimer();
     clearTimeout(this.reconnectTimer);
+    this.reconnectMs = RECONNECT_MS;
     this.source?.close();
     this.source = undefined;
     this._available.set(false);

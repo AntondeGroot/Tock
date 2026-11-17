@@ -8,10 +8,18 @@
 # Not `ng serve`: Lighthouse would score its unminified development build.
 #
 # Seeds a fresh three-player game, then audits its board as player0. Thresholds: lighthouserc.cjs.
+# Unless a chat server already runs on :4100, a stub stands in for it, so the board has its chat.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 API="${LHCI_API_URL:-http://localhost:4200}"
+
+if ! curl -s -o /dev/null --max-time 2 http://localhost:4100/; then
+  node lighthouse/chat-stub.mjs &
+  chat_stub_pid=$!
+  trap 'kill "$chat_stub_pid"' EXIT
+  for i in $(seq 1 20); do curl -s -o /dev/null http://localhost:4100/ && break; sleep 0.25; done
+fi
 
 session_id=$(curl -sf -X POST "$API/games" -H 'Content-Type: application/json' \
   -d '{"roomName":"lighthouse","maxPlayers":3}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).sessionId')

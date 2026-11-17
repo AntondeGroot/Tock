@@ -1,7 +1,6 @@
 package adg.services;
 
 import jakarta.annotation.PreDestroy;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
- * Proxies /chat/** to the chat server running on port 4100 (GameRoom service).
- * Active in all environments so the keezen app can reach the chat server
- * without requiring a separate nginx rule for /chat/.
+ * Proxies /chat/** to the chat server (GameRoom service, port 4100 unless `chat.server-url` says
+ * otherwise). Active in all environments so the keezen app can reach the chat server without
+ * requiring a separate nginx rule for /chat/. While the chat server is down, every endpoint
+ * answers 503.
  */
 @RestController
 @RequestMapping("/chat")
 public class ChatProxyController {
 
-  private static final String CHAT_SERVER_BASE_URL = "http://localhost:4100";
+  private final String chatServerBaseUrl;
   private final HttpClient httpClient = HttpClient.newHttpClient();
   private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -41,32 +42,48 @@ public class ChatProxyController {
    * Interrupts open proxy streams when the app is undeployed: inside the shared Tomcat the JVM
    * outlives the app, and a thread still blocked on the chat server would pin the old classes.
    */
+  public ChatProxyController(
+      @Value("${chat.server-url:http://localhost:4100}") String chatServerBaseUrl) {
+    this.chatServerBaseUrl = chatServerBaseUrl;
+  }
+
   @PreDestroy
   void shutdown() {
     streamExecutor.shutdownNow();
   }
 
+  /**
+   * Connects to the chat server before answering, so that a chat server that is down gets a 503
+   * rather than a stream that fails after it has started. Only the connection is made here: the
+   * chat server may not send its response until its first event, so that is read in the background.
+   */
   @GetMapping(value = "/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public SseEmitter streamMessages(
-      @PathVariable("sessionId") String sessionId, HttpServletResponse response) {
-    response.setHeader("X-Accel-Buffering", "no");
+  public ResponseEntity<SseEmitter> streamMessages(@PathVariable("sessionId") String sessionId) {
+    HttpURLConnection upstream;
+    try {
+      upstream = connectToStream(sessionId);
+    } catch (IOException e) {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
     SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-    streamExecutor.execute(() -> proxyStream(sessionId, emitter));
-    return emitter;
+    streamExecutor.execute(() -> proxyStream(upstream, emitter));
+    return ResponseEntity.ok().header("X-Accel-Buffering", "no").body(emitter);
   }
 
-  private void proxyStream(String sessionId, SseEmitter emitter) {
-    String url = CHAT_SERVER_BASE_URL + "/chat/" + sessionId + "/stream";
-    try {
-      HttpURLConnection conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
-      conn.setRequestProperty("Accept", "text/event-stream");
-      conn.setConnectTimeout(5_000);
-      conn.setReadTimeout(0);
-      conn.connect();
+  private HttpURLConnection connectToStream(String sessionId) throws IOException {
+    String url = chatServerBaseUrl + "/chat/" + sessionId + "/stream";
+    HttpURLConnection conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
+    conn.setRequestProperty("Accept", "text/event-stream");
+    conn.setConnectTimeout(5_000);
+    conn.setReadTimeout(0);
+    conn.connect();
+    return conn;
+  }
 
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-        forwardEvents(reader, sinkFor(emitter));
-      }
+  private void proxyStream(HttpURLConnection conn, SseEmitter emitter) {
+    try (BufferedReader reader =
+        new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+      forwardEvents(reader, sinkFor(emitter));
       emitter.complete();
     } catch (Exception e) {
       emitter.completeWithError(e);
@@ -134,7 +151,7 @@ public class ChatProxyController {
   }
 
   private ResponseEntity<String> proxy(String sessionId, String method, String body) {
-    String targetUrl = CHAT_SERVER_BASE_URL + "/chat/" + sessionId;
+    String targetUrl = chatServerBaseUrl + "/chat/" + sessionId;
     try {
       HttpRequest.Builder builder = HttpRequest.newBuilder()
           .uri(URI.create(targetUrl))
