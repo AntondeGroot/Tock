@@ -40,7 +40,7 @@
     "@angular/cli": "^22.0.4",
     "@angular/compiler-cli": "^22.0.0",
     "@eslint/js": "^10.0.1",
-    "@lhci/cli": "0.16.0",
+    "@lhci/cli": "0.16.1",
     "@openapitools/openapi-generator-cli": "^2.39.0",
     "@playwright/test": "^1.61.1",
     "@vitest/coverage-v8": "^5.0.0",
