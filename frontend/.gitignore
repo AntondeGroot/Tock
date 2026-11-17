@@ -55,3 +55,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Lighthouse CI reports (npm run lighthouse)
+/.lighthouseci
