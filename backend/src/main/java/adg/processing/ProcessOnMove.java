@@ -239,7 +239,12 @@ public class ProcessOnMove {
         && board.cannotMoveToTileBecauseSamePlayer(pawn1, startTile);
   }
 
+  /** Three steps back, then the blockade turns the pawn around for its last step. */
   private void landBeyondBlockadedStartTile() {
+    if (gs.isExactMoveRequired()) {
+      reject(CANNOT_MAKE_MOVE, MoveRejectionReason.CANNOT_PASS_START_TILE);
+      return;
+    }
     PositionKey tile2 = new PositionKey(playerIdOfTile, 2);
     if (board.canMoveToTile(pawn1, tile2)) {
       landOnTile(tile2);
