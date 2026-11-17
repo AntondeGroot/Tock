@@ -13,8 +13,7 @@ module.exports = {
       assertions: {
         // TODO: pin at the score CI's runners reach (a laptop scores 1). Until then, a margin.
         'categories:performance': ['error', { minScore: 0.9, aggregationMethod: 'median-run' }],
-        // TODO: raise to 1. Missing: a <main> landmark.
-        'categories:accessibility': ['error', { minScore: 0.98, aggregationMethod: 'median-run' }],
+        'categories:accessibility': ['error', { minScore: 1, aggregationMethod: 'median-run' }],
         // TODO: raise to 1. Missing: the chat stream answers 500 when the chat service is not running.
         'categories:best-practices': ['error', { minScore: 0.96, aggregationMethod: 'median-run' }],
       },
