@@ -463,11 +463,11 @@ class ExactMoveRequiredTest {
 
   @Test
   void alreadyOnFinish_OvershootsCap_ExitsFinish_CannotMove() {
-    // pawn at (1,19) + 4 steps → bounces off cap and exits finish to (0,15)
+    // pawn at (1,18) + 5 steps → bounces off cap and exits finish to (0,15)
     // → without setting: lands at (0,15)
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 1, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 19));
+    Card card = givePlayerCard(cardsDeck, 1, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 0), new PositionKey("1", 18));
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
@@ -476,6 +476,6 @@ class ExactMoveRequiredTest {
     // THEN
     assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
     assertNull(moveResponse.getPawn1());
-    assertEquals(new PositionKey("1", 19), gameState.getPawn(pawn1).getCurrentTileId());
+    assertEquals(new PositionKey("1", 18), gameState.getPawn(pawn1).getCurrentTileId());
   }
 }

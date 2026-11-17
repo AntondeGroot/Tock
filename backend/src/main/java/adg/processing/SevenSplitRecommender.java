@@ -216,7 +216,7 @@ public final class SevenSplitRecommender {
 
   private static MoveResponse checkSingleMove(
       GameState gs, MoveRequest base, PawnId pawnId, int cardId, int steps) {
-    return MoveChecks.checkMove(gs, base.getPlayerId(), cardId, pawnId, steps);
+    return MoveChecks.checkMove(gs, base.getPlayerId(), cardId, pawnId, steps, SPLIT);
   }
 
   private static PositionKey lastTile(List<PositionKey> move) {

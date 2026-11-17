@@ -174,6 +174,12 @@ public class ProcessOnSplit {
       reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
       return false;
     }
+    // 0 + 7 is a split too — it lets the player switch between splitting and one pawn walking all 7
+    // — but a pawn never walks a negative half backwards.
+    if (moveMessage.getStepsPawn1() < 0 || moveMessage.getStepsPawn2() < 0) {
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
+    }
     gs.duplicatePlayerCard(playerId, card);
     moveMessagePawn1.setTempMessageType(MAKE_MOVE);
     moveMessagePawn2.setTempMessageType(MAKE_MOVE);

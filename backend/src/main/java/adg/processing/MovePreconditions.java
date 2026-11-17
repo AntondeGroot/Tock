@@ -1,9 +1,13 @@
 package adg.processing;
 
+import static adg.util.CardValueCheck.isFour;
 import static adg.util.CardValueCheck.isJack;
+import static adg.util.CardValueCheck.isKing;
+import static adg.util.CardValueCheck.isSeven;
 import static com.adg.openapi.model.MoveResult.CANNOT_MAKE_MOVE;
 import static com.adg.openapi.model.MoveResult.INVALID_SELECTION;
 import static com.adg.openapi.model.MoveResult.PLAYER_DOES_NOT_HAVE_CARD;
+import static com.adg.openapi.model.MoveType.SPLIT;
 
 import adg.keezen.GameState;
 import com.adg.openapi.model.Card;
@@ -17,12 +21,15 @@ import java.util.Optional;
 /**
  * What a move has to satisfy before there is any point working out its route: a real pawn and card
  * were named, the pawn is on the board rather than in the nest, the player actually holds the card,
- * and the pawns are theirs to move.
+ * asks for the card's own number of steps, and the pawns are theirs to move.
  *
  * <p>Separate from the routing because these are questions about the REQUEST, answerable without
  * walking a single tile — and because a refusal here says nothing about the board's geometry.
  */
 final class MovePreconditions {
+
+  /** The steps of a seven: a split's half may be anything from none to all of them. */
+  private static final int SEVEN_STEPS = 7;
 
   private MovePreconditions() {}
 
@@ -40,7 +47,24 @@ final class MovePreconditions {
     if (!gs.playerHasCard(request.getPlayerId(), card)) {
       return refuse(PLAYER_DOES_NOT_HAVE_CARD, MoveRejectionReason.DONT_HAVE_CARD);
     }
+    if (!stepsFitTheCard(request, card)) {
+      return refuse(INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+    }
     return checkPawnOwnership(gs, request, card);
+  }
+
+  /**
+   * Whether the request asks for the card's own number of steps; the client's word is not taken
+   * for it. A normal move walks the card's value — a four backwards, an ace one step — and a King
+   * or Jack never makes one: those bring a pawn onto the board and switch two pawns. Half of a
+   * 7-split may be anything from 0 to 7 steps; the split itself checks that the halves add up to 7.
+   */
+  private static boolean stepsFitTheCard(MoveRequest request, Card card) {
+    Integer steps = request.getStepsPawn1();
+    if (steps == null) return false;
+    if (request.getMoveType() == SPLIT) return isSeven(card) && steps >= 0 && steps <= SEVEN_STEPS;
+    if (isKing(card) || isJack(card)) return false;
+    return steps == (isFour(card) ? -4 : card.getValue());
   }
 
   /**

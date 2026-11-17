@@ -3,6 +3,7 @@ package adg.processing;
 import static adg.util.BoardLogic.isPawnOnNest;
 import static adg.util.BoardLogic.pawnIsOnNormalBoard;
 import static com.adg.openapi.model.MoveResult.CAN_MAKE_MOVE;
+import static com.adg.openapi.model.MoveType.MOVE;
 import static com.adg.openapi.model.MoveType.SPLIT;
 import static com.adg.openapi.model.MoveType.SWITCH;
 import static com.adg.openapi.model.TempMessageType.CHECK_MOVE;
@@ -161,6 +162,6 @@ public class MoveAvailabilityChecker {
 
   private static MoveResponse checkMoveResponse(
       GameState gs, String playerId, Card card, Pawn pawn, int steps) {
-    return MoveChecks.checkMove(gs, playerId, card.getUuid(), pawn.getPawnId(), steps);
+    return MoveChecks.checkMove(gs, playerId, card.getUuid(), pawn.getPawnId(), steps, MOVE);
   }
 }
