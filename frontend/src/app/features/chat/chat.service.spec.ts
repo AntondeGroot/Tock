@@ -156,6 +156,44 @@ describe('ChatService', () => {
     expect(openedSources.at(-1)?.url).toBe(stream.url);
   });
 
+  // Every open board asks again, so a chat server that is down would get a request every 2 seconds
+  // from each of them for as long as it stays down.
+  it('waits longer before each reopen while the chat server stays down, and starts over once it answers', () => {
+    vi.useFakeTimers();
+    const giveUp = () => {
+      const stream = openedSources.at(-1)!;
+      stream.readyState = FakeEventSource.CLOSED;
+      stream.onerror?.();
+    };
+    /** How long until the next stream opens. */
+    const nextReopenMs = () => {
+      const opened = openedSources.length;
+      let waited = 0;
+      while (openedSources.length === opened) {
+        vi.advanceTimersByTime(1_000);
+        waited += 1_000;
+      }
+      return waited;
+    };
+
+    // WHEN every reopened stream fails as well
+    const waits = [];
+    for (let i = 0; i < 7; i++) {
+      giveUp();
+      waits.push(nextReopenMs());
+    }
+
+    // THEN each wait doubles, up to a minute
+    expect(waits).toEqual([2_000, 4_000, 8_000, 16_000, 32_000, 60_000, 60_000]);
+
+    // WHEN the chat server answers again, and later drops once more
+    service.ingest('[]');
+    giveUp();
+
+    // THEN the wait starts over at 2 seconds
+    expect(nextReopenMs()).toBe(2_000);
+  });
+
   // A reopen left pending would open a stream for a game the player has already left.
   it('leaves no timers running after disconnecting, so a closed stream stays closed', () => {
     vi.useFakeTimers();

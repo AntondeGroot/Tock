@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 class ChatProxyControllerTest {
 
@@ -17,6 +19,21 @@ class ChatProxyControllerTest {
     List<String> events = new ArrayList<>();
     ChatProxyController.forwardEvents(new BufferedReader(new StringReader(stream)), events::add);
     return events;
+  }
+
+  /**
+   * With the chat server down, the stream is refused with a 503 up front — the same answer the
+   * other chat endpoints give — instead of starting a stream that can only fail.
+   */
+  @Test
+  void refuses_the_stream_with_503_while_the_chat_server_is_down() throws IOException {
+    int closedPort;
+    try (ServerSocket socket = new ServerSocket(0)) {
+      closedPort = socket.getLocalPort(); // free a moment ago, and closed again: nothing listens there
+    }
+    ChatProxyController proxy = new ChatProxyController("http://localhost:" + closedPort);
+
+    assertEquals(HttpStatus.SERVICE_UNAVAILABLE, proxy.streamMessages("session").getStatusCode());
   }
 
   /** The chat server (Spring SseEmitter) writes "data:" without a space; those events must still be forwarded. */
