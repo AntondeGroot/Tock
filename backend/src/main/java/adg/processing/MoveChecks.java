@@ -14,9 +14,10 @@ final class MoveChecks {
   private MoveChecks() {}
 
   /**
-   * Run a single pawn's move through a CHECK_MOVE — no temp mutations on the shared game state — and
-   * return the resulting response, whose result tells whether the move is legal. {@code moveType}
-   * says what the steps are: a whole card ({@code MOVE}) or one half of a 7-split ({@code SPLIT}).
+   * Run a single pawn's move through a CHECK_MOVE — no temp mutations on the shared game state —
+   * and return the resulting response, whose result tells whether the move is legal.
+   * {@code moveType} says what the steps are: a whole card ({@code MOVE}) or one half of a 7-split
+   * ({@code SPLIT}).
    */
   static MoveResponse checkMove(
       GameState gs, String playerId, int cardId, PawnId pawnId, int steps, MoveType moveType) {
