@@ -123,6 +123,25 @@ class ExactMoveRequiredTest {
   }
 
   @Test
+  void backwardMove_LandingExactlyOnBlockedStartTile_CannotMove() {
+    // pawn at (1,4) - 4 steps → would land exactly on (1,0), but player1's pawn blocks it
+    // → without setting: three steps back, turns around, one step forward to (1,2)
+    // GIVEN
+    Card card = givePlayerCard(cardsDeck, 0, -4);
+    Pawn pawn1 = placePawnOnNest(gameState, "0", new PositionKey("1", 4));
+    Pawn blocker = placePawnOnNest(gameState, "1", new PositionKey("1", 0));
+
+    // WHEN
+    createMoveRequest(moveMessage, pawn1, card);
+    ProcessOnMove.process(gameState, moveMessage, moveResponse);
+
+    // THEN
+    assertEquals(CANNOT_MAKE_MOVE, moveResponse.getResult());
+    assertNull(moveResponse.getPawn1());
+    assertEquals(new PositionKey("1", 4), gameState.getPawn(pawn1).getCurrentTileId());
+  }
+
+  @Test
   void backwardMove_BlockedByOwnOccupiedStartTile_CannotMove() {
     // pawn at (0,3) - 5 steps → wants to cross through (0,0), but player0's own pawn blocks it
     // → without setting: reverses to (0,4)
