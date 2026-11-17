@@ -52,8 +52,8 @@ public class PawnAnimationTest {
   @Test
   void pawnMovesAroundCorner7() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 0, 4);
-    Pawn pawn1 = GameStateUtil.placePawnOnNest(gameState, "0", new PositionKey("0", 5));
+    Card card = givePlayerCard(cardsDeck, 0, 5);
+    Pawn pawn1 = GameStateUtil.placePawnOnNest(gameState, "0", new PositionKey("0", 4));
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);
@@ -61,7 +61,7 @@ public class PawnAnimationTest {
 
     // THEN
     LinkedList<PositionKey> expectedMovement = new LinkedList<>();
-    expectedMovement.add(new PositionKey("0", 5));
+    expectedMovement.add(new PositionKey("0", 4));
     expectedMovement.add(new PositionKey("0", 7));
     expectedMovement.add(new PositionKey("0", 9));
 

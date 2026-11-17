@@ -168,8 +168,8 @@ class MovingOnFinishTilesTest {
   @Test
   void MoveOutOfFinishTileWhenAlreadyOnFinishTile_ByMovingForwards() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 1, 4);
-    Pawn pawn1 = placePawnOnNest(gameState, "1", new PositionKey("1", 19));
+    Card card = givePlayerCard(cardsDeck, 1, 5);
+    Pawn pawn1 = placePawnOnNest(gameState, "1", new PositionKey("1", 18));
 
     // WHEN
     createMoveRequest(moveMessage, pawn1, card);

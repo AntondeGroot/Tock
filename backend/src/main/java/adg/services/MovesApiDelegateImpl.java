@@ -118,6 +118,8 @@ public class MovesApiDelegateImpl implements MovesApiDelegate {
       response.setRejectionReason(MoveRejectionReason.MUST_FINISH_OWN_PAWNS_FIRST);
       return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    // The server decides what kind of move this is, not the client: the steps are checked by kind.
+    moveRequest.setMoveType(validation.getMoveType());
     switch (validation.getMoveType()) {
       case MOVE -> ProcessOnMove.process(gameState, moveRequest, response);
       case SPLIT -> ProcessOnSplit.process(gameState, moveRequest, response);

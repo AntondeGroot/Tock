@@ -62,6 +62,7 @@ public class ProcessOnSplit {
     // you play your teammate's pawns once all of your own are home. ProcessOnMove still checks,
     // per pawn, that the mover is allowed to control it.
     playerId = moveMessage.getPlayerId();
+    if (!bothStepsAreGiven()) return;
     nrStepsPawn1 = moveMessage.getStepsPawn1();
     nrStepsPawn2 = moveMessage.getStepsPawn2();
 
@@ -77,7 +78,7 @@ public class ProcessOnSplit {
     if (!bothPawnMovesAreValid()) return;
 
     if (gs.isMakeMove(moveMessage)) {
-      if (!executeSplitMoves()) return;
+      executeSplitMoves();
     }
 
     buildSplitResponse();
@@ -87,6 +88,14 @@ public class ProcessOnSplit {
 
   private boolean selectionIsValid() {
     if (pawn1 == null || card == null || pawn2 == null) {
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
+    }
+    return true;
+  }
+
+  private boolean bothStepsAreGiven() {
+    if (moveMessage.getStepsPawn1() == null || moveMessage.getStepsPawn2() == null) {
       reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
       return false;
     }
@@ -114,6 +123,12 @@ public class ProcessOnSplit {
       reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
       return false;
     }
+    // 0 + 7 is a split too — it lets the player switch between splitting and one pawn walking all 7
+    // — but a pawn never walks a negative half backwards.
+    if (nrStepsPawn1 < 0 || nrStepsPawn2 < 0) {
+      reject(response, INVALID_SELECTION, MoveRejectionReason.INVALID_SELECTION);
+      return false;
+    }
     return true;
   }
 
@@ -138,15 +153,17 @@ public class ProcessOnSplit {
   // ── Move validation ───────────────────────────────────────────────────────
 
   /**
-   * Pawn 1 is checked on the board as it is; pawn 2 on the board as it will be once pawn 1 has
-   * moved — a what-if board, so the check never moves a pawn, not even for a moment. (It used to
-   * move pawn 1 there and back, and checks running side by side could each catch the other
-   * half-done, and put pawn 1 "back" on a tile it had only borrowed.)
+   * Both halves have to be makeable; any other answer about either one — however it was refused —
+   * refuses the split, since there is no path to carry on from. Pawn 1 is checked on the board as
+   * it is; pawn 2 on the board as it will be once pawn 1 has moved — a what-if board, so the check
+   * never moves a pawn, not even for a moment. (It used to move pawn 1 there and back, and checks
+   * running side by side could each catch the other half-done, and put pawn 1 "back" on a tile it
+   * had only borrowed.)
    */
   private boolean bothPawnMovesAreValid() {
     moveResponsePawn1 = new MoveResponse();
     ProcessOnMove.process(gs, moveMessagePawn1, moveResponsePawn1);
-    if (moveResponsePawn1.getResult().equals(CANNOT_MAKE_MOVE)) {
+    if (!CAN_MAKE_MOVE.equals(moveResponsePawn1.getResult())) {
       // Surface the reason the first pawn's part of the split could not be made.
       reject(response, moveResponsePawn1.getResult(),
           moveResponsePawn1.getRejectionReason(), moveResponsePawn1.getRejectionDetail());
@@ -157,7 +174,7 @@ public class ProcessOnSplit {
         gs.board().withPawnMovedTo(pawn1, moveResponsePawn1.getMovePawn1().getLast());
     moveResponsePawn2 = new MoveResponse();
     ProcessOnMove.check(gs, afterPawn1, moveMessagePawn2, moveResponsePawn2);
-    if (moveResponsePawn2.getResult().equals(CANNOT_MAKE_MOVE)) {
+    if (!CAN_MAKE_MOVE.equals(moveResponsePawn2.getResult())) {
       // Surface the reason the second pawn's part of the split could not be made.
       reject(response, moveResponsePawn2.getResult(),
           moveResponsePawn2.getRejectionReason(), moveResponsePawn2.getRejectionDetail());
@@ -169,17 +186,12 @@ public class ProcessOnSplit {
 
   // ── Move execution ────────────────────────────────────────────────────────
 
-  private boolean executeSplitMoves() {
-    if (moveMessage.getStepsPawn1() + moveMessage.getStepsPawn2() != 7) {
-      reject(response, INVALID_SELECTION, MoveRejectionReason.SPLIT_STEPS_NOT_SEVEN);
-      return false;
-    }
+  private void executeSplitMoves() {
     gs.duplicatePlayerCard(playerId, card);
     moveMessagePawn1.setTempMessageType(MAKE_MOVE);
     moveMessagePawn2.setTempMessageType(MAKE_MOVE);
     ProcessOnMove.process(gs, moveMessagePawn1, moveResponsePawn1, false);
     ProcessOnMove.process(gs, moveMessagePawn2, moveResponsePawn2, true);
-    return true;
   }
 
   // ── Response assembly ─────────────────────────────────────────────────────

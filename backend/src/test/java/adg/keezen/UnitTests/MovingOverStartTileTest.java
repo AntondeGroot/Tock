@@ -355,8 +355,8 @@ class MovingOverStartTileTest {
   @Test
   void pawnEndOnOccupiedStartTileForwards_NoBlockade_CannotMove() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 1, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 12));
+    Card card = givePlayerCard(cardsDeck, 1, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 11));
     Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("1", 2), new PositionKey("0", 0));
 
     // WHEN
@@ -367,14 +367,14 @@ class MovingOverStartTileTest {
     assertNull(moveResponse.getPawn1());
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult());
     // THEN Gamestate is correct
-    assertEquals(new PositionKey("7", 12), gameState.getPawn(pawn1).getCurrentTileId());
+    assertEquals(new PositionKey("7", 11), gameState.getPawn(pawn1).getCurrentTileId());
   }
 
   @Test
   void pawnEndOnOccupiedStartTileForwards_Blockade_EndsOnTile14() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 1, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 12));
+    Card card = givePlayerCard(cardsDeck, 1, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 11));
     Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("0", 2), new PositionKey("0", 0));
 
     // WHEN
@@ -392,8 +392,8 @@ class MovingOverStartTileTest {
   @Test
   void pawnEndOnOccupiedStartTileForwards_Blockade_Tile14IsAlsoOccupied_CannotMove() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 1, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 12));
+    Card card = givePlayerCard(cardsDeck, 1, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("1", 1), new PositionKey("7", 11));
     Pawn pawn2 = placePawnOnNest(gameState, "0", new PositionKey("0", 0));
     Pawn pawn3 = placePawnOnBoard(gameState, new PawnId("1", 2), new PositionKey("7", 14));
 
@@ -405,14 +405,14 @@ class MovingOverStartTileTest {
     assertTrue(moveResponse.getMovePawn1().isEmpty()); // moves the pawn to the correct tile
     assertEquals(MoveResult.CANNOT_MAKE_MOVE, moveResponse.getResult()); // moves the correct pawn
     // THEN Gamestate is correct
-    assertEquals(new PositionKey("7", 12), gameState.getPawn(pawn1).getCurrentTileId());
+    assertEquals(new PositionKey("7", 11), gameState.getPawn(pawn1).getCurrentTileId());
   }
 
   @Test
   void canPassStartTileSamePlayerWhenPawnOnDifferentStartTile() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 2, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("2", 1), new PositionKey("0", 15));
+    Card card = givePlayerCard(cardsDeck, 2, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("2", 1), new PositionKey("0", 14));
     Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("2", 2), new PositionKey("1", 0));
 
     // WHEN
@@ -449,8 +449,8 @@ class MovingOverStartTileTest {
   @Test
   void canPassStartTile_DifferentPlayerOnDifferentStartTile() {
     // GIVEN
-    Card card = givePlayerCard(cardsDeck, 2, 4);
-    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("2", 1), new PositionKey("0", 15));
+    Card card = givePlayerCard(cardsDeck, 2, 5);
+    Pawn pawn1 = placePawnOnBoard(gameState, new PawnId("2", 1), new PositionKey("0", 14));
     Pawn pawn2 = placePawnOnBoard(gameState, new PawnId("0", 2), new PositionKey("1", 0));
 
     // WHEN

@@ -342,6 +342,21 @@ class MoveAvailabilityCheckerTest {
   }
 
   /**
+   * exactMoveRequired=true, and a four only: backwards it would land exactly on a blocked start
+   * tile and have to turn around, so it is refused — no move available → can forfeit. Four steps
+   * forwards would be free, so this also proves the four is tried backwards, as it is played.
+   */
+  @Test
+  void exactMoveRequired_fourLandsOnBlockedStartTile_forwardWouldBeFree_noMoveAvailable() {
+    gameState.setExactMoveRequired(true);
+    Card card = givePlayerCard(cardsDeck, 0, 4);
+    placePawnOnNest(gameState, "0", new PositionKey("1", 4));
+    placePawnOnNest(gameState, "1", new PositionKey("1", 0)); // blockade
+
+    assertFalse(MoveAvailabilityChecker.hasAvailableMove(gameState, "0", List.of(card)));
+  }
+
+  /**
    * exactMoveRequired=false, pawn inside the finish lane, ping-pong move available.
    * Without exactMoveRequired a pawn closed in by own pawns can ping-pong → CAN_MAKE_MOVE.
    * mustPlayIfPossible should block the forfeit.

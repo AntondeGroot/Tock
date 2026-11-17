@@ -8,6 +8,10 @@ public class CardValueCheck {
     return card.getValue() == 1;
   }
 
+  public static boolean isFour(Card card) {
+    return card.getValue() == 4;
+  }
+
   public static boolean isSeven(Card card) {
     return card.getValue() == 7;
   }
