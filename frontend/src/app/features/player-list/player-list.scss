@@ -5,7 +5,7 @@
   font-family: 'Lato', 'Helvetica Neue', sans-serif;
 
   // Team accents — a separate channel from the players' pawn colours (avatar
-  // rings) and from the gold turn signal. Bold, well-spaced hues so teams stay
+  // rings, and the fill of the chip on turn). Bold, well-spaced hues so teams stay
   // distinguishable for low-vision players; kept in sync with player-colors.ts
   // TEAM_PALETTE (the pawn pennants use the same colours + a per-team shape).
   --team-a: #f0932a; // orange
@@ -51,7 +51,7 @@
   --team-color: var(--team-d);
 }
 // The team outline already frames its players: their chips drop their own border and shadow,
-// except for the gold turn highlight.
+// except the player on turn, whose chip keeps its border in their colour.
 .team .chip {
   flex: 1 1 0;
   min-width: 0;
@@ -60,7 +60,7 @@
   box-shadow: none;
 }
 .team .chip--turn {
-  border-color: #f4d03f;
+  border-color: var(--player-color);
 }
 
 /* ── Chips in turn order. Mobile: a compact grid that wraps beside the buttons
@@ -154,11 +154,12 @@
   }
 }
 
-// Player on turn: gold chip + glow.
+// Player on turn: the chip fills with a dark tint of their colour, with a glow in it. At 40% even
+// a white pick keeps the name above 5:1 contrast; much more and light picks get hard to read.
 .chip--turn {
-  border-color: #f4d03f;
-  background: linear-gradient(rgba(244, 208, 63, 0.14), rgba(6, 18, 11, 0.85));
-  box-shadow: 0 0 14px rgba(244, 208, 63, 0.28);
+  border-color: var(--player-color);
+  background: color-mix(in oklab, var(--player-color) 40%, #06120b);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--player-color) 45%, transparent);
 
   .chip__name {
     color: #fdf3cf;
@@ -209,8 +210,8 @@
   .chip__name {
     font-size: 13px;
   }
-  // The current player is shown by the gold chip highlight — so drop the dot on mobile to give
-  // the name the full chip width.
+  // The current player is shown by their chip filled in their colour — so drop the dot on mobile
+  // to give the name the full chip width.
   .chip__dot {
     display: none;
   }
