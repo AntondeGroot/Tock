@@ -3,6 +3,8 @@
   "extends": [
     "config:recommended"
   ],
+  "reviewers": ["AntondeGroot"],
+  "assignAutomerge": true,
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
