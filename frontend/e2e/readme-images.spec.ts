@@ -3,11 +3,13 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { API_URL } from '../playwright.config';
 import { createGame, getHand, setHand, setPawn, teamTrade } from './support/seed';
+import { captureSocialPreview } from './support/social-preview';
 import { handCard } from './support/steps';
 
 /**
  * Docs generator (not a test): seeds a game per player-count, screenshots the real Angular board
- * into readme-images/, and rewrites the auto-generated block in the repo README. Because it shoots
+ * into readme-images/, rewrites the auto-generated block in the repo README, and renders the repo's
+ * social preview from those screenshots. Because it shoots
  * the live app, the images always track the current board styling.
  *
  * Guarded by an env var so the normal `npx playwright test` run (and CI) skips it. Run it with
@@ -280,6 +282,7 @@ test.describe('readme images', () => {
       await captureScenario(browser, scenario);
     }
     await rewriteReadme();
+    await captureSocialPreview(browser, IMG_DIR);
   });
 });
 

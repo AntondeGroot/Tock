@@ -1,0 +1,126 @@
+<!doctype html>
+<!--
+  The repo's social preview (GitHub: Settings → General → Social preview), 1280×640.
+  Rendered to readme-images/social-preview.png by social-preview.ts, from the README screenshots
+  in readme-images/ — so run ./generate-readme-images.sh rather than editing the PNG.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Lato:wght@400;700&display=block"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+        position: relative;
+        background: radial-gradient(ellipse at 68% 50%, #1d4a2c 0%, #12301d 55%, #0a1d11 100%);
+        font-family: Lato, sans-serif;
+      }
+      .plank {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 14px;
+        background: linear-gradient(180deg, #6b3a1f, #4a2610 50%, #6b3a1f);
+        border-bottom: 4px solid #2a1408;
+      }
+      .plank.bottom {
+        inset: auto 0 0 0;
+        border-bottom: 0;
+        border-top: 4px solid #2a1408;
+      }
+      .text {
+        position: absolute;
+        left: 84px;
+        top: 150px;
+        width: 470px;
+      }
+      h1 {
+        margin: 0;
+        font:
+          900 108px/1 Cinzel,
+          serif;
+        letter-spacing: 8px;
+        color: #f4d03f;
+        text-shadow:
+          3px 3px 12px rgba(0, 0, 0, 0.9),
+          0 0 30px rgba(244, 208, 63, 0.35);
+      }
+      .aka {
+        margin: 14px 0 0;
+        font:
+          700 22px Cinzel,
+          serif;
+        letter-spacing: 3px;
+        color: #d9b65a;
+      }
+      .pitch {
+        margin: 30px 0 0;
+        font-size: 27px;
+        line-height: 1.35;
+        color: #f3ead0;
+      }
+      .facts {
+        margin: 30px 0 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .facts span {
+        padding: 7px 16px;
+        border-radius: 999px;
+        font-size: 17px;
+        font-weight: 700;
+        color: #fdf3cf;
+        background: rgba(6, 18, 11, 0.7);
+        border: 1px solid rgba(244, 208, 63, 0.45);
+      }
+      .board {
+        position: absolute;
+        left: 560px;
+        top: 28px;
+        width: 600px;
+        height: 584px;
+        border-radius: 24px;
+        overflow: hidden;
+        background: url('../../../readme-images/game-6-players-teams-desktop.png') -330px -150px/1150px
+          auto no-repeat;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+        border: 2px solid rgba(201, 162, 39, 0.35);
+      }
+      .phone {
+        position: absolute;
+        left: 1032px;
+        top: 196px;
+        width: 200px;
+        height: 366px;
+        border-radius: 30px;
+        overflow: hidden;
+        background: url('../../../readme-images/game-4-players-mobile.png') 0 0/200px auto no-repeat;
+        border: 7px solid #0b0f0c;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="plank"></div>
+    <div class="plank bottom"></div>
+    <div class="text">
+      <h1>TOCK</h1>
+      <p class="aka">Keezen · Dog · Toc</p>
+      <p class="pitch">The classic pawn-and-card game, played online with friends.</p>
+      <div class="facts">
+        <span>2–8 players</span><span>Team play</span><span>Phone &amp; desktop</span>
+      </div>
+    </div>
+    <div class="board"></div>
+    <div class="phone"></div>
+  </body>
+</html>

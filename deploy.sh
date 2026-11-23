@@ -54,6 +54,19 @@ for i in $(seq 1 60); do curl -sf http://localhost:4200/game-options >/dev/null 
 curl -sf http://localhost:4200/game-options >/dev/null 2>&1 || {
   echo "❌ E2E backend failed to start"; tail -n 80 /tmp/keezen-e2e-backend.log; exit 1; }
 ( cd frontend && npx playwright install chromium >/dev/null 2>&1 && npm run e2e )
+
+# README images gate, against the same backend. The generator retakes the README screenshots, the
+# README's generated block and the social preview from the app just tested. On this machine a rerun
+# reproduces the committed images exactly, so any difference means they are out of date — or were
+# regenerated but not committed. Either way the deploy stops before anything is uploaded.
+echo "🖼  Checking the README images are up to date..."
+( cd frontend && npm run generate:readme-images )
+if [ -n "$(git status --porcelain -- readme-images README.md)" ]; then
+  echo "❌ The README images or README.md differ from what is committed:"
+  git status --short -- readme-images README.md
+  echo "   They have just been regenerated: review them, commit them, and deploy again."
+  exit 1
+fi
 kill "$E2E_BACKEND_PID" 2>/dev/null; E2E_BACKEND_PID=""; trap - EXIT
 
 # Tomcat itself is provisioned by the GameRoom project (setup-tomcat.sh); this script only drops
