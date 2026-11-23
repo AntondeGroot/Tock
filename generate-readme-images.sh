@@ -1,7 +1,9 @@
 #!/bin/bash
 # Regenerates the board preview images (readme-images/game-*.png) and the auto-generated block in
 # README.md by screenshotting the real Angular app served by ng serve against a real backend — so
-# the pictures always track the current board styling.
+# the pictures always track the current board styling. From those screenshots it also renders the
+# repo's social preview (readme-images/social-preview.png), which is uploaded by hand on GitHub:
+# Settings → General → Social preview.
 #
 # It boots the backend on :4200 with the `test` Spring profile (that is what exposes the /test/**
 # seeding hooks the generator uses to create the 2/4/6-player games), then runs the guarded
