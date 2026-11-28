@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.24.0</version>
+      <version>5.25.0</version>
       <scope>test</scope>
     </dependency>
     <!-- Gatling load tests (src/test/java/adg/performance), run with: mvn gatling:test -->
